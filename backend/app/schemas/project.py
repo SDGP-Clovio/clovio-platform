@@ -1,24 +1,36 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional
 
-# 1. We define the "Task" first. This is the smallest unit.
+# This is the "TeamMember" model. It represents a person on the team and their skills.
+class TeamMember(BaseModel):
+    name: str             # The person's name
+    skills: List[str] = Field(default_factory=list)   # A list of skills they have (e.g. ["Python", "Design", "Management"])
+
+# Refusing to accept a project request without a proper description. 
+class ProjectRequest(BaseModel):
+    # This forces the user to type at least 10 characters.
+    # If they type "Hi", the app rejects it immediately.
+    description: str = Field(..., min_length=10) 
+    team_members: List[TeamMember] = Field(default_factory=list)   # A list of team members involved in the project
+
+# Defining the tasks. This is the smallest unit.
 class Task(BaseModel):
-    name: str              # The title of the task
+    name: str              # The title of the task 
     description: Optional[str] = None  # Short explanation of what to do
-    complexity: int        # A difficulty score (1-10)
+    complexity: int = Field(..., ge=1, le=10) # A difficulty score (1-10)
     required_skills: List[str] # A list of skills needed (e.g. ["Python", "Logic"])
     
-    # These fields handle your "Assignment" logic
+    # These fields handle "Assignment" logic
     assigned_to: Optional[str] = None  # The name of the team member
     assignment_reason: Optional[str] = None # The "Why" (e.g. "Best skill match")
     is_skill_gap: bool = False # True if no one in the team actually had the skill
 
-# 2. We define the "Milestone". It's just a folder for Tasks.
+# We define the "Milestone". It's just a folder for Tasks.
 class Milestone(BaseModel):
     title: str
     tasks: List[Task]
 
-# 3. We define the "ProjectPlan". This is the final JSON "Package".
+# We define the "ProjectPlan". This is the final JSON "Package".
 class ProjectPlan(BaseModel):
     project_name: str
     milestones: List[Milestone]

@@ -1,43 +1,69 @@
 import json
 from groq import Groq
 from app.core.config import settings
-from app.schemas.project import ProjectPlan
+from app.schemas.project import ProjectPlan, TeamMember
 
-# Initializing the Groq client using the key from our config file
+# Initializing the Groq client using the key from the config file
 client = Groq(api_key=settings.GROQ_API_KEY)
 
-def generate_task_breakdown(description: str, team_members: list) -> ProjectPlan:
+def generate_task_breakdown(description: str, team_members: List[TeamMember]) -> ProjectPlan:
     """
     Takes a project description and a list of team members, 
     then returns a structured project plan assigned by AI.
     """
     
-    # The System Prompt is the 'rulebook' the AI must follow
+    # The System Prompt that the AI must follow
     system_prompt = f"""
     You are a Senior Project Manager. Your goal is to break down a project into logical milestones and tasks.
     
     CRITICAL RULES:
-    1. Scale: For simple projects, use 1 milestone. For complex ones, use 3-5.
+    1. Scale: Determine the number of milestones based on the project's complexity. Ensure the breakdown is detailed enough for guidance but not so granular that it overwhelms the team.
     2. Fairness: Assign tasks to the following team members based on their skills: {team_members}
     3. Bottlenecks: If one person has a unique skill needed for 90% of the project, assign them the hardest tasks 
        and assign 'learning' tasks to others to balance the load.
     4. Reasoning: For every assignment, explain WHY that person was chosen in the 'assignment_reason' field.
     5. Output: You must return ONLY valid JSON that matches the ProjectPlan schema.
+
+    members_info = [
+        f"{member.name}: skills={member.skills}"
+        for member in team_members
+    ]
+
+    You must respond with a JSON object that exactly matches this schema:
+    JSON STRUCTURE:
+    {
+    "project_name": string,
+    "milestones": [
+        {
+        "title": string,
+        "tasks": [
+            {
+            "name": string,
+            "description": string,
+            "complexity": integer (1-10),
+            "required_skills": [string],
+            "assigned_to": string,
+            "assignment_reason": string,
+            "is_skill_gap": boolean
+            }
+        ]
+        }
+    ],
+    "overall_risk_warning": string | null
+    }
     """
 
-    # Making the actual request to the Groq API
-    completion = client.chat.completions.create(
-        model=settings.AI_MODEL,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Project Description: {description}"}
-        ],
-        # Forces the AI to respond in JSON format
-        response_format={{"type": "json_object"}}
-    )
+    try:
+        completion = client.chat.completions.create(
+            model=settings.AI_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Project Description: {description}"}
+            ],
+        )
 
-    # Extracting the text response from the AI
-    raw_json = completion.choices[0].message.content
-    
-    # Validating the AI's JSON against our ProjectPlan class
-    return ProjectPlan.model_validate_json(raw_json)
+        raw_json = completion.choices[0].message.content
+        return ProjectPlan.model_validate_json(raw_json)
+
+    except Exception as e:
+        raise RuntimeError(f"AI generation failed: {str(e)}")

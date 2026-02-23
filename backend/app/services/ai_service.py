@@ -12,10 +12,10 @@ def generate_task_breakdown(description: str, team_members: List[TeamMember]) ->
     then returns a structured project plan assigned by AI.
     """
 
-    members_info = "\n".join(
-        [f"- {member.name}: {', '.join(member.skills) if member.skills else 'no skills listed'}" 
-        for member in team_members]
-    )
+    members_info = [
+        f"{member.name}: skills={member.skills}"
+        for member in team_members
+    ]
 
     # The System Prompt that the AI must follow
     system_prompt = f"""

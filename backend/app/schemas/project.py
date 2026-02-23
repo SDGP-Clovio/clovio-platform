@@ -25,14 +25,14 @@ class Task(BaseModel):
     assignment_reason: Optional[str] = None # The "Why" (e.g. "Best skill match")
     is_skill_gap: bool = False # True if no one in the team actually had the skill
 
-# We define the "Milestone". It's just a folder for Tasks.
+# Defining the "Milestone". It's a folder for Tasks.
 class Milestone(BaseModel):
     title: str
     tasks: List[Task]
 
-# We define the "ProjectPlan". This is the final JSON "Package".
+# Defining the "ProjectPlan". This is the final JSON "Package".
 class ProjectPlan(BaseModel):
     project_name: str
     milestones: List[Milestone]
-    # This is a bonus for your demo: A summary of the project health
+    # A summary of the project health
     overall_risk_warning: Optional[str] = None

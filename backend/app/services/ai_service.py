@@ -63,6 +63,11 @@ def generate_task_breakdown(description: str, team_members: List[TeamMember]) ->
         )
 
         raw_json = completion.choices[0].message.content
+        if "```json" in raw_json:
+            raw_json = raw_json.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_json:
+            raw_json = raw_json.split("```")[1].split("```")[0].strip()
+
         return ProjectPlan.model_validate_json(raw_json)
 
     except Exception as e:

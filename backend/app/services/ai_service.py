@@ -12,10 +12,10 @@ def generate_task_breakdown(description: str, team_members: List[TeamMember]) ->
     then returns a structured project plan assigned by AI.
     """
 
-    members_info = [
-        f"{member.name}: skills={member.skills}"
+    members_info = "\n".join(
+        f"{member.name}: " + ", ".join(str(skill) for skill in member.skills)
         for member in team_members
-    ]
+    )
 
     # The System Prompt that the AI must follow
     system_prompt = f"""
@@ -23,7 +23,8 @@ def generate_task_breakdown(description: str, team_members: List[TeamMember]) ->
     
     CRITICAL RULES:
     1. Scale: Determine the number of milestones based on the project's complexity. Ensure the breakdown is detailed enough for guidance but not so granular that it overwhelms the team.
-    2. Fairness: Assign tasks to the following team members based on their skills: {members_info}
+    2. Fairness: Assign tasks to the following team members based on their skills and proficiency levels
+       (format: "Skill (Level, N/4)"): {members_info}
     3. Bottlenecks: If one person has a unique skill needed for 90% of the project, assign them the hardest tasks 
        and assign 'learning' tasks to others to balance the load.
     4. Reasoning: For every assignment, explain WHY that person was chosen in the 'assignment_reason' field.

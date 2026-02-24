@@ -1,10 +1,31 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
+# Skill level labels for human-readable output
+_LEVEL_LABELS = {
+    1: "Beginner",
+    2: "Intermediate",
+    3: "Advanced",
+    4: "Expert",
+}
+
+# A single skill with a proficiency level (1 = Beginner … 4 = Expert)
+class Skill(BaseModel):
+    name: str                              # e.g. "Python"
+    level: int = Field(..., ge=1, le=4)    # 1-Beginner, 2-Intermediate, 3-Advanced, 4-Expert
+
+    @property
+    def label(self) -> str:
+        """Return the human-readable level label."""
+        return _LEVEL_LABELS[self.level]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.label}, {self.level}/4)"
+
 # This is the "TeamMember" model. It represents a person on the team and their skills.
 class TeamMember(BaseModel):
     name: str             # The person's name
-    skills: List[str] = Field(default_factory=list)   # A list of skills they have (e.g. ["Python", "Design", "Management"])
+    skills: List[Skill] = Field(default_factory=list)   # A list of skills with proficiency levels
 
 # Refusing to accept a project request without a proper description. 
 class ProjectRequest(BaseModel):

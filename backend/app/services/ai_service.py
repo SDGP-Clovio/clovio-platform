@@ -62,6 +62,9 @@ def generate_task_breakdown(description: str, team_members: List[TeamMember]) ->
             ],
         )
 
+        if not completion.choices:
+            raise RuntimeError("AI returned no choices – possible API error or empty response")
+
         raw_json = completion.choices[0].message.content
         if "```json" in raw_json:
             raw_json = raw_json.split("```json")[1].split("```")[0].strip()

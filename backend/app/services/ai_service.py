@@ -13,7 +13,7 @@ def generate_task_breakdown(description: str, team_members: List[TeamMember]) ->
     """
 
     members_info = "\n".join(
-        f"{member.name}: " + ", ".join(str(skill) for skill in member.skills)
+        f"{member.name}: " + (", ".join(str(skill) for skill in member.skills) if member.skills else "no skills listed")
         for member in team_members
     )
 

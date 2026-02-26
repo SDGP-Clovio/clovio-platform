@@ -61,6 +61,8 @@ def generate_task_breakdown(description: str, team_members: List[TeamMember]) ->
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": f"Project Description: {description}"}
             ],
+            #max_tokens=settings.MAX_TOKENS,
+            #response_format={"type": "json_object"},
         )
 
         if not completion.choices:

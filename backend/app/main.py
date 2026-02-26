@@ -5,7 +5,8 @@ from app.services.ai_service import generate_task_breakdown
 # Initialize the App 
 app = FastAPI(
     title="Clovio AI Backend",
-    version="0.1.0"
+    version="0.1.0",
+    description="AI-powered project planning and task breakdown API."
 )
 
 # 2. The Health Check (Just to see if lights are on)

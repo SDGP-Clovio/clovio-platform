@@ -26,6 +26,8 @@ class Skill(BaseModel):
 class TeamMember(BaseModel):
     name: str             # The person's name
     skills: List[Skill] = Field(default_factory=list)   # A list of skills with proficiency levels
+    # Add a max_items constraint on skills (e.g., max_length=20) to prevent
+    # a single member from having 100+ skills that balloon the system prompt size.
 
 # Refusing to accept a project request without a proper description. 
 class ProjectRequest(BaseModel):

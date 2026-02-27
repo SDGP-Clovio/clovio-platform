@@ -64,6 +64,13 @@ class Task(BaseModel):
 class Milestone(BaseModel):
     title: str
     tasks: List[Task]
+    # Add an order field (int) so milestones can be explicitly sequenced,
+    # rather than relying on list position which can get shuffled in serialization.
+    # order: Optional[int] = None
+
+    # Add a depends_on field (List[str] of milestone titles) to model
+    # dependencies between milestones, enabling basic critical-path analysis.
+    # depends_on: List[str] = Field(default_factory=list)
 
 # Defining the "ProjectPlan". This is the final JSON "Package".
 class ProjectPlan(BaseModel):

@@ -52,6 +52,14 @@ class Task(BaseModel):
     assignment_reason: Optional[str] = None # The "Why" (e.g. "Best skill match")
     is_skill_gap: bool = False # True if no one in the team actually had the skill
 
+    # Add an estimated_hours field so the plan output gives teams a rough
+    # time estimate per task. The AI could populate this based on complexity.
+    # estimated_hours: Optional[float] = Field(None, gt=0)
+
+    # Add a priority field (e.g., "high", "medium", "low" or 1-3 int) so teams
+    # can sort and schedule tasks more effectively after receiving the plan.
+    # priority: Optional[int] = Field(None, ge=1, le=3)
+
 # Defining the "Milestone". It's a folder for Tasks.
 class Milestone(BaseModel):
     title: str

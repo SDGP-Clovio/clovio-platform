@@ -33,7 +33,9 @@ class TeamMember(BaseModel):
 class ProjectRequest(BaseModel):
     # This forces the user to type at least 10 characters.
     # If they type "Hi", the app rejects it immediately.
-    description: str = Field(..., min_length=10) 
+    description: str = Field(..., min_length=10, max_length=2000)
+    # Add max_length (e.g., 2000) to cap token usage per request. Without it,
+    # a very long description can produce unexpectedly large (and expensive) AI responses.
     team_members: List[TeamMember] = Field(default_factory=list)   # A list of team members involved in the project
 
 # Defining the tasks. This is the smallest unit.

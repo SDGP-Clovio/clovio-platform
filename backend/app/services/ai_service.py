@@ -3,6 +3,14 @@ from groq import Groq
 from app.core.config import settings
 from app.schemas.project import ProjectPlan, TeamMember
 
+# Add tenacity (or a simple manual retry loop) to retry the Groq API call
+# on transient failures (rate limits, timeouts) with exponential backoff.
+# from tenacity import retry, stop_after_attempt, wait_exponential
+
+# Consider adding an in-memory cache (e.g., functools.lru_cache or cachetools TTLCache)
+# for identical (description, team_members) inputs. Repeated identical requests currently
+# hit the paid API every time.
+
 # Initializing the Groq client using the key from the config file
 client = Groq(api_key=settings.GROQ_API_KEY)
 

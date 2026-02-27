@@ -37,6 +37,8 @@ class ProjectRequest(BaseModel):
     # Add max_length (e.g., 2000) to cap token usage per request. Without it,
     # a very long description can produce unexpectedly large (and expensive) AI responses.
     team_members: List[TeamMember] = Field(default_factory=list)   # A list of team members involved in the project
+    # Consider adding a max_items constraint on team_members (e.g., reasonable cap of 20)
+    # to prevent prompt size explosion and unreasonable AI load-balancing scenarios.
 
 # Defining the tasks. This is the smallest unit.
 class Task(BaseModel):

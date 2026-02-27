@@ -78,3 +78,11 @@ class ProjectPlan(BaseModel):
     milestones: List[Milestone]
     # A summary of the project health
     overall_risk_warning: Optional[str] = None
+    # Add a total_complexity field (computed as sum of all task complexities)
+    # so the frontend can display a single headline difficulty metric for the plan.
+    # total_complexity: Optional[int] = None
+
+    # Add a skill_gaps field (List[str]) summarising all unique skills flagged
+    # as is_skill_gap=True across all tasks, making it easy for a team to see at a
+    # glance what hiring or training is needed without scanning every task.
+    # skill_gaps: List[str] = Field(default_factory=list)

@@ -29,6 +29,18 @@ class TeamMember(BaseModel):
     # Add a max_items constraint on skills (e.g., max_length=20) to prevent
     # a single member from having 100+ skills that balloon the system prompt size.
 
+class MilestoneSummary(BaseModel): # A simplified milestone summary for the milestone-only endpoint
+    title: str # The title of the milestone
+    effort_points: int # A positive integer estimating the effort for this milestone (no upper limit)
+
+
+# The response for milestone generation
+class MilestonePlanResponse(BaseModel): 
+    project_name: str # The name of the project (can be a short title derived from the description)
+    milestones: List[MilestoneSummary] # A list of milestones with their effort points
+    overall_risk_warning: Optional[str] = None # A summary of any risks the AI identified (e.g., "High risk due to missing skills in X")
+    suggested_timeline_weeks: Optional[int] = None # An estimated timeline for the project in weeks, based on effort points and team skills
+
 # Refusing to accept a project request without a proper description. 
 class ProjectRequest(BaseModel):
     # This forces the user to type at least 10 characters.

@@ -1,0 +1,641 @@
+Clovio as an Academic SDGP Project – Scope, Constraints, and My Role
+1. Project Context: SDGP vs. Enterprise App
+Clovio is developed as part of a Software Development Group Project (SDGP) – a capstone‑style academic exercise with a fixed timeline (approximately 4 months), a team of six students, and a strong emphasis on learning, collaboration, and delivering a functional prototype. Unlike an enterprise‑level application, we are not expected to build a production‑ready system with high scalability, 99.99% uptime, or extensive security audits. Instead, the goal is to demonstrate a coherent idea, implement core features, and produce a working Minimum Viable Product (MVP) that can be showcased and evaluated.
+
+2. MVP Scope for Clovio
+Our MVP includes the following core features (based on our functional requirements):
+
+User authentication (JWT) – so users can log in and have profiles.
+
+Project creation with AI‑generated milestones (effort points, timeline suggestion).
+
+On‑demand task generation for a milestone, considering team skills and current workload.
+
+Fairness score (Gini coefficient) to measure workload equality.
+
+Progress tracking based on effort points (milestone estimates + task completions).
+
+Basic Kanban board to view and update tasks.
+
+Supervisor dashboard (read‑only) to monitor multiple projects.
+
+File upload and document management.
+
+We explicitly exclude advanced features like real‑time collaborative editing, machine learning model training, calendar integrations, mobile apps, sentiment analysis, etc. These are either out of scope or deferred as stretch goals.
+
+3. My Role: AI & Integration Lead
+As Member 1, I am responsible for the AI‑powered task distribution engine. This includes:
+
+Designing and implementing the AI service that interfaces with an LLM (currently Groq, with plans to evaluate DeepSeek).
+
+Crafting system prompts to generate milestones and tasks in a structured JSON format.
+
+Building the retry logic, JSON cleaning, and validation using Pydantic models.
+
+Developing the fairness score calculation (Gini coefficient) and progress tracking logic.
+
+Coordinating with other team members:
+
+Member 5 (Database) – to define the schema for projects, milestones, tasks, and user skills.
+
+Member 4 (API Lead) – to create the endpoints that use my AI functions.
+
+Member 2 & 3 (Frontend) – to provide clear API contracts and ensure the UI can display the generated plans.
+
+My work is the intelligent core of Clovio – without it, the app would be just a manual task manager. The success of the project hinges on the AI’s ability to produce realistic, fair, and useful breakdowns.
+
+4. Why We Made Certain Choices
+Given the academic nature of the project, we made pragmatic decisions:
+
+Using an external LLM API (Groq) instead of training our own model – saves time and resources, and leverages state‑of‑the‑art language understanding.
+
+Simple retry logic with tenacity, not a full‑blown fallback system – sufficient for demo reliability.
+
+Effort points as a proxy for complexity – allows progress tracking without requiring detailed time estimates.
+
+No machine learning on historical data – we don’t have enough data, and it’s outside the scope.
+
+Manual deadline entry instead of AI‑predicted completion dates – keeps the MVP focused; we can add smarter predictions later if time permits.
+
+These trade‑offs are typical for an SDGP: we build just enough to demonstrate the idea, with clear paths for future enhancement.
+
+5. Conclusion
+Clovio is a proof‑of‑concept, not a commercial product. It showcases how AI can transform group projects by automating planning and promoting fairness. My contribution – the AI service – is the heart of this vision. Within the limited timeframe, I have delivered a robust module that can generate milestones, tasks, and fairness metrics, ready to be integrated with the rest of the system. The MVP will prove that the concept works, and the project report will highlight both achievements and future possibilities.
+
+
+Part 1: Clovio – An AI-Powered Academic Collaboration Platform
+1.1 What is Clovio?
+Clovio is a web-based academic collaboration platform designed to transform the group project experience for students. It leverages artificial intelligence to automate and optimize project planning, task distribution, and progress tracking, ensuring fairness, accountability, and efficiency. The platform targets university students working on team assignments, as well as educators who need to supervise multiple projects.
+
+1.2 The Problem Clovio Solves
+Group projects in academia are notoriously challenging due to:
+
+Unequal workload distribution – some members contribute significantly more than others, leading to frustration and unfair grading.
+
+Scheduling difficulties – coordinating meetings and deadlines among diverse schedules is often chaotic.
+
+Lack of supervision – educators cannot monitor every team continuously, so problems like free-riding or skill gaps go unnoticed until it's too late.
+
+Poor task planning – students struggle to break down a complex project into manageable steps, resulting in last‑minute work and stress.
+
+Existing tools like Trello, Asana, or Google Workspace offer basic project management but lack intelligence to address these issues. They are passive – they require users to manually create tasks, assign them, and track progress. Clovio actively assists by using AI to generate a structured plan, assign tasks based on skills and workload, and provide real‑time fairness analytics.
+
+1.3 Core Mission
+Clovio’s mission is to make group projects equitable and stress‑free. It aims to:
+
+Ensure every team member contributes fairly and is recognized for their work.
+
+Reduce the cognitive load of project planning by automating task breakdown.
+
+Give supervisors visibility into team dynamics without micromanaging.
+
+Foster collaboration and skill development by matching tasks to members’ abilities.
+
+1.4 Target Users
+Students – who need to collaborate efficiently and transparently.
+
+Team leaders – who can use Clovio to coordinate and keep everyone accountable.
+
+Supervisors / Educators – who oversee multiple projects and need to identify at‑risk teams early.
+
+1.5 Key Value Propositions
+Intelligent Task Breakdown – From a simple project description, the AI generates a full plan with milestones and tasks, saving hours of manual planning.
+
+Skill‑Based Assignment – Tasks are assigned to members whose skills best match the requirements, taking into account proficiency levels (Beginner to Expert).
+
+Fairness Score – A Gini‑based metric reveals how evenly workload is distributed, prompting corrective action.
+
+Progress Prediction & Alerts – Simple math predicts if the team is on track, and alerts flag potential delays or skill bottlenecks.
+
+Supervisor Dashboard – Read‑only view with aggregated data on all projects, fairness, and risk indicators.
+
+Real‑time Collaboration – Integrated chat, file sharing, and live updates keep everyone in sync.
+
+Flexibility – Works for any type of project, from software development to research papers to event planning.
+
+1.6 How Clovio Stands Out
+Unlike generic project management tools, Clovio embeds AI throughout the workflow. It doesn't just provide a board – it populates it with intelligent suggestions, explains why a task was assigned to a particular person, and highlights skill gaps. Supervisors get early warnings without needing to read every update. The fairness score is a unique differentiator, making equity measurable and actionable.
+
+Part 2: How Clovio Works – Architecture and Key Features
+2.1 High‑Level System Architecture
+Clovio follows a modern web application architecture with a clear separation between frontend, backend, and external services. The main components are:
+
+Frontend – A React + TypeScript single‑page application (SPA) styled with Tailwind CSS. It communicates with the backend via REST APIs and uses WebSockets for real‑time updates (e.g., task status changes, chat messages). State management is handled by Zustand (or Redux). The UI includes a project dashboard, milestone list, task board (Kanban), supervisor overview, and document hub.
+
+Backend – Built with FastAPI (Python), it exposes RESTful endpoints for all client interactions. It handles:
+
+User authentication (JWT) and authorization.
+
+CRUD operations for projects, milestones, tasks, and documents.
+
+Integration with AI services for intelligent task breakdown and assignment.
+
+Real‑time communication via Socket.IO.
+
+Computation of fairness scores and progress metrics.
+
+Generation of PDF reports.
+
+Database – PostgreSQL stores all persistent data: users, projects, milestones, tasks, skills, assignments, documents, and fairness snapshots. SQLAlchemy serves as the ORM, with Alembic managing migrations.
+
+Cache & Real‑Time Layer – Redis is used for caching frequently accessed data (e.g., fairness scores) and as a pub/sub backend for Socket.IO to support horizontal scaling.
+
+AI Service – An internal module (ai_service.py) that communicates with an LLM provider (currently Groq, with plans to add DeepSeek as a primary option). It constructs detailed prompts, sends them via the provider’s API, and parses the JSON responses into validated Pydantic models. The AI service is stateless and called only when needed (milestone generation, task generation).
+
+File Storage – For the MVP, uploaded documents are stored locally in the uploads folder, with metadata in PostgreSQL. In production, this would be replaced by cloud storage like AWS S3.
+
+Third‑Party Integrations – (Optional) Calendar APIs for advanced scheduling, email/SMS for alerts, and PDF generation using ReportLab.
+
+2.2 Core User Flows
+2.2.1 Project Creation and Milestone Generation
+User (team leader) navigates to the “Create Project” page and fills in:
+
+Project description (e.g., “Build a habit tracker app with social features and wearable integration”).
+
+Team members: for each member, they enter a name and a list of skills with proficiency levels (1‑4: Beginner to Expert). This data is sent as JSON to the backend.
+
+Backend receives the request at POST /projects/breakdown and validates it using the ProjectRequest Pydantic model. It then calls generate_milestones_only from the AI service.
+
+AI service:
+
+Formats team members into a human‑readable string (e.g., “Alice: Python (Advanced, 3/4), Django (Intermediate, 2/4)”).
+
+Builds a system prompt that instructs the AI to act as a Senior Project Manager and produce a list of milestones with effort points (positive integers, no upper limit) and an optional timeline suggestion. The prompt includes the project description and the team summary.
+
+Sends the prompt to the LLM (e.g., Groq) with retry logic for transient errors.
+
+Receives a JSON response, strips any markdown code fences, and validates the structure against MilestonePlanResponse (a Pydantic model).
+
+Returns the validated object.
+
+Backend returns the milestones to the frontend. The user can review, edit, or accept them. Once accepted, the frontend calls POST /projects to create the project record in the database, including the chosen milestones (stored as separate rows in the milestones table).
+
+2.2.2 Task Generation for a Milestone
+When a team starts a milestone (usually the first one is automatically triggered after project creation), the following occurs:
+
+Frontend requests POST /milestones/{id}/generate-tasks, optionally with additional instructions.
+
+Backend:
+
+Fetches the project description, the milestone’s title and effort points, the full team member list (with skills), and a workload summary of all tasks from previously completed milestones. The workload summary is generated by querying the database and formatting a string like: “Alice: completed 12 points, pending 5 points; Bob: completed 8 points, pending 0 points.”
+
+Optionally, it also includes the list of all milestones (with effort points) to give the AI context about the overall plan.
+
+AI service calls generate_tasks_for_milestone with this context. The prompt now instructs the AI to:
+
+Generate an appropriate number of tasks (no fixed count) for this milestone.
+
+Assign each task to a team member based on skills and current workload, explaining the reason.
+
+Ensure the sum of task complexities roughly matches the milestone’s effort points.
+
+Flag any task where the required skills are missing from the team (is_skill_gap = true).
+
+Stay strictly within the scope of the current milestone (no tasks that belong to other milestones).
+
+AI response is a JSON array of tasks, which is parsed and validated against the Task model. The backend then stores each task in the database, linked to the milestone.
+
+Frontend receives the tasks and displays them (e.g., as a Kanban board). The first milestone’s tasks are shown immediately after project creation; subsequent milestones only load when the user opens them.
+
+2.2.3 Fairness Score Calculation
+Fairness is measured using the Gini coefficient on the distribution of total assigned task complexity per team member. The fairness endpoint GET /projects/{id}/fairness:
+
+Queries all tasks for the project (across all milestones) where assigned_to is not null.
+
+Sums complexity for each member.
+
+Sorts the sums and applies the Gini formula:
+
+G
+=
+2
+∑
+i
+=
+1
+n
+i
+⋅
+y
+i
+n
+∑
+i
+=
+1
+n
+y
+i
+−
+n
++
+1
+n
+G= 
+n∑ 
+i=1
+n
+​
+ y 
+i
+​
+ 
+2∑ 
+i=1
+n
+​
+ i⋅y 
+i
+​
+ 
+​
+ − 
+n
+n+1
+​
+ 
+where 
+y
+i
+y 
+i
+​
+  are the sorted sums.
+
+Returns a float between 0 (perfect equality) and 1 (complete inequality). The frontend can display this as a percentage or a fairness grade.
+
+2.2.4 Progress Tracking
+Progress is computed dynamically using effort points. The endpoint GET /projects/{id}/progress:
+
+Retrieves all milestones with their effort_points and status (pending/active/completed).
+
+Computes total_effort as the sum of effort points for all milestones.
+
+For completed milestones, adds their full effort to completed_effort.
+
+For the current active milestone, fetches its tasks, sums the complexities of completed tasks, and adds the fraction (completed_task_complexity / milestone_effort) * milestone_effort to completed_effort.
+
+Returns overall progress percentage and milestone‑level details (e.g., “Milestone 1: 80% done”).
+
+2.2.5 Supervisor Dashboard
+Supervisors have read‑only access to all projects. They can:
+
+View a list of projects with aggregated metrics: total members, completion percentage, fairness score, and risk alerts.
+
+Drill down into a project to see milestones, task distribution, and individual contributions.
+
+Receive alerts when a fairness score drops below a threshold or when a bus factor risk (a critical skill held by only one person) is detected.
+
+Generate a PDF report summarizing the project’s progress, fairness, and risk factors.
+
+2.3 AI Integration Details
+The AI service is the brain of Clovio. It uses carefully engineered prompts to ensure consistent, structured output. Key design choices:
+
+System prompt defines the role (Senior Project Manager) and provides explicit rules.
+
+JSON schema is included verbatim in the prompt, forcing the AI to produce valid JSON.
+
+Few‑shot examples are not used in the MVP, but can be added later to improve consistency.
+
+Retry logic with exponential backoff handles temporary API failures (rate limits, network glitches).
+
+JSON cleaning removes markdown code fences that some models wrap around responses.
+
+Pydantic validation ensures the AI output matches the expected types and fields; if it fails, a clear error is raised.
+
+2.4 Data Models (Simplified)
+User: id, email, hashed_password, name, role (student/supervisor)
+
+Skill: id, name (optional – can be free‑text)
+
+UserSkill: user_id, skill_id, level (1‑4)
+
+Project: id, name, description, created_by, deadline, total_effort (computed), status
+
+Milestone: id, project_id, title, effort_points (int), order, status (pending/active/completed)
+
+Task: id, milestone_id, name, description, complexity (1‑10), required_skills (JSON), assigned_to (user_id), assignment_reason, is_skill_gap, status (todo/doing/done)
+
+Document: id, project_id, filename, s3_key, uploaded_by, version, uploaded_at
+
+2.5 Real‑Time Collaboration
+Clovio uses Socket.IO for live updates:
+
+When a task is moved on the Kanban board, an event is broadcast to all project members, updating the UI in real time.
+
+Chat messages are delivered instantly.
+
+Notifications (e.g., new tasks generated, deadline alerts) appear as toast messages.
+
+2.6 Security and Privacy
+Authentication is handled via JWT tokens issued at login. Tokens are short‑lived and refreshed as needed.
+
+All endpoints (except login/register) require a valid token.
+
+Role‑based access control: supervisors can only read, students can modify their projects.
+
+Data encryption: .env files store secrets; passwords are hashed with bcrypt.
+
+HTTPS is enforced in production.
+
+2.7 Deployment Strategy
+Frontend: Vercel (automatic deploys from GitHub)
+
+Backend: Railway or Render (with environment variables)
+
+Database: Supabase PostgreSQL (managed) or self‑hosted
+
+Redis: Redis Cloud (managed)
+
+File storage: Local for MVP, AWS S3 for production
+
+Part 3: Deep Dive – AI Prompts, Fairness Algorithm, and Future Enhancements
+3.1 AI Prompt Engineering – The Art of Guiding the LLM
+Clovio’s intelligence hinges on well‑crafted prompts. The prompts are designed to be explicit, structured, and consistent across different LLMs (Groq, DeepSeek, etc.). Below we detail the two primary prompts used in the system.
+
+3.1.1 Milestone Generation Prompt
+Purpose: To generate a high‑level project breakdown into milestones, each with an effort estimate (effort points) and an optional overall timeline suggestion.
+
+Key Elements:
+
+Role setting: “You are a Senior Project Manager.” – establishes authority and context.
+
+Input data: Team members (with skills and levels) and project description.
+
+Rules:
+
+Milestone count: Adapt to project complexity – simple projects may have just one milestone, complex ones several.
+Milestone details: Each milestone must have a title and an effort_points integer (no upper bound). Effort points should roughly equal the sum of task complexities later.
+Risk warning: Optional field to flag any potential issues (missing skills, vague description, unrealistic timeline).
+Timeline suggestion: Optional integer for estimated weeks.
+Output format: Strict JSON schema (provided in the prompt) to ensure machine‑readable output.
+
+Additional instruction: “Do not include any other text.” – prevents extra commentary.
+
+Example (abridged):
+
+text
+You are a Senior Project Manager. Given a project description and a team, break the project into a logical set of milestones.
+
+Team Members and their skills (format: "Skill (Level, 1/4)"):
+Alice: Python (Advanced, 3/4), Django (Intermediate, 2/4)
+Bob: React Native (Intermediate, 2/4), UI/UX (Beginner, 1/4)
+
+Project Description: Build a simple calculator app...
+
+CRITICAL RULES:
+1. Identify major phases of work as milestones...
+2. For each milestone, provide: title, effort_points (integer, no upper limit).
+3. If risks exist, include `overall_risk_warning` (string or null).
+4. Optionally provide `suggested_timeline_weeks` (integer or null).
+5. Output JSON with this exact structure: { "project_name": "...", "milestones": [...], "overall_risk_warning": ..., "suggested_timeline_weeks": ... }
+Do not include any other text.
+3.1.2 Task Generation Prompt
+Purpose: For a given milestone, generate a list of concrete, assignable tasks that collectively represent the work needed, respecting the milestone’s effort estimate and current workload.
+
+Key Elements:
+
+Project context: Original description, current milestone title, and its effort estimate.
+
+Overall milestones list (optional): Provides awareness of the whole plan, preventing cross‑milestone tasks.
+
+Team members: Same format as before.
+
+Workload summary: Generated from the database, showing each member’s completed and pending complexity points from previous milestones. Example:
+
+text
+Alice: completed 12 points, pending 5 points
+Bob: completed 8 points, pending 0 points
+Rules:
+
+Generate an appropriate number of tasks (no fixed count) based on effort and team size.
+For each task, provide: name, description (optional), complexity (1‑10), required_skills, assigned_to, assignment_reason, is_skill_gap.
+Sum of complexities should approximately equal the milestone’s effort estimate.
+Fairness and workload balancing: Distribute new tasks considering current workload; avoid overloading; gradually equalize cumulative complexity.
+Skill gap handling: If required skills missing, set assigned_to null and is_skill_gap true.
+Strict scope: Tasks must belong only to the current milestone; do not generate tasks for other milestones.
+Output format: JSON array of task objects.
+
+Example (abridged):
+
+text
+You are a Senior Project Manager. Break down a specific milestone into concrete tasks.
+
+Project Context:
+- Original Description: Build a simple calculator app...
+- Current Milestone: Frontend Development
+- Milestone Effort Estimate: 20 points
+
+Overall Milestones:
+- Milestone 1: Planning and Design (10 points)
+- Milestone 2: Frontend Development (20 points)  ← current
+- Milestone 3: Backend Development (15 points)
+- Milestone 4: Testing and QA (15 points)
+
+Team Members...
+Current Workload: Alice: completed 0, pending 0; Bob: completed 0, pending 0; Charlie: completed 0, pending 0.
+
+CRITICAL RULES:
+1. Generate tasks for this milestone only...
+2. Each task: name, description, complexity 1‑10, required_skills, assigned_to, assignment_reason, is_skill_gap.
+3. Sum of complexities ≈ 20 points.
+4. Balance workload...
+5. Output JSON array: [ { ... } ]
+3.1.3 Handling Model Differences
+Different LLMs may interpret the same prompt differently. Our tests showed:
+
+DeepSeek excelled at adhering to scope, producing focused tasks and accurate effort sums.
+
+Groq occasionally mixed backend tasks into frontend milestones; this was mitigated by adding the “strict scope” rule and providing the full milestones list.
+
+ChatGPT performed adequately but sometimes over‑split tasks.
+
+Future improvements could include few‑shot examples in the prompt (e.g., showing one example of a well‑structured task list) to improve consistency.
+
+3.2 Fairness Algorithm – Gini Coefficient
+The fairness score is computed using the Gini coefficient, a standard measure of statistical dispersion often used in economics to quantify inequality. In Clovio, it measures how evenly the total workload (sum of task complexities) is distributed among team members.
+
+3.2.1 Why Gini?
+Normalized 0‑1 scale: Easy to interpret – 0 = perfect equality, 1 = total inequality.
+
+Sensitive to all points: Unlike simple ratios (e.g., max/min), it considers the entire distribution.
+
+Widely recognized: Fits the academic context and can be explained in reports.
+
+3.2.2 Calculation Steps
+Given a list of total complexities per member (sorted ascending):
+
+Let 
+y
+1
+,
+y
+2
+,
+.
+.
+.
+,
+y
+n
+y 
+1
+​
+ ,y 
+2
+​
+ ,...,y 
+n
+​
+  be the sorted sums.
+
+Let 
+S
+=
+∑
+i
+=
+1
+n
+y
+i
+S=∑ 
+i=1
+n
+​
+ y 
+i
+​
+  (total project effort assigned to individuals).
+
+Compute the numerator: 
+N
+=
+2
+∑
+i
+=
+1
+n
+i
+⋅
+y
+i
+N=2∑ 
+i=1
+n
+​
+ i⋅y 
+i
+​
+ .
+
+Gini = 
+N
+n
+⋅
+S
+−
+n
++
+1
+n
+n⋅S
+N
+​
+ − 
+n
+n+1
+​
+ .
+
+Example:
+
+Member A: 10 points, Member B: 20 points, Member C: 30 points.
+
+Sorted: 10, 20, 30.
+
+Sum S = 60.
+
+N = 2(110 + 2*20 + 3*30) = 2*(10 + 40 + 90) = 2*140 = 280.
+
+n = 3, n*S = 180.
+
+Gini = 280/180 - 4/3 ≈ 1.555 - 1.333 = 0.222.
+
+3.2.3 Usage in the Dashboard
+The fairness endpoint returns the Gini coefficient.
+
+The frontend can display it as a percentage (22.2%) or a grade (e.g., A–F based on thresholds).
+
+A color‑coded bar or gauge gives instant feedback.
+
+When Gini exceeds a configurable threshold (e.g., 0.4), an alert is raised on the supervisor dashboard.
+
+3.2.4 Limitations and Enhancements
+Pending tasks: Currently, we include all assigned tasks (including pending) to reflect future workload. Alternatively, one could use only completed tasks to measure contribution fairness. Both perspectives can be provided.
+
+Skill levels: Gini does not account for skill differences; a highly skilled member might legitimately carry more complex tasks. Future versions could weight by skill or provide a separate “effort vs. capacity” metric.
+
+Team size: Gini can be skewed for very small teams (n=2). Additional heuristics can supplement it.
+
+3.3 Progress Prediction and Alerts
+Progress is tracked using effort points rather than task count. This ensures that large tasks are weighted appropriately. The system uses a simple linear prediction: if a deadline is set, it compares elapsed time with completed effort to forecast delays.
+
+Alert rules:
+
+If elapsed time > deadline * 0.5 and completed effort < total effort * 0.5 → “At risk of delay.”
+
+If elapsed time > deadline * 0.75 and completed effort < total effort * 0.75 → “Behind schedule – urgent attention.”
+
+If any milestone has tasks with is_skill_gap = true, an alert warns of missing skills.
+
+3.4 Future Enhancements
+3.4.1 AI Model Upgrades
+Primary model shift: Migrate from Groq to DeepSeek (or a fine‑tuned model) for superior accuracy and consistency.
+
+Fallback mechanism: Keep Groq as a backup; automatically retry with another provider on failure.
+
+Few‑shot learning: Include 1‑2 examples in the prompt to guide the AI on expected output format and reasoning.
+
+3.4.2 Advanced Analytics
+Bus factor detection: Identify tasks where only one person has the required skill; highlight as a risk.
+
+Dynamic rebalancing: If fairness score drops, suggest reassigning some tasks (with user approval).
+
+Velocity tracking: Measure the team’s weekly completed points to predict completion date more accurately.
+
+Skill growth monitoring: Track how members’ skill levels evolve over multiple projects.
+
+3.4.3 Enhanced User Experience
+Manual task breakdown: Allow users to split a task into subtasks; AI can optionally assist.
+
+Integration with calendars: Sync milestones with Google Calendar, Outlook.
+
+Gamification: Award badges for timely completion, fairness, etc.
+
+Mobile app: Native iOS/Android version (beyond the web‑based MVP).
+
+3.4.4 Supervisor Features
+Automated intervention suggestions: e.g., “Based on fairness score, consider reassigning task X from Alice to Bob.”
+
+Customizable report templates: Export project data in various formats (PDF, Excel).
+
+Email alerts: Notify supervisors of critical issues (bus factor, severe fairness drop).
+
+3.4.5 Scalability and Performance
+Caching: Use Redis to cache fairness scores and progress calculations, reducing database load.
+
+Background tasks: Generate tasks asynchronously for large milestones, notifying the user when ready.
+
+Database indexing: Optimize queries for fairness and progress endpoints.
+
+3.4.6 AI Prompt Optimization
+Dynamic token management: Adjust max_tokens based on project size (e.g., more tokens for larger milestones).
+
+Structured output: Enforce JSON even more strictly by using the LLM’s built‑in JSON mode (if supported).
+
+Multi‑language support: Translate prompts and handle project descriptions in different languages.
+
+3.5 Summary
+Clovio’s AI‑driven approach, combined with thoughtful fairness metrics and flexible progress tracking, addresses the core challenges of academic group work. The system is designed to evolve – from the current Groq‑based prototype to a more sophisticated, multi‑model architecture that adapts to user feedback and scales to larger teams. The future roadmap ensures that Clovio remains a cutting‑edge tool for equitable collaboration.

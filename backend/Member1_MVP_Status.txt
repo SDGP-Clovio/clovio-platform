@@ -1,0 +1,274 @@
+================================================================================
+  MEMBER 1 — AI & INTEGRATION LEAD: MVP STATUS & MISSING ITEMS
+  Clovio AI-Powered Task Distribution Engine
+  Generated: 2026-03-01
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+A. WHAT HAS BEEN COMPLETED
+────────────────────────────────────────────────────────────────────────────────
+
+1. Pydantic Schemas (app/schemas/project.py)               ✅ DONE
+   - Skill model with level (1-4) and human-readable labels
+   - TeamMember model with skills list
+   - MilestoneSummary and MilestonePlanResponse models
+   - ProjectRequest with input validation (min 10 chars, max 2000)
+   - Task model with complexity (1-10), assignment fields, skill gap flag
+   - Milestone and ProjectPlan models (for legacy endpoint)
+
+2. Groq LLM Integration (app/services/ai_service.py)       ✅ DONE
+   - Groq client initialisation from config
+   - _call_groq_with_retry() with tenacity (3 attempts, exponential backoff
+     on APIError, APIConnectionError, RateLimitError)
+
+3. Milestone Generation (generate_milestones_only)          ✅ DONE
+   - System prompt generating milestones with effort points
+   - JSON cleaning (strips markdown fences)
+   - Pydantic validation of AI response
+   - Error handling with try/except
+
+4. Task Generation (generate_tasks_for_milestone)           ✅ DONE
+   - System prompt with workload-aware task assignment
+   - Accepts workload_summary and all_milestones for context
+   - Skill-gap detection (is_skill_gap flag)
+   - JSON cleaning and parsing into Task objects
+
+5. Configuration (app/core/config.py)                       ✅ DONE
+   - GROQ_API_KEY loaded from .env
+   - AI_MODEL and MAX_TOKENS configurable
+   - Startup validation (raises if key missing)
+
+6. Test Scripts                                             ✅ DONE
+   - test_milestone_gen.py — standalone milestone generation test
+   - generate_tasks_for_milestone.py — standalone task generation test
+
+7. Project Documentation (About App.txt)                    ✅ DONE
+   - Comprehensive write-up of architecture, prompts, fairness algo,
+     progress tracking, and future enhancements
+
+
+────────────────────────────────────────────────────────────────────────────────
+B. WHAT IS MISSING / BROKEN — MUST FIX FOR MVP
+────────────────────────────────────────────────────────────────────────────────
+
+Priority: 🔴 = Blocker  |  🟡 = Important  |  🟢 = Nice-to-have
+
+──────────────────────────────────────
+B1. 🔴 BROKEN ENDPOINT IN main.py
+──────────────────────────────────────
+The current POST /api/v1/generate-plan endpoint imports and calls
+`generate_task_breakdown`, which is COMMENTED OUT in ai_service.py.
+This means the only API endpoint will crash at runtime.
+
+ACTION:
+  - Remove the old endpoint or replace it with the two-step flow.
+  - Create two new endpoints:
+      POST /api/v1/generate-milestones   → calls generate_milestones_only()
+      POST /api/v1/generate-tasks        → calls generate_tasks_for_milestone()
+  - Define proper request/response Pydantic models for each.
+
+──────────────────────────────────────
+B2. 🔴 FAIRNESS SCORE (GINI COEFFICIENT) — NOT IMPLEMENTED
+──────────────────────────────────────
+The Gini coefficient calculation is described in detail in About App.txt but
+NO code exists anywhere in the project. This is one of your core deliverables.
+
+ACTION:
+  - Implement a function `calculate_fairness_score(member_workloads: List[int])
+    -> float` in a new file (e.g., app/services/fairness.py or inside
+    ai_service.py).
+  - Formula:
+      Sort workloads ascending → y_1, y_2, ..., y_n
+      G = (2 * Σ(i * y_i)) / (n * Σ(y_i)) - (n+1) / n
+  - Handle edge cases: all-zero workloads (return 0.0), single member.
+  - Expose via an endpoint (coordinate with Member 4):
+      GET /api/v1/projects/{id}/fairness
+
+──────────────────────────────────────
+B3. 🔴 PROGRESS TRACKING LOGIC — NOT IMPLEMENTED
+──────────────────────────────────────
+The progress calculation described in the docs (effort-point-based, per-
+milestone and overall) has no code.
+
+ACTION:
+  - Implement `calculate_progress(milestones, tasks)` that computes:
+      • Per-milestone progress (completed task complexity / milestone effort)
+      • Overall project progress (weighted by milestone effort points)
+  - Return a structured result with overall_percent, milestone_details list.
+  - Expose via endpoint:
+      GET /api/v1/projects/{id}/progress
+
+──────────────────────────────────────
+B4. 🔴 HARDCODED MILESTONE CONTEXT IN generate_tasks_for_milestone()
+──────────────────────────────────────
+In ai_service.py line ~154, there is a hardcoded override:
+    milestone_context = "Planning and Design, Frontend Development, ..."
+This overwrites the dynamically built milestones_context variable, meaning
+the AI never sees the real milestones list. This is a bug.
+
+ACTION:
+  - Remove the hardcoded line.
+  - Use the dynamically built `milestones_context` variable instead.
+
+──────────────────────────────────────
+B5. 🔴 REQUEST SCHEMA FOR TASK GENERATION ENDPOINT
+──────────────────────────────────────
+There is no Pydantic request model for the task generation endpoint. The
+frontend/API layer needs a clear contract.
+
+ACTION:
+  - Create a `TaskGenerationRequest` model in schemas/project.py:
+      project_description: str
+      milestone_title: str
+      milestone_effort: int
+      team_members: List[TeamMember]
+      workload_summary: str  (or compute server-side from DB)
+      all_milestones: Optional[List[MilestoneSummary]]
+
+──────────────────────────────────────
+B6. 🟡 WORKLOAD SUMMARY BUILDER FUNCTION
+──────────────────────────────────────
+generate_tasks_for_milestone() expects a pre-formatted workload_summary
+string, but there is no utility to build it from actual data. Currently
+the test scripts hardcode it manually.
+
+ACTION:
+  - Implement `build_workload_summary(members, tasks)` that queries or
+    accepts task lists and produces the string format:
+    "Alice: completed X points, pending Y points; Bob: ..."
+  - This will be essential when integrating with Member 5's database.
+
+──────────────────────────────────────
+B7. 🟡 CORS MIDDLEWARE — NOT CONFIGURED
+──────────────────────────────────────
+The FastAPI app has no CORS middleware. The React frontend (Members 2 & 3)
+won't be able to call the API from localhost:3000.
+
+ACTION:
+  - Add CORSMiddleware to main.py:
+      from fastapi.middleware.cors import CORSMiddleware
+      app.add_middleware(CORSMiddleware, allow_origins=["*"], ...)
+  - Later, restrict to specific origins.
+
+──────────────────────────────────────
+B8. 🟡 ERROR HANDLING IN generate_tasks_for_milestone()
+──────────────────────────────────────
+Unlike generate_milestones_only(), the task generation function has NO
+try/except block. If the AI returns invalid JSON or the network fails
+after retries, the raw exception propagates with no meaningful message.
+
+ACTION:
+  - Wrap the body in try/except, similar to generate_milestones_only().
+  - Raise RuntimeError("Task generation failed: ...") with context.
+
+──────────────────────────────────────
+B9. 🟡 DUPLICATE JSON CLEANING CODE
+──────────────────────────────────────
+The markdown-fence stripping logic (```json ... ```) is duplicated in
+both generate_milestones_only() and generate_tasks_for_milestone().
+
+ACTION:
+  - Extract into a helper: `def clean_json_response(raw: str) -> str`
+  - Reuse in both functions and any future AI calls.
+
+──────────────────────────────────────
+B10. 🟡 API ROUTER STRUCTURE (app/api/)
+──────────────────────────────────────
+The app/api/ directory exists but is empty. All routes are crammed into
+main.py. For clean integration with Member 4, routes should use
+FastAPI's APIRouter.
+
+ACTION:
+  - Create app/api/ai_routes.py (or similar) with an APIRouter.
+  - Move AI-related endpoints there.
+  - Include the router in main.py: app.include_router(router)
+  - This makes it easier for Member 4 to add their own routers.
+
+──────────────────────────────────────
+B11. 🟡 TEMPERATURE PARAMETER NOT USED
+──────────────────────────────────────
+AI_TEMPERATURE is commented out in config.py and never passed to the
+Groq API. Lower temperature (~0.3) improves JSON consistency.
+
+ACTION:
+  - Uncomment AI_TEMPERATURE in Settings.
+  - Pass temperature=settings.AI_TEMPERATURE in _call_groq_with_retry()
+    or at the call sites.
+
+──────────────────────────────────────
+B12. 🟢 DEEPSEEK FALLBACK — NOT IMPLEMENTED
+──────────────────────────────────────
+Plans mention evaluating DeepSeek as an alternative/fallback LLM, but
+no code exists for it.
+
+ACTION (stretch goal):
+  - Add a DEEPSEEK_API_KEY and DEEPSEEK_MODEL to config.
+  - Implement fallback logic: if Groq fails after retries, try DeepSeek.
+  - Abstract the LLM call behind a common interface so providers can be
+    swapped easily.
+
+──────────────────────────────────────
+B13. 🟢 INPUT VALIDATION GAPS
+──────────────────────────────────────
+  - No max_items on team_members list (could send 100+ members, bloating
+    the prompt and costs).
+  - No max_items on skills per member.
+  - No check that team_members is non-empty for task generation.
+  - These are noted as comments in the schema but not enforced.
+
+ACTION:
+  - Add Field(max_length=20) on team_members and skills lists.
+  - Add a validator ensuring at least 1 team member for task generation.
+
+
+────────────────────────────────────────────────────────────────────────────────
+C. INTEGRATION POINTS WITH OTHER MEMBERS
+────────────────────────────────────────────────────────────────────────────────
+
+MEMBER 5 (Database):
+  - You need DB models for: Project, Milestone, Task, User, UserSkill.
+  - Your AI functions currently return Pydantic objects — once DB is ready,
+    the API layer needs to persist these to the database.
+  - The workload_summary builder (B6) depends on querying tasks from DB.
+  - The fairness and progress endpoints (B2, B3) need to query all tasks
+    for a project from the DB.
+
+MEMBER 4 (API Lead):
+  - Provide the updated endpoint contracts (B1, B5) so they can wire them.
+  - Agree on how milestones/tasks flow:
+      Step 1: POST generate-milestones → user reviews → POST save project
+      Step 2: POST generate-tasks for selected milestone → save tasks
+  - Agree on error response format (HTTP status codes, error body schema).
+
+MEMBERS 2 & 3 (Frontend):
+  - Share the request/response JSON shapes for:
+      • MilestonePlanResponse (milestone generation output)
+      • List[Task] (task generation output)
+      • Fairness score response (float + per-member breakdown)
+      • Progress response (overall %, per-milestone details)
+  - CORS must be enabled (B7) for frontend dev to begin API integration.
+
+
+────────────────────────────────────────────────────────────────────────────────
+D. RECOMMENDED IMPLEMENTATION ORDER
+────────────────────────────────────────────────────────────────────────────────
+
+ 1. Fix the hardcoded milestone_context bug (B4)             — 5 min
+ 2. Extract JSON cleaning helper (B9)                        — 10 min
+ 3. Add error handling to generate_tasks_for_milestone (B8)   — 10 min
+ 4. Implement Gini fairness score function (B2)              — 30 min
+ 5. Implement progress tracking function (B3)                — 30 min
+ 6. Create TaskGenerationRequest schema (B5)                 — 10 min
+ 7. Build workload summary utility (B6)                      — 15 min
+ 8. Fix/replace endpoints in main.py (B1)                    — 30 min
+ 9. Add CORS middleware (B7)                                 — 5 min
+10. Set up API router structure (B10)                        — 15 min
+11. Enable temperature parameter (B11)                       — 5 min
+12. Add input validation constraints (B13)                   — 10 min
+13. (Stretch) DeepSeek fallback (B12)                        — 1-2 hrs
+
+Estimated total for items 1-12: ~3 hours of focused work.
+
+================================================================================
+END OF STATUS REPORT
+================================================================================

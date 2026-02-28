@@ -1,12 +1,9 @@
 from typing import List
 from groq import Groq
-from tenacity import retry, stop_after_attempt, wait_exponential
+from groq import APIError, APIConnectionError, RateLimitError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from app.core.config import settings
 from app.schemas.project import ProjectPlan, TeamMember
-
-# Consider adding an in-memory cache (e.g., functools.lru_cache or cachetools TTLCache)
-# for identical (description, team_members) inputs. Repeated identical requests currently
-# hit the paid API every time.
 
 # Initializing the Groq client using the key from the config file
 client = Groq(api_key=settings.GROQ_API_KEY)
@@ -15,19 +12,26 @@ client = Groq(api_key=settings.GROQ_API_KEY)
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=30),
+    retry=retry_if_exception_type((APIError, APIConnectionError, RateLimitError)),
     reraise=True,
 )
-def _call_groq_with_retry(messages: list, model: str) -> str:
+def _call_groq_with_retry(messages: list, model: str, max_tokens: int = None, **kwargs) -> str:
     """
-    Calls the Groq API. Retried up to 3 times on transient failures
+    Calls the Groq API. Retried up to 3 times on network failures
     (rate limits, timeouts) with exponential backoff (2 s -> 4 s -> 8 s, max 30 s).
     """
-    completion = client.chat.completions.create(
-        model=model,
-        messages=messages,
+    extra_args = {}
+    if max_tokens is not None:
+        extra_args["max_tokens"] = max_tokens
+    extra_args.update(kwargs) # Include any additional arguments passed like temperature etc.     
+
+    completion = client.chat.completions.create( # API call to AI to get a completion based on the provided messages and model
+        model=model, # The AI model to use for generating the response 
+        messages=messages, # A list of messages that includes the system prompt and user input, which guides the AI's response
+        **extra_args # Any additional parameters for the API call, such as max_tokens or temperature, are passed here
     )
     if not completion.choices:
-        raise RuntimeError("AI returned no choices – possible API error or empty response")
+        raise RuntimeError("AI returned no choices: possible API error or empty response")
     return completion.choices[0].message.content
 
 
@@ -79,18 +83,22 @@ def generate_task_breakdown(description: str, team_members: List[TeamMember]) ->
     }}
     """
 
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Project Description: {description}"},
-    ]
-
     try:
-        raw_json = _call_groq_with_retry(messages, settings.AI_MODEL)
+        raw_content = _call_groq_with_retry(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Project Description: {description}"}
+            ],
+            model=settings.AI_MODEL,
+            max_tokens=settings.MAX_TOKENS   
+        )            
 
-        if "```json" in raw_json:
-            raw_json = raw_json.split("```json")[1].split("```")[0].strip()
-        elif "```" in raw_json:
-            raw_json = raw_json.split("```")[1].split("```")[0].strip()
+        raw_json = raw_content
+        # The AI might wrap the JSON in markdown code blocks, so we need to extract it. 
+        if "```json" in raw_content:
+            raw_json = raw_content.split("```json")[1].split("```")[0].strip()
+        elif "```" in raw_content:
+            raw_json = raw_content.split("```")[1].split("```")[0].strip()
 
         return ProjectPlan.model_validate_json(raw_json)
 

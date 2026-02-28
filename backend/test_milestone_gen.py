@@ -8,7 +8,7 @@ def test_milestone_gen(description, members):
     print(f"\n--- Testing: {description} ---")
     try:
         result = generate_milestones_only(description, members)
-        print(json.dumps(result, indent=2))
+        print(result.model_dump_json(indent=2))
     except Exception as e:
         print(f"ERROR: {e}")
 

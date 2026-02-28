@@ -1,11 +1,8 @@
 from typing import List
 from groq import Groq
+from tenacity import retry, stop_after_attempt, wait_exponential
 from app.core.config import settings
 from app.schemas.project import ProjectPlan, TeamMember
-
-# Add tenacity (or a simple manual retry loop) to retry the Groq API call
-# on transient failures (rate limits, timeouts) with exponential backoff.
-# from tenacity import retry, stop_after_attempt, wait_exponential
 
 # Consider adding an in-memory cache (e.g., functools.lru_cache or cachetools TTLCache)
 # for identical (description, team_members) inputs. Repeated identical requests currently
@@ -13,6 +10,26 @@ from app.schemas.project import ProjectPlan, TeamMember
 
 # Initializing the Groq client using the key from the config file
 client = Groq(api_key=settings.GROQ_API_KEY)
+
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    reraise=True,
+)
+def _call_groq_with_retry(messages: list, model: str) -> str:
+    """
+    Calls the Groq API. Retried up to 3 times on transient failures
+    (rate limits, timeouts) with exponential backoff (2 s -> 4 s -> 8 s, max 30 s).
+    """
+    completion = client.chat.completions.create(
+        model=model,
+        messages=messages,
+    )
+    if not completion.choices:
+        raise RuntimeError("AI returned no choices – possible API error or empty response")
+    return completion.choices[0].message.content
+
 
 def generate_task_breakdown(description: str, team_members: List[TeamMember]) -> ProjectPlan:
     """
@@ -62,21 +79,14 @@ def generate_task_breakdown(description: str, team_members: List[TeamMember]) ->
     }}
     """
 
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": f"Project Description: {description}"},
+    ]
+
     try:
-        completion = client.chat.completions.create(
-            model=settings.AI_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Project Description: {description}"}
-            ],
-            #max_tokens=settings.MAX_TOKENS,
-            #response_format={"type": "json_object"},
-        )
+        raw_json = _call_groq_with_retry(messages, settings.AI_MODEL)
 
-        if not completion.choices:
-            raise RuntimeError("AI returned no choices – possible API error or empty response")
-
-        raw_json = completion.choices[0].message.content
         if "```json" in raw_json:
             raw_json = raw_json.split("```json")[1].split("```")[0].strip()
         elif "```" in raw_json:

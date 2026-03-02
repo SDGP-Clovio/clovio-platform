@@ -29,6 +29,11 @@ class TeamMember(BaseModel):
     # Add a max_items constraint on skills (e.g., max_length=20) to prevent
     # a single member from having 100+ skills that balloon the system prompt size.
 
+    # Returns the member's highest-level skill, useful for quick team summary views.
+    # @property
+    # def top_skill(self) -> Optional[Skill]:
+    #     return max(self.skills, key=lambda s: s.level, default=None)
+
 class MilestoneSummary(BaseModel): # A simplified milestone summary for the milestone-only endpoint
     title: str # The title of the milestone
     effort_points: int # A positive integer estimating the effort for this milestone (no upper limit)

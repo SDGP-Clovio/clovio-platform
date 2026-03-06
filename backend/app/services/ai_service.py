@@ -84,7 +84,8 @@ def generate_milestones_only(description: str, team_members: List[TeamMember]) -
                 {"role": "user", "content": f"Project Description: {description}"}
             ],
             model=settings.AI_MODEL,
-            max_tokens=settings.MAX_TOKENS
+            max_tokens=settings.MAX_TOKENS,
+            temperature=settings.AI_TEMPERATURE
         )
 
         # Clean markdown fences (same as before)

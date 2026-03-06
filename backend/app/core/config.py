@@ -26,12 +26,14 @@ class Settings:
     # We define the AI model here so we can change it if needed
     AI_MODEL: str = "llama-3.3-70b-versatile"
 
-    # Added MAX_TOKENS here so it can be used (and easily tuned) in ai_service.py.
+    # Added MAX_TOKENS here so it can be used in ai_service.py.
     MAX_TOKENS: int = 4096
 
-    # Add AI_TEMPERATURE to control response randomness. A low value (~0.2-0.4)
-    # makes the model produce more consistent, structured JSON — ideal for this use case.
-    # AI_TEMPERATURE: float = 0.3
+    # Added AI_TEMPERATURE here which defines how "creative" the AI's responses will be. 
+    AI_TEMPERATURE: float = float(os.getenv("AI_TEMPERATURE", 0.3)) # lower = more deterministic output, higher = more creative
+
+    # CORS settings
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
 
     def __init__(self):
         if not self.GROQ_API_KEY:

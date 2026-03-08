@@ -25,14 +25,7 @@ class Skill(BaseModel):
 # This is the "TeamMember" model. It represents a person on the team and their skills.
 class TeamMember(BaseModel):
     name: str             # The person's name
-    skills: List[Skill] = Field(default_factory=list)   # A list of skills with proficiency levels
-    # Add a max_items constraint on skills (e.g., max_length=20) to prevent
-    # a single member from having 100+ skills that balloon the system prompt size.
-
-    # Returns the member's highest-level skill, useful for quick team summary views.
-    # @property
-    # def top_skill(self) -> Optional[Skill]:
-    #     return max(self.skills, key=lambda s: s.level, default=None)
+    skills: List[Skill] = Field(default_factory=list, max_items=20)   # A list of skills with proficiency levels, 20 skills max to prevent prompt overload.
 
 class MilestoneSummary(BaseModel): # A simplified milestone summary for the milestone-only endpoint
     title: str # The title of the milestone
@@ -50,12 +43,9 @@ class MilestonePlanResponse(BaseModel):
 class ProjectRequest(BaseModel):
     # This forces the user to type at least 10 characters.
     # If they type "Hi", the app rejects it immediately.
-    description: str = Field(..., min_length=10, max_length=2000)
-    # Add max_length (e.g., 2000) to cap token usage per request. Without it,
-    # a very long description can produce unexpectedly large (and expensive) AI responses.
-    team_members: List[TeamMember] = Field(default_factory=list)   # A list of team members involved in the project
-    # Consider adding a max_items constraint on team_members (e.g., reasonable cap of 20)
-    # to prevent prompt size explosion and unreasonable AI load-balancing scenarios.
+    description: str = Field(..., min_length=10, max_length=2000) # We set a max_length to prevent prompt overload and unreasonable AI load-balancing scenarios.
+    
+    team_members: List[TeamMember] = Field(default_factory=list, max_items=20)   # A list of team members involved in the project. Capped at 20 to prevent prompt overload and unreasonable AI load-balancing scenarios.
 
 # Defining the tasks. This is the smallest unit.
 class Task(BaseModel):
@@ -69,37 +59,17 @@ class Task(BaseModel):
     assignment_reason: Optional[str] = None # The "Why" (e.g. "Best skill match")
     is_skill_gap: bool = False # True if no one in the team actually had the skill
 
-    # Add an estimated_hours field so the plan output gives teams a rough
-    # time estimate per task. The AI could populate this based on complexity.
-    # estimated_hours: Optional[float] = Field(None, gt=0)
-
-    # Add a priority field (e.g., "high", "medium", "low" or 1-3 int) so teams
-    # can sort and schedule tasks more effectively after receiving the plan.
-    # priority: Optional[int] = Field(None, ge=1, le=3)
-
 # Defining the "Milestone". It's a folder for Tasks.
 class Milestone(BaseModel):
     title: str
     tasks: List[Task]
-    # Add an order field (int) so milestones can be explicitly sequenced,
-    # rather than relying on list position which can get shuffled in serialization.
-    # order: Optional[int] = None
-
-    # Add a depends_on field (List[str] of milestone titles) to model
-    # dependencies between milestones, enabling basic critical-path analysis.
-    # depends_on: List[str] = Field(default_factory=list)
+    order: Optional[int] = None
 
 # Defining the "ProjectPlan". This is the final JSON "Package".
 class ProjectPlan(BaseModel):
     project_name: str
     milestones: List[Milestone]
+    
     # A summary of the project health
     overall_risk_warning: Optional[str] = None
-    # Add a total_complexity field (computed as sum of all task complexities)
-    # so the frontend can display a single headline difficulty metric for the plan.
-    # total_complexity: Optional[int] = None
 
-    # Add a skill_gaps field (List[str]) summarising all unique skills flagged
-    # as is_skill_gap=True across all tasks, making it easy for a team to see at a
-    # glance what hiring or training is needed without scanning every task.
-    # skill_gaps: List[str] = Field(default_factory=list)

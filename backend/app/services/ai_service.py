@@ -184,7 +184,8 @@ def generate_tasks_for_milestone(
             {"role": "system", "content": prompt}
         ],
         model=settings.AI_MODEL,
-        max_tokens=settings.MAX_TOKENS
+        max_tokens=settings.MAX_TOKENS,
+        temperature=settings.AI_TEMPERATURE
     )
 
     try:

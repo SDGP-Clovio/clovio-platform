@@ -73,3 +73,19 @@ def verify_token(token: str):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
         )
+    
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    """
+    FastAPI dependency that retrieves the current user from the JWT token.
+    """
+    payload = verify_token(token)
+
+    username = payload.get("sub")
+
+    if username is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid authentication credentials"
+        )
+
+    return username

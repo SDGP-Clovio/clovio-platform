@@ -34,3 +34,4 @@ def generate_plan(request: ProjectRequest):
         # If anything explodes, tell us why
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+

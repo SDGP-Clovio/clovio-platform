@@ -48,9 +48,10 @@ def create_access_token(data: dict):
     to_encode = data.copy()
 
     expire = datetime.utcnow() + timedelta(
-        minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-    )
-
+    minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+   )  
+    
+   # Add expiration timestamp to the JWT payload
     to_encode.update({"exp": expire})
 
     encoded_jwt = jwt.encode(

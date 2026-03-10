@@ -69,10 +69,12 @@ def verify_token(token: str):
         return payload
 
     except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-        )
+      # Raised when the JWT token is invalid, malformed, or expired
+      raise HTTPException(
+        status_code= status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication token is invalid or has expired",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     
 def get_current_user(token: str = Depends(oauth2_scheme)):
     """
@@ -83,9 +85,10 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     username = payload.get("sub")
 
     if username is None:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid authentication credentials"
-        )
+      raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid authentication credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
 
     return username

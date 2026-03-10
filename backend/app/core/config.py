@@ -20,6 +20,12 @@ load_dotenv()
 #         env_file = ".env"
 
 class Settings:
+
+    # JWT authentication settings
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    
     # We grab the key from the computer's environment
     GROQ_API_KEY: str = os.getenv("GROQ_API_KEY")
     

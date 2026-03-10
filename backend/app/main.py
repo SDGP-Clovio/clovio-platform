@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException
 from app.schemas.project import ProjectPlan, ProjectRequest
 from app.services.ai_service import generate_task_breakdown
 from app.api.auth_routes import router as auth_router
+from fastapi import Depends
+from app.core.auth import get_current_user
 
 # Initialize the App 
 app = FastAPI(
@@ -20,7 +22,10 @@ def health_check():
 
 # 3. The Main Door (Project Generation)
 @app.post("/api/v1/generate-plan", response_model=ProjectPlan)
-def generate_plan(request: ProjectRequest):
+def generate_plan(
+    request: ProjectRequest,
+    user: str = Depends(get_current_user)):
+    
     """
     Receives a project description, validates it, and returns a task breakdown.
     """

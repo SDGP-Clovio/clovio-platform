@@ -16,7 +16,7 @@ from fastapi.security import OAuth2PasswordBearer
 
 from app.core.config import settings
 
-# Password hashing context
+# Password hashing context using bcrypt algorithm
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 scheme for extracting tokens from requests
@@ -51,7 +51,7 @@ def create_access_token(data: dict):
     minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
    )  
     
-   # Add expiration timestamp to the JWT payload
+   
     to_encode.update({"exp": expire})
 
     encoded_jwt = jwt.encode(

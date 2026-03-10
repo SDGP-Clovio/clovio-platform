@@ -25,6 +25,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 def hash_password(password: str) -> str:
     """
     Hash a plain text password using bcrypt.
+
+    This ensures that passwords are never stored or transmitted
+    in plain text format.
     """
     return pwd_context.hash(password)
 
@@ -37,7 +40,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(data: dict):
     """
-    Create a JWT access token containing user data.
+    Generate a JWT access token.
+
+    The token includes the provided payload data and an expiration
+    timestamp defined in the application settings.
     """
     to_encode = data.copy()
 

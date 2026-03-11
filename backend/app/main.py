@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from app.schemas.project import ProjectPlan, ProjectRequest
 from app.api.auth_routes import router as auth_router
 from app.core.auth import get_current_user
+from app.api.projects import router as projects_router   # Import the projects router to register it with the app
 
 # Initialize the App 
 app = FastAPI(
@@ -13,7 +14,10 @@ app = FastAPI(
 # Register authentication routes
 app.include_router(auth_router)
 
-# 2. The Health Check (Just to see if lights are on)
+# Register projects routes
+app.include_router(projects_router)
+
+# The Health Check 
 @app.get("/")
 def health_check():
     return {"status": "Active", "message": "Clovio Backend is running"}

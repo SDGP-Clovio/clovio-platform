@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Sidebar from "./components/NavBar";
-import TopBar from "./components/TopBar";
+import TopBar from "./components/TopBarDashboard";
 import ProjectList from "./components//ProjectList";
 import MiniCalendar from "./components/MiniCalendar";
 import UpcomingMeetings from "./components/UpcomingMeetings";
@@ -25,7 +25,7 @@ export default function Dashboard() {
   );
 
   return (
-<div className="flex h-screen bg-gray-50">      {/* Left collapsible sidebar */}
+<div className="flex h-screen bg-gray-100">      {/* Left collapsible sidebar */}
       <Sidebar
         expanded={sidebarExpanded}
         onToggle={() => setSidebarExpanded((prev) => !prev)}

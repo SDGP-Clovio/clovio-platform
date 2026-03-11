@@ -61,16 +61,16 @@ const SignupForm = () => {
           <button
             type="button"
             onClick={() => handleRoleSelect("student")}
-            className={`flex flex-col items-center gap-1 border-2 rounded-xl py-4 px-3 transition-all cursor-pointer
+            className={`flex flex-col items-center gap-1 border-2 rounded-xl py-3 sm:py-4 px-2 sm:px-3 transition-all cursor-pointer
               ${
                 formData.role === "student"
                   ? "border-blue-600 bg-blue-50 text-blue-700"
                   : "border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50"
               }`}
           >
-            <span className="text-2xl">🎓</span>
-            <span className="font-semibold text-sm">Student</span>
-            <span className="text-xs text-center leading-tight">
+            <span className="text-xl sm:text-2xl">🎓</span>
+            <span className="font-semibold text-xs sm:text-sm">Student</span>
+            <span className="text-xs text-center leading-tight hidden sm:block">
               Looking for a supervisor
             </span>
           </button>
@@ -79,16 +79,16 @@ const SignupForm = () => {
           <button
             type="button"
             onClick={() => handleRoleSelect("supervisor")}
-            className={`flex flex-col items-center gap-1 border-2 rounded-xl py-4 px-3 transition-all cursor-pointer
+            className={`flex flex-col items-center gap-1 border-2 rounded-xl py-3 sm:py-4 px-2 sm:px-3 transition-all cursor-pointer
               ${
                 formData.role === "supervisor"
                   ? "border-blue-600 bg-blue-50 text-blue-700"
                   : "border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50"
               }`}
           >
-            <span className="text-2xl">🏫</span>
-            <span className="font-semibold text-sm">Supervisor</span>
-            <span className="text-xs text-center leading-tight">
+            <span className="text-xl sm:text-2xl">🏫</span>
+            <span className="font-semibold text-xs sm:text-sm">Supervisor</span>
+            <span className="text-xs text-center leading-tight hidden sm:block">
               Looking to supervise students
             </span>
           </button>
@@ -109,7 +109,7 @@ const SignupForm = () => {
           value={formData.name}
           onChange={handleChange}
           placeholder="John Doe"
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -126,7 +126,7 @@ const SignupForm = () => {
           value={formData.email}
           onChange={handleChange}
           placeholder="you@example.com"
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -143,7 +143,7 @@ const SignupForm = () => {
           value={formData.password}
           onChange={handleChange}
           placeholder="••••••••"
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -160,7 +160,7 @@ const SignupForm = () => {
           value={formData.confirmPassword}
           onChange={handleChange}
           placeholder="••••••••"
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2.5 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -170,7 +170,7 @@ const SignupForm = () => {
       {/* Submit button */}
       <button
         type="submit"
-        className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors cursor-pointer"
+        className="mt-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 text-sm sm:text-base rounded-lg transition-colors cursor-pointer"
       >
         Create Account
       </button>

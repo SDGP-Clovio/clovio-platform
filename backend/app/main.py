@@ -18,4 +18,3 @@ app.include_router(auth_router)
 def health_check():
     return {"status": "Active", "message": "Clovio Backend is running"}
 
-

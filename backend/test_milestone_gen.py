@@ -93,12 +93,13 @@ members = members_smartcity = [
 ]
 
 
-
+"""
 # Test case 1: Simple software project
 test_milestone_gen(
     "Build a simple calculator app with a basic UI and arithmetic operations",
     members
 )
+"""
 
 """# Test case 2: Cooking project
 test_milestone_gen(
@@ -107,10 +108,9 @@ test_milestone_gen(
 )"""
 
 
-"""
 # Test case 4: Community event
 test_milestone_gen(
-    Project Name: SmartCity Infrastructure Monitoring Platform
+    """Project Name: SmartCity Infrastructure Monitoring Platform
 
     Overview:
     Develop an end‑to‑end IoT platform for a mid‑sized city to monitor environmental conditions (air quality, noise levels, traffic flow) and infrastructure health (bridge vibrations, water pressure, waste bin levels). The system will consist of:
@@ -135,7 +135,6 @@ test_milestone_gen(
 
     Scalability to support up to 10,000 sensors within two years.
 
-    Timeline: 18 months, with phased rollout.
+    Timeline: 18 months, with phased rollout.""",
     members
 )
-"""

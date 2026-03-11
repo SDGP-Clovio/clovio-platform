@@ -90,7 +90,7 @@ const SignupForm = () => {
             <span className="text-xl sm:text-2xl">🎓</span>
             <span className="font-semibold text-xs sm:text-sm">Student</span>
             <span className="text-xs text-center leading-tight hidden sm:block">
-              Looking for a supervisor
+              Looking to work on projects
             </span>
           </button>
 

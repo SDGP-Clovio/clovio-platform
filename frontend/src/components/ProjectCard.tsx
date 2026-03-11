@@ -12,11 +12,17 @@ function FairnessBar({ value }: { value: number }) {
     value >= 80
       ? "text-[#85D5C8]"
       : value >= 60
-      ? "text-[#F59E0B]"
-      : "text-[#EF4444]";
+        ? "text-[#F59E0B]"
+        : "text-[#EF4444]";
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full">
+      <div className="w-20 bg-gray-100 rounded h-1">
+        <div
+          className="h-full rounded transition-all duration-500"
+          style={{ width: `${value}%`, backgroundColor: color }}
+        />
+      </div>
       <span className={`text-[11px] font-bold min-w-[28px] ${textColor}`}>
         {value}%
       </span>
@@ -24,20 +30,42 @@ function FairnessBar({ value }: { value: number }) {
   );
 }
 
+function getStatusColor(status: string) {
+  switch (status) {
+    case "On Track":
+      return { color: "#85D5C8", bg: "#D4F0EC" };
+
+    case "At Risk":
+      return { color: "#F59E0B", bg: "#FEF3C7" };
+
+    case "Completed":
+      return { color: "#B179DF", bg: "#E8D5F5" };
+
+    case "Overdue":
+      return { color: "#EF4444", bg: "#FEE2E2" };
+
+    default:
+      return { color: "#6B7280", bg: "#F3F4F6" };
+  }
+}
+
 export default function ProjectCard({ project }: ProjectCardProps) {
   const visibleMembers = project.members.slice(0, 4);
   const extraMembers = project.members.length - 4;
 
+  const statusStyle = getStatusColor(project.status);
+
+
   return (
-    <div className="bg-white rounded-2xl px-6 py-5 border border-gray-100 shadow-sm flex items-center gap-5 cursor-pointer hover:shadow-[0_6px_24px_rgba(177,121,223,0.15)] hover:-translate-y-px transition-all duration-200">
+    <div className="bg-white rounded-2xl px-6 py-5 border border-gray-100 shadow-sm flex items-center gap-6 cursor-pointer hover:shadow-[0_6px_24px_rgba(177,121,223,0.15)] hover:-translate-y-px transition-all duration-200">
       {/* Circular progress ring */}
-            <div className="relative flex-shrink-0">
-              <CircularProgress value={project.progress} />
-              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold text-[#1A1A1A]">
-                {project.progress}%
-              </div>
-            </div>
-      
+      <div className="relative flex-shrink-0">
+        <CircularProgress value={project.progress} />
+        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold text-[#1A1A1A]">
+          {project.progress}%
+        </div>
+      </div>
+
       {/* Main info */}
       <div className="flex-1 min-w-0">
         {/* Name + status badge */}
@@ -48,8 +76,8 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           <span
             className="text-[10px] font-bold px-2.5 py-0.5 rounded-full flex-shrink-0"
             style={{
-              color: project.statusColor,
-              backgroundColor: project.statusBg,
+              color: statusStyle.color,
+              backgroundColor: statusStyle.bg,
             }}
           >
             {project.status}
@@ -63,7 +91,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
             {project.tag}
           </span>
         </div>
-        <div className="text-[#555] text-[13px] leading-relaxed mb-2">
+        <div className="text-[#555] text-[13px] leading-relaxed mb-2 max-w-[700px]" >
           {project.description}
         </div>
         {/* Fairness */}
@@ -71,8 +99,8 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           <span className="text-[10px] text-gray-400 flex-shrink-0">Fairness:</span>
           <FairnessBar value={project.fairness} />
         </div>
-    </div>
-    {/* Member avatar stack */}
+      </div>
+      {/* Member avatar stack */}
       <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
         <div className="flex">
           {visibleMembers.map((member, i) => (
@@ -103,7 +131,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       </div>
       {/* Due date */}
       <div className="text-center flex-shrink-0">
-        <p className="text-xs font-bold text-[#1A1A1A] m-0">{project.dueDate}</p>
+        <p className="text-[12px] font-bold text-[#1A1A1A] m-0">{project.dueDate}</p>
         <p className="text-[10px] text-gray-400 m-0">Due date</p>
       </div>
     </div>

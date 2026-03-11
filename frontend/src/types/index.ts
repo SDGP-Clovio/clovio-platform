@@ -10,13 +10,9 @@ export interface Project {
   progress: number;
   dueDate: string;
   members: Member[];
-  tasksTotal: number;
-  tasksDone: number;
   description:string;
   fairness: number;
   status: "On Track" | "At Risk" | "Completed" | "Overdue";
-  statusColor: string;
-  statusBg: string;
   tag: string;
 }
 

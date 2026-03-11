@@ -25,8 +25,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Left collapsible sidebar */}
+<div className="flex h-screen bg-gray-50">      {/* Left collapsible sidebar */}
       <Sidebar
         expanded={sidebarExpanded}
         onToggle={() => setSidebarExpanded((prev) => !prev)}
@@ -44,8 +43,7 @@ export default function Dashboard() {
 
         <div className="flex flex-1 overflow-hidden">
           {/* Filters + project list */}
-          <main className="flex-1 overflow-y-auto p-5 flex flex-col gap-2">
-            <div className="flex items-center justify-between mb-3.5">
+<main className="flex-1 p-5 flex flex-col gap-2 overflow-y-auto">            <div className="flex items-center justify-between mb-3.5">
               <span className="ml-3 text-s text-[#555] uppercase tracking-widest">All Projects</span>
               <div className="flex gap-1.5">
                 {["All", "Active", "At Risk", "Overdue"].map((f) => (

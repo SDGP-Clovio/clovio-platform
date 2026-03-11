@@ -32,11 +32,13 @@ export default function MiniCalendar({
 
 
   // Map meetings to day numbers
-  const meetingMap = new Map<number, Meeting[]>();
+  const meetingMap = new Map<string, Meeting[]>();
 
   meetings.forEach((m) => {
-    if (!meetingMap.has(m.day)) meetingMap.set(m.day, []);
-    meetingMap.get(m.day)!.push(m);
+    const key = `${m.month}-${m.day}`;
+
+    if (!meetingMap.has(key)) meetingMap.set(key, []);
+    meetingMap.get(key)!.push(m);
   });
 
   const handlePrevMonth = () => {
@@ -105,7 +107,7 @@ export default function MiniCalendar({
         {/* Day cells */}
         {Array.from({ length: daysInMonth }).map((_, i) => {
           const day = i + 1;
-          const meetingsToday = meetingMap.get(day) || [];
+          const meetingsToday = meetingMap.get(`${currentMonth}-${day}`) || [];
           const isToday = day === todayDate;
 
           return (

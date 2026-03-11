@@ -21,6 +21,8 @@ export default function Sidebar({
         bg-[#1A1A1A] flex flex-col py-5 flex-shrink-0 relative z-10
         shadow-[4px_0_24px_rgba(0,0,0,0.12)]
         transition-all duration-300 ease-in-out overflow-hidden
+        h-screen     
+        fixed 
       `}
     >
       {/* Logo */}

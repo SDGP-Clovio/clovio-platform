@@ -2,12 +2,70 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
+type LoginFormValues = {
+  email: string;
+  password: string;
+};
+
+type LoginFormErrors = Partial<Record<keyof LoginFormValues, string>>;
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const validateLoginForm = (values: LoginFormValues): LoginFormErrors => {
+  const errors: LoginFormErrors = {};
+
+  if (!values.email.trim()) {
+    errors.email = 'Email is required.';
+  } else if (!emailPattern.test(values.email)) {
+    errors.email = 'Enter a valid email address.';
+  }
+
+  if (!values.password.trim()) {
+    errors.password = 'Password is required.';
+  }
+
+  return errors;
+};
+
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
+  const [formValues, setFormValues] = useState<LoginFormValues>({
+    email: '',
+    password: '',
+  });
+  const [touchedFields, setTouchedFields] = useState<Record<keyof LoginFormValues, boolean>>({
+    email: false,
+    password: false,
+  });
+  const [errors, setErrors] = useState<LoginFormErrors>({});
+
+  const handleChange = (field: keyof LoginFormValues, value: string) => {
+    const nextValues = { ...formValues, [field]: value };
+    setFormValues(nextValues);
+
+    if (touchedFields[field]) {
+      setErrors(validateLoginForm(nextValues));
+    }
+  };
+
+  const handleBlur = (field: keyof LoginFormValues) => {
+    const nextTouchedFields = { ...touchedFields, [field]: true };
+    setTouchedFields(nextTouchedFields);
+    setErrors(validateLoginForm(formValues));
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validationErrors = validateLoginForm(formValues);
+    setTouchedFields({ email: true, password: true });
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+
     navigate('/dashboard');
   };
 
@@ -43,7 +101,7 @@ const Login: React.FC = () => {
             </Link>
           </p>
 
-          <form className="space-y-5" onSubmit={handleLogin}>
+          <form className="space-y-5" onSubmit={handleLogin} noValidate>
             <div className="space-y-2">
               <label
                 htmlFor="email"
@@ -56,8 +114,15 @@ const Login: React.FC = () => {
                 type="email"
                 placeholder="Enter your email"
                 required
+                value={formValues.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                onBlur={() => handleBlur('email')}
+                aria-invalid={Boolean(errors.email)}
                 className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
               />
+              {errors.email && touchedFields.email && (
+                <p className="text-sm text-red-500">{errors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -73,6 +138,10 @@ const Login: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   required
+                  value={formValues.password}
+                  onChange={(e) => handleChange('password', e.target.value)}
+                  onBlur={() => handleBlur('password')}
+                  aria-invalid={Boolean(errors.password)}
                   className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
                 />
                 <button
@@ -84,6 +153,9 @@ const Login: React.FC = () => {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {errors.password && touchedFields.password && (
+                <p className="text-sm text-red-500">{errors.password}</p>
+              )}
 
               <div className="flex justify-end">
                 <button

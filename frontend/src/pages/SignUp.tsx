@@ -2,13 +2,92 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
+type SignUpFormValues = {
+  fullName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
+
+type SignUpFormErrors = Partial<Record<keyof SignUpFormValues, string>>;
+
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const validateSignUpForm = (values: SignUpFormValues): SignUpFormErrors => {
+  const errors: SignUpFormErrors = {};
+
+  if (!values.fullName.trim()) {
+    errors.fullName = 'Full name is required.';
+  }
+
+  if (!values.email.trim()) {
+    errors.email = 'Email is required.';
+  } else if (!emailPattern.test(values.email)) {
+    errors.email = 'Enter a valid email address.';
+  }
+
+  if (!values.password.trim()) {
+    errors.password = 'Password is required.';
+  }
+
+  if (!values.confirmPassword.trim()) {
+    errors.confirmPassword = 'Confirm password is required.';
+  } else if (values.confirmPassword !== values.password) {
+    errors.confirmPassword = 'Passwords do not match.';
+  }
+
+  return errors;
+};
+
 const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formValues, setFormValues] = useState<SignUpFormValues>({
+    fullName: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [touchedFields, setTouchedFields] = useState<Record<keyof SignUpFormValues, boolean>>({
+    fullName: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  });
+  const [errors, setErrors] = useState<SignUpFormErrors>({});
+
+  const handleChange = (field: keyof SignUpFormValues, value: string) => {
+    const nextValues = { ...formValues, [field]: value };
+    setFormValues(nextValues);
+
+    if (touchedFields[field] || field === 'password' || field === 'confirmPassword') {
+      setErrors(validateSignUpForm(nextValues));
+    }
+  };
+
+  const handleBlur = (field: keyof SignUpFormValues) => {
+    const nextTouchedFields = { ...touchedFields, [field]: true };
+    setTouchedFields(nextTouchedFields);
+    setErrors(validateSignUpForm(formValues));
+  };
 
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const validationErrors = validateSignUpForm(formValues);
+    setTouchedFields({
+      fullName: true,
+      email: true,
+      password: true,
+      confirmPassword: true,
+    });
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
+
     navigate('/dashboard');
   };
 
@@ -45,7 +124,7 @@ const SignUp: React.FC = () => {
             </Link>
           </p>
 
-          <form className="space-y-5" onSubmit={handleSignUp}>
+          <form className="space-y-5" onSubmit={handleSignUp} noValidate>
             <div className="space-y-2">
               <label
                 htmlFor="fullName"
@@ -58,8 +137,15 @@ const SignUp: React.FC = () => {
                 type="text"
                 placeholder="Enter your full name"
                 required
+                value={formValues.fullName}
+                onChange={(e) => handleChange('fullName', e.target.value)}
+                onBlur={() => handleBlur('fullName')}
+                aria-invalid={Boolean(errors.fullName)}
                 className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
               />
+              {errors.fullName && touchedFields.fullName && (
+                <p className="text-sm text-red-500">{errors.fullName}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -74,8 +160,15 @@ const SignUp: React.FC = () => {
                 type="email"
                 placeholder="Enter your email"
                 required
+                value={formValues.email}
+                onChange={(e) => handleChange('email', e.target.value)}
+                onBlur={() => handleBlur('email')}
+                aria-invalid={Boolean(errors.email)}
                 className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
               />
+              {errors.email && touchedFields.email && (
+                <p className="text-sm text-red-500">{errors.email}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -91,6 +184,10 @@ const SignUp: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Create a password"
                   required
+                  value={formValues.password}
+                  onChange={(e) => handleChange('password', e.target.value)}
+                  onBlur={() => handleBlur('password')}
+                  aria-invalid={Boolean(errors.password)}
                   className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
                 />
                 <button
@@ -102,6 +199,9 @@ const SignUp: React.FC = () => {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {errors.password && touchedFields.password && (
+                <p className="text-sm text-red-500">{errors.password}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -117,6 +217,10 @@ const SignUp: React.FC = () => {
                   type={showConfirmPassword ? 'text' : 'password'}
                   placeholder="Confirm your password"
                   required
+                  value={formValues.confirmPassword}
+                  onChange={(e) => handleChange('confirmPassword', e.target.value)}
+                  onBlur={() => handleBlur('confirmPassword')}
+                  aria-invalid={Boolean(errors.confirmPassword)}
                   className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
                 />
                 <button
@@ -128,6 +232,9 @@ const SignUp: React.FC = () => {
                   {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
+              {errors.confirmPassword && touchedFields.confirmPassword && (
+                <p className="text-sm text-red-500">{errors.confirmPassword}</p>
+              )}
             </div>
 
             <button

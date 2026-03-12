@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import type { Project } from "../types/index";
 import ProjectCard from "./ProjectCard";
 
@@ -9,7 +10,12 @@ export default function ProjectList({ projects }: ProjectListProps) {
   return (
     <div className="flex flex-col gap-3.5">
       {projects.map((project) => (
-        <ProjectCard key={project.id} project={project} />
+        <Link key={project.id} to={`/project/${project.id}`}>
+          <div className="cursor-pointer">
+            <ProjectCard key={project.id} project={project} />
+            <h3>{project.name}</h3>
+          </div>
+        </Link>
       ))}
     </div>
   );

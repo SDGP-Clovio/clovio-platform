@@ -11,8 +11,8 @@ export default function TopBar({ project }: TopBarProps) {
             {/* Header */}
             <div>
                 <div className="text-[11px] text-[#555] uppercase tracking-widest mb-1">Project Dashboard</div>
-                <h1 className="m-0 text-[22px] font-extrabold text-[#1A1A1A] tracking-tight">
-                    {project.name}!
+                <h1 className="m-0 text-[22px] font-extrabold text-[#1A1A1A] tracking-tight mb-2">
+                    {project.name}
                 </h1>
 
                 <div className="flex items-center gap-3 mb-1.5">

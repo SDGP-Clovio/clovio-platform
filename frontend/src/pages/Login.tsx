@@ -49,12 +49,13 @@ const Login: React.FC = () => {
                 htmlFor="email"
                 className="block text-sm font-semibold text-slate-700"
               >
-                Email
+                Email <span className="text-red-500">*</span>
               </label>
               <input
                 id="email"
                 type="email"
                 placeholder="Enter your email"
+                required
                 className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
               />
             </div>
@@ -64,13 +65,14 @@ const Login: React.FC = () => {
                 htmlFor="password"
                 className="block text-sm font-semibold text-slate-700"
               >
-                Password
+                Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
+                  required
                   className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
                 />
                 <button
@@ -95,7 +97,7 @@ const Login: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full rounded-2xl bg-[#7c3aed] py-4 text-base font-bold text-white shadow-xl shadow-purple-400/30 transition-all hover:brightness-110"
+              className="mt-4 w-full rounded-2xl bg-[#7c3aed] py-4 text-base font-bold text-white shadow-xl shadow-purple-400/30 transition-all hover:brightness-110"
             >
               Log in
             </button>

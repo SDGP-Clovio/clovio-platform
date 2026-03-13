@@ -1,7 +1,7 @@
-from fastapi import FastAPI, HTTPException
-from app.schemas.project import ProjectPlan, ProjectRequest
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.core.config import settings
 from app.api.auth_routes import router as auth_router
-from app.core.auth import get_current_user
 from app.api.projects import router as projects_router   # Import the projects router to register it with the app
 from app.api.milestones import router as milestones_router   # Import the milestones router to register it with the app
 from app.api.fairness import router as fairness_router   # Import the fairness router to register it with the app
@@ -12,6 +12,15 @@ app = FastAPI(
     title="Clovio AI Backend",
     version="0.1.0",
     description="AI-powered project planning and task breakdown API."
+)
+
+# CORS – allow the React frontend to call the API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Register authentication routes

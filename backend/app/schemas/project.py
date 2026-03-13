@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 # Skill level labels for human-readable output
 _LEVEL_LABELS = {
@@ -29,7 +29,7 @@ class TeamMember(BaseModel):
 
 class MilestoneSummary(BaseModel): # A simplified milestone summary for the milestone-only endpoint
     title: str # The title of the milestone
-    effort_points: int # A positive integer estimating the effort for this milestone (no upper limit)
+    effort_points: int = Field(..., ge=1) # A positive integer estimating the effort for this milestone (no upper limit)
 
 
 # The response for milestone generation
@@ -58,13 +58,13 @@ class Task(BaseModel):
     assigned_to: Optional[str] = None  # The name of the team member
     assignment_reason: Optional[str] = None # The "Why" (e.g. "Best skill match")
     is_skill_gap: bool = False # True if no one in the team actually had the skill
-    status: str = "todo" # "todo", "in_progress", "done"
+    status: Literal["todo", "in_progress", "done"] = "todo" # enforced status values
 
 # Defining the "Milestone". It's a folder for Tasks.
 class Milestone(BaseModel):
     title: str
     tasks: List[Task]
-    effort_points: int # A positive integer estimating the effort for this milestone (no upper limit)
+    effort_points: int = Field(..., ge=1) # A positive integer estimating the effort for this milestone (no upper limit)
     order: Optional[int] = None
 
 # This is the request model for generating tasks for a specific milestone. 

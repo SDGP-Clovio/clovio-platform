@@ -178,17 +178,17 @@ def generate_tasks_for_milestone(
     Do not include any other text.
     """ 
 
-    # Call AI (use _call_groq_with_retry)
-    raw_content = _call_groq_with_retry(
-        messages=[
-            {"role": "system", "content": prompt}
-        ],
-        model=settings.AI_MODEL,
-        max_tokens=settings.MAX_TOKENS,
-        temperature=settings.AI_TEMPERATURE
-    )
-
     try:
+        # Call AI (use _call_groq_with_retry)
+        raw_content = _call_groq_with_retry(
+            messages=[
+                {"role": "system", "content": prompt}
+            ],
+            model=settings.AI_MODEL,
+            max_tokens=settings.MAX_TOKENS,
+            temperature=settings.AI_TEMPERATURE
+        )  
+              
         # Clean JSON (same as before)
         if "```json" in raw_content:
             raw_content = raw_content.split("```json")[1].split("```")[0].strip()

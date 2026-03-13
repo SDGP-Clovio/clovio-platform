@@ -8,7 +8,7 @@ Handles:
 - retrieving the authenticated user
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
@@ -47,9 +47,8 @@ def create_access_token(data: dict):
     """
     to_encode = data.copy()
 
-    expire = datetime.utcnow() + timedelta(
-    minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-   )  
+    expire = expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+
     
    
     to_encode.update({"exp": expire})

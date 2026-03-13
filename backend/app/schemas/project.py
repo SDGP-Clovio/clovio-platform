@@ -25,7 +25,7 @@ class Skill(BaseModel):
 # This is the "TeamMember" model. It represents a person on the team and their skills.
 class TeamMember(BaseModel):
     name: str             # The person's name
-    skills: List[Skill] = Field(default_factory=list, max_items=20)   # A list of skills with proficiency levels, 20 skills max to prevent prompt overload.
+    skills: List[Skill] = Field(default_factory=list, max_length=20)   # A list of skills with proficiency levels, 20 skills max to prevent prompt overload.
 
 class MilestoneSummary(BaseModel): # A simplified milestone summary for the milestone-only endpoint
     title: str # The title of the milestone
@@ -45,7 +45,7 @@ class ProjectRequest(BaseModel):
     # If they type "Hi", the app rejects it immediately.
     description: str = Field(..., min_length=10, max_length=2000) # We set a max_length to prevent prompt overload and unreasonable AI load-balancing scenarios.
     
-    team_members: List[TeamMember] = Field(default_factory=list, max_items=20)   # A list of team members involved in the project. Capped at 20 to prevent prompt overload and unreasonable AI load-balancing scenarios.
+    team_members: List[TeamMember] = Field(default_factory=list, max_length=20)   # A list of team members involved in the project. Capped at 20 to prevent prompt overload and unreasonable AI load-balancing scenarios.
 
 # Defining the tasks. This is the smallest unit.
 class Task(BaseModel):

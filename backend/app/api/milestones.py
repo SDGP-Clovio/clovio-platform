@@ -21,7 +21,7 @@ async def generate_tasks(milestone_id: int, request: MilestoneTaskRequest):
             milestone_effort=request.milestone_effort,
             team_members=request.team_members,
             workload_summary=request.workload_summary,
-            all_milestones=[m.dict() for m in request.all_milestones]  # convert to dicts
+            all_milestones=[m.model_dump() for m in request.all_milestones]  # convert to dicts
         )
         return tasks
     except Exception as e:

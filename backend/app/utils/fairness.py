@@ -9,8 +9,8 @@ def gini_coefficient(tasks: List[Task], member_names: List[str]) -> float:
     # Initialize all members with 0
     totals = {name: 0 for name in member_names}
     for task in tasks:
-        if task.assigned_to:  # ignore unassigned tasks (skill gaps)
-            totals[task.assigned_to] = totals.get(task.assigned_to, 0) + task.complexity
+        if task.assigned_to and task.assigned_to in totals:  # ignore unassigned tasks (skill gaps)
+            totals[task.assigned_to] += task.complexity
 
     values = sorted(totals.values())
     n = len(values)

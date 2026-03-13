@@ -1,19 +1,57 @@
 import json
+import logging
 from typing import List
 from groq import Groq
-from groq import APIError, APIConnectionError, RateLimitError
+from groq import APIError as GroqAPIError, APIConnectionError as GroqAPIConnectionError, RateLimitError as GroqRateLimitError
+from openai import OpenAI
+from openai import APIError as OAIAPIError, APIConnectionError as OAIAPIConnectionError, RateLimitError as OAIRateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from app.core.config import settings
 from app.schemas.project import ProjectPlan, TeamMember, MilestonePlanResponse, Task
 
-# Initializing the Groq client using the key from the config file
-client = Groq(api_key=settings.GROQ_API_KEY)
+logger = logging.getLogger(__name__)
+
+# provider clients (only initialised when the key is present)
+_groq_client = Groq(api_key=settings.GROQ_API_KEY) if settings.GROQ_API_KEY else None
+_deepseek_client = (
+    OpenAI(api_key=settings.DEEPSEEK_API_KEY, base_url="https://api.deepseek.com/v1")
+    if settings.DEEPSEEK_API_KEY
+    else None
+)
+
+
+# provider-specific callers with retry
+
+@retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    retry=retry_if_exception_type((OAIAPIError, OAIAPIConnectionError, OAIRateLimitError)),
+    reraise=True,
+)
+def _call_deepseek_with_retry(messages: list, model: str, max_tokens: int = None, **kwargs) -> str:
+    """
+    Calls the DeepSeek API (OpenAI-compatible endpoint). Retried up to 3 times
+    with exponential backoff on transient failures.
+    """
+    extra_args = {}
+    if max_tokens is not None:
+        extra_args["max_tokens"] = max_tokens
+    extra_args.update(kwargs)
+
+    completion = _deepseek_client.chat.completions.create(
+        model=model,
+        messages=messages,
+        **extra_args,
+    )
+    if not completion.choices:
+        raise RuntimeError("DeepSeek returned no choices: possible API error or empty response")
+    return completion.choices[0].message.content
 
 
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=2, max=30),
-    retry=retry_if_exception_type((APIError, APIConnectionError, RateLimitError)),
+    retry=retry_if_exception_type((GroqAPIError, GroqAPIConnectionError, GroqRateLimitError)),
     reraise=True,
 )
 def _call_groq_with_retry(messages: list, model: str, max_tokens: int = None, **kwargs) -> str:
@@ -24,16 +62,45 @@ def _call_groq_with_retry(messages: list, model: str, max_tokens: int = None, **
     extra_args = {}
     if max_tokens is not None:
         extra_args["max_tokens"] = max_tokens
-    extra_args.update(kwargs) # Include any additional arguments passed like temperature etc.     
+    extra_args.update(kwargs)
 
-    completion = client.chat.completions.create( # API call to AI to get a completion based on the provided messages and model
-        model=model, # The AI model to use for generating the response 
-        messages=messages, # A list of messages that includes the system prompt and user input, which guides the AI's response
-        **extra_args # Any additional parameters for the API call, such as max_tokens or temperature, are passed here
+    completion = _groq_client.chat.completions.create( # API to call Groq's chat completion endpoint
+        model=model, # The Groq model to use (e.g., "llama-3.3-70b-versatile")
+        messages=messages, # A list of messages that includes the system prompt and user input
+        **extra_args, # Any additional arguments like max_tokens and temperature
     )
     if not completion.choices:
         raise RuntimeError("AI returned no choices: possible API error or empty response")
     return completion.choices[0].message.content
+
+
+# common LLM interface 
+
+def _call_llm(messages: list, max_tokens: int = None, **kwargs) -> str:
+    """
+    Single entry-point for all LLM calls.
+    Tries DeepSeek first (primary); falls back to Groq if DeepSeek fails or is
+    not configured.  Raises the final exception if both providers fail.
+    """
+    if _deepseek_client:
+        try:
+            return _call_deepseek_with_retry(
+                messages=messages,
+                model=settings.DEEPSEEK_MODEL,
+                max_tokens=max_tokens,
+                **kwargs,
+            )
+        except Exception as exc:
+            logger.warning("DeepSeek failed (%s) – falling back to Groq.", exc)
+            if not _groq_client:
+                raise
+
+    return _call_groq_with_retry(
+        messages=messages,
+        model=settings.AI_MODEL,
+        max_tokens=max_tokens,
+        **kwargs,
+    )
 
 def generate_milestones_only(description: str, team_members: List[TeamMember]) -> MilestonePlanResponse:
     """
@@ -78,12 +145,11 @@ def generate_milestones_only(description: str, team_members: List[TeamMember]) -
     """
 
     try:
-        raw_content = _call_groq_with_retry(
+        raw_content = _call_llm(
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": f"Project Description: {description}"}
             ],
-            model=settings.AI_MODEL,
             max_tokens=settings.MAX_TOKENS,
             temperature=settings.AI_TEMPERATURE
         )
@@ -179,12 +245,11 @@ def generate_tasks_for_milestone(
     """ 
 
     try:
-        # Call AI (use _call_groq_with_retry)
-        raw_content = _call_groq_with_retry(
+        # Call AI
+        raw_content = _call_llm(
             messages=[
                 {"role": "system", "content": prompt}
             ],
-            model=settings.AI_MODEL,
             max_tokens=settings.MAX_TOKENS,
             temperature=settings.AI_TEMPERATURE
         )  

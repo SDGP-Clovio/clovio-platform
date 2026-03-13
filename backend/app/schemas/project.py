@@ -58,11 +58,13 @@ class Task(BaseModel):
     assigned_to: Optional[str] = None  # The name of the team member
     assignment_reason: Optional[str] = None # The "Why" (e.g. "Best skill match")
     is_skill_gap: bool = False # True if no one in the team actually had the skill
+    status: str = "todo" # "todo", "in_progress", "done"
 
 # Defining the "Milestone". It's a folder for Tasks.
 class Milestone(BaseModel):
     title: str
     tasks: List[Task]
+    effort_points: int # A positive integer estimating the effort for this milestone (no upper limit)
     order: Optional[int] = None
 
 # This is the request model for generating tasks for a specific milestone. 
@@ -82,3 +84,5 @@ class ProjectPlan(BaseModel):
     # A summary of the project health
     overall_risk_warning: Optional[str] = None
 
+class ProgressRequest(BaseModel):
+    milestones: List[Milestone]  # each Milestone contains its tasks

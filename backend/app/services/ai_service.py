@@ -37,6 +37,9 @@ def _call_deepseek_with_retry(messages: list, model: str, max_tokens: int = None
     if max_tokens is not None:
         extra_args["max_tokens"] = max_tokens
     extra_args.update(kwargs)
+    # deepseek-reasoner is a chain-of-thought model that does not accept temperature
+    if "reasoner" in model:
+        extra_args.pop("temperature", None)
 
     completion = _deepseek_client.chat.completions.create(
         model=model,

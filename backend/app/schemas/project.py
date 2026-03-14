@@ -69,12 +69,12 @@ class Milestone(BaseModel):
 
 # This is the request model for generating tasks for a specific milestone. 
 class MilestoneTaskRequest(BaseModel):
-    project_description: str 
+    project_description: str
     milestone_title: str
     milestone_effort: int
-    team_members: List[TeamMember]
+    team_members: List[TeamMember] = Field(..., min_length=1, max_length=20)  # at least 1 member required; capped at 20
     workload_summary: str
-    all_milestones: List[MilestoneSummary]   # list of all milestones with title and effort_points    
+    all_milestones: List[MilestoneSummary]   # list of all milestones with title and effort_points
 
 # Defining the "ProjectPlan". This is the final JSON "Package".
 class ProjectPlan(BaseModel):

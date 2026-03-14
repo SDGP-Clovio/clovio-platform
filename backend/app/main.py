@@ -4,7 +4,7 @@ from app.core.config import settings
 from app.api.auth_routes import router as auth_router
 from app.core.auth import get_current_user
 from app.models import user, project, skill, task, milestone, user_skill  # import all models
-from app.api import users, skills
+from app.api import users, skills, user_skills
 from app.api.projects import router as projects_router   # Import the projects router to register it with the app
 from app.api.milestones import router as milestones_router   # Import the milestones router to register it with the app
 from app.api.fairness import router as fairness_router   # Import the fairness router to register it with the app
@@ -19,6 +19,9 @@ app = FastAPI(
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 
 app.include_router(skills.router, prefix="/api/skills", tags=["Skills"])
+
+
+app.include_router(user_skills.router, prefix="/api/user-skills", tags=["User Skills"])
 
 # CORS – allow the React frontend to call the API
 app.add_middleware(

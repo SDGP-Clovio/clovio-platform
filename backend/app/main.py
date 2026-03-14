@@ -3,7 +3,7 @@ from app.schemas.project import ProjectPlan, ProjectRequest
 from app.api.auth_routes import router as auth_router
 from app.core.auth import get_current_user
 from app.models import user, project, skill, task, milestone, user_skill  # import all models
-from app.api import users
+from app.api import users, skills
 
 # Initialize the App 
 app = FastAPI(
@@ -13,6 +13,7 @@ app = FastAPI(
 )
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 
+app.include_router(skills.router, prefix="/api/skills", tags=["Skills"])
 
 # Register authentication routes
 app.include_router(auth_router)

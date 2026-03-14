@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 # Skill level labels for human-readable output
 _LEVEL_LABELS = {
@@ -25,11 +25,11 @@ class Skill(BaseModel):
 # This is the "TeamMember" model. It represents a person on the team and their skills.
 class TeamMember(BaseModel):
     name: str             # The person's name
-    skills: List[Skill] = Field(default_factory=list, max_items=20)   # A list of skills with proficiency levels, 20 skills max to prevent prompt overload.
+    skills: List[Skill] = Field(default_factory=list, max_length=20)   # A list of skills with proficiency levels, 20 skills max to prevent prompt overload.
 
 class MilestoneSummary(BaseModel): # A simplified milestone summary for the milestone-only endpoint
     title: str # The title of the milestone
-    effort_points: int # A positive integer estimating the effort for this milestone (no upper limit)
+    effort_points: int = Field(..., ge=1) # A positive integer estimating the effort for this milestone (no upper limit)
 
 
 # The response for milestone generation
@@ -45,7 +45,7 @@ class ProjectRequest(BaseModel):
     # If they type "Hi", the app rejects it immediately.
     description: str = Field(..., min_length=10, max_length=2000) # We set a max_length to prevent prompt overload and unreasonable AI load-balancing scenarios.
     
-    team_members: List[TeamMember] = Field(default_factory=list, max_items=20)   # A list of team members involved in the project. Capped at 20 to prevent prompt overload and unreasonable AI load-balancing scenarios.
+    team_members: List[TeamMember] = Field(default_factory=list, max_length=20)   # A list of team members involved in the project. Capped at 20 to prevent prompt overload and unreasonable AI load-balancing scenarios.
 
 # Defining the tasks. This is the smallest unit.
 class Task(BaseModel):
@@ -58,12 +58,23 @@ class Task(BaseModel):
     assigned_to: Optional[str] = None  # The name of the team member
     assignment_reason: Optional[str] = None # The "Why" (e.g. "Best skill match")
     is_skill_gap: bool = False # True if no one in the team actually had the skill
+    status: Literal["todo", "in_progress", "done"] = "todo" # enforced status values
 
 # Defining the "Milestone". It's a folder for Tasks.
 class Milestone(BaseModel):
     title: str
     tasks: List[Task]
+    effort_points: int = Field(..., ge=1) # A positive integer estimating the effort for this milestone (no upper limit)
     order: Optional[int] = None
+
+# This is the request model for generating tasks for a specific milestone. 
+class MilestoneTaskRequest(BaseModel):
+    project_description: str
+    milestone_title: str
+    milestone_effort: int
+    team_members: List[TeamMember] = Field(..., min_length=1, max_length=20)  # at least 1 member required; capped at 20
+    workload_summary: str
+    all_milestones: List[MilestoneSummary]   # list of all milestones with title and effort_points
 
 # Defining the "ProjectPlan". This is the final JSON "Package".
 class ProjectPlan(BaseModel):
@@ -73,3 +84,5 @@ class ProjectPlan(BaseModel):
     # A summary of the project health
     overall_risk_warning: Optional[str] = None
 
+class ProgressRequest(BaseModel):
+    milestones: List[Milestone]  # each Milestone contains its tasks

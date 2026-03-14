@@ -61,10 +61,9 @@ export default function Sidebar({
                 text-sm font-medium whitespace-nowrap cursor-pointer
                 transition-all duration-200
                 border-l-[3px]
-                ${
-                  isActive
-                    ? "bg-gradient-to-r from-[#B179DF]/20 to-[#85D5C8]/10 text-[#B179DF] border-l-[#B179DF] font-bold"
-                    : "text-gray-500 border-l-transparent hover:bg-white/5 hover:text-gray-300"
+                ${isActive
+                  ? "bg-gradient-to-r from-[#B179DF]/20 to-[#85D5C8]/10 text-[#B179DF] border-l-[#B179DF] font-bold"
+                  : "text-gray-500 border-l-transparent hover:bg-white/5 hover:text-gray-300"
                 }
               `}
             >

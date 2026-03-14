@@ -13,7 +13,6 @@ export default function ProjectList({ projects }: ProjectListProps) {
         <Link key={project.id} to={`/project/${project.id}`}>
           <div className="cursor-pointer">
             <ProjectCard key={project.id} project={project} />
-            <h3>{project.name}</h3>
           </div>
         </Link>
       ))}

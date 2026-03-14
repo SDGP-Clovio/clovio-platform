@@ -7,9 +7,9 @@ interface TopBarProps {
   setSearchQuery: (value: string) => void;
 }
 
-export default function TopBar({ user,searchQuery,setSearchQuery }: TopBarProps) {
+export default function TopBar({ user, searchQuery, setSearchQuery }: TopBarProps) {
   const [focused, setFocused] = useState(false);
-  
+
   return (
     <header className="bg-white px-8 py-4 flex items-center justify-between border-b border-gray-100">
       {/* Header */}
@@ -36,7 +36,7 @@ export default function TopBar({ user,searchQuery,setSearchQuery }: TopBarProps)
             onBlur={() => setFocused(false)}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-  />
+          />
         </div>
         <button
           className="pr-6 pb-3 border-none rounded-[10px] px-4 py-2.5 font-bold text-sm cursor-pointer text-white"

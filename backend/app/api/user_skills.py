@@ -38,7 +38,7 @@ def assign_skill_to_user(user_skill: UserSkillCreate, db: Session = Depends(get_
     new_link = UserSkill(
         user_id=user_skill.user_id,
         skill_id=user_skill.skill_id,
-        proficiency_level=user_skill.proficiency_level
+        level=user_skill.level
     )
     
     db.add(new_link)

@@ -16,6 +16,10 @@ export interface Project {
   tag: string;
 }
 
+export interface ProjectDistribution {
+
+}
+
 export interface Meeting {
   month: number;
   day: number;
@@ -43,7 +47,7 @@ export interface User {
 }
 
 export interface Task {
-  id: number;
+  id: string;
   title: string;
   assignee?: string;
   status: "todo" | "in-progress" | "complete";
@@ -51,7 +55,7 @@ export interface Task {
 }
 
 export interface Milestone {
-  id: number;
+  id: string;
   title: string;
   effort: number;  // effort points
   suggestedTimeline: string;

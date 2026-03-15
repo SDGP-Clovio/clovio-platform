@@ -20,7 +20,8 @@ def create_skill(skill: SkillCreate, db: Session = Depends(get_db)):
     
     new_skill = Skill(
         name=skill.name,
-        category=skill.category
+        category=skill.category,
+        description=skill.description  
     )
     
     db.add(new_skill)

@@ -18,7 +18,11 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
         description=task.description,
         status=task.status,
         milestone_id=task.milestone_id,
-        assigned_user_id=task.assigned_user_id
+        complexity=task.complexity,
+        required_skills=task.required_skills,
+        assigned_to=task.assigned_to,
+        assignment_reason=task.assignment_reason,
+        is_skill_gap=task.is_skill_gap
     )
     
     db.add(new_task)

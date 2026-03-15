@@ -5,6 +5,7 @@ from typing import Optional
 class SkillBase(BaseModel):
     name: str  # e.g., "Python", "React"
     category: Optional[str] = None # e.g., "Frontend", "Backend", "Database"
+    description: Optional[str] = None
 
 # 2. Properties required to create a new Skill
 class SkillCreate(SkillBase):

@@ -23,10 +23,9 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     
     new_user = User(
         email=user.email,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        student_id=user.student_id,
-        hashed_password=user.password # Storing raw temporarily for testing
+        username=user.username,
+        full_name=user.full_name,
+        hashed_password=user.password  # Storing raw temporarily for testing
     )
     
     # 3. Save to the PostgreSQL database

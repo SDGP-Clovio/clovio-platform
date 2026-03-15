@@ -26,7 +26,7 @@ router = APIRouter()
 def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     """Create a new project in the database."""
     # Check if the user trying to own this project actually exists
-    db_owner = db.query(User).filter(User.id == project.owner_id).first()
+    db_owner = db.query(User).filter(User.id == project.created_by).first()
     if not db_owner:
         raise HTTPException(status_code=404, detail="Owner (User) not found")
     
@@ -34,7 +34,7 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
         name=project.name,
         description=project.description,
         status=project.status,
-        owner_id=project.owner_id
+        created_by=project.created_by  # Updated to match the DB column!
     )
     db.add(new_project)
     db.commit()

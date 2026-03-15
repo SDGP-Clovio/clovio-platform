@@ -92,9 +92,9 @@ class ProgressRequest(BaseModel):
 # 1. Base properties every Project needs
 class ProjectBase(BaseModel):
     name: str
-    description: Optional[str] = None
-    status: Optional[str] = "Planning"  # e.g., "Planning", "Active", "Completed"
-    owner_id: int  # Links back to the User who created it
+    description: str  # Removed Optional: Database strictly requires a description
+    status: str = "planned"  # Lowercase to perfectly match the Database Enum
+    created_by: int  # Changed from owner_id to perfectly match the Database column
 
 # 2. Properties required when the frontend creates a new Project
 class ProjectCreate(ProjectBase):

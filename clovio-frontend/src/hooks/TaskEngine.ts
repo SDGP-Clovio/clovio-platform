@@ -19,25 +19,43 @@ export const useTaskEngine = () => {
             //Generating the milestones
             const plan = await generateMilestones(projectDescription, teamMembers);
             console.log("Response from /projects/breakdown:", plan);
-            
-            // Map to frontend Milestone format with generated IDs
+
+
             const milestoneData: Milestone[] = plan.milestones.map((m: any, index: number) => ({
                 id: (index + 1).toString(),
                 title: m.title,
-                effort: m.effort_points
+                effort: m.effort_points,
+                suggestedTimeline: m.suggested_timeline || "TBD",
+                tasks: []
             }));
-            
+
             //Generate tasks for each milestone
             const milestonesWithTasks = await Promise.all(
                 milestoneData.map(async (m) => {
-                    const tasks: Task[] = await generateTasks(m.id, {
+                    const rawTasks = await generateTasks(m.id, {
                         project_description: projectDescription,
                         milestone_title: m.title,
                         milestone_effort: m.effort,
-                        team_members: teamMembers.map(name => ({ name, skills: [] })),
-                        workload_summary: "default", // can adapt
-                        all_milestones: milestoneData.map(m => ({ title: m.title, effort_points: m.effort })),
+                        team_members: teamMembers.map(name => ({
+                            name,
+                            skills: [
+                                {
+                                    name: "general",
+                                    level: 1
+                                }
+                            ]
+                        })),
+                        workload_summary: "Distributed based on effort",
+                        all_milestones: plan.milestones
                     });
+                    const tasks: Task[] = rawTasks.map((t: any, index: number) => ({
+                        id: `${m.id}-${index}`, // 🔥 guaranteed unique
+                        title: t.name,
+                        assignee: t.assigned_to,
+                        status: t.status || "todo",
+                        skill_gap: t.is_skill_gap
+                    }));
+
                     return { ...m, tasks };
                 })
             );

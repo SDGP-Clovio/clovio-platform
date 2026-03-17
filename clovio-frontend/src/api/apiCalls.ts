@@ -32,6 +32,7 @@ export const generateTasks = async (milestoneId: string, milestoneData: any) => 
     return response.data;
 };
 
+
 export const computeFairness = async (tasksData: any) => {
     const response = await apiClient.post("/fairness/compute", tasksData);
     return response.data;

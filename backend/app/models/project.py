@@ -22,3 +22,5 @@ class Project(Base):
 
     creator = relationship("User", foreign_keys=[created_by])
     milestones = relationship("Milestone", back_populates="project", cascade="all, delete-orphan")
+
+    conversation = relationship("Conversation", back_populates="project", uselist=False, cascade="all, delete")

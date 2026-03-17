@@ -80,3 +80,51 @@ def _get_conversation_by_project(db: Session, project_id: uuid.UUID) -> Conversa
         raise HTTPException(status_code=404, detail="Conversation not found for this project")
     return conv
 
+
+# ── Direct messages ─────────────────────────────────────────
+
+def get_or_create_dm(db: Session, current_user_id: uuid.UUID, target_email: str) -> DirectConversation:
+    """
+    Finds the target user by email.
+    Returns an existing DM conversation or creates a new one.
+    The two user IDs are always stored in sorted order so the
+    pair is always unique regardless of who initiates.
+    """
+    target = db.query(User).filter(User.email == target_email).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="No user found with that email")
+    if target.id == current_user_id:
+        raise HTTPException(status_code=400, detail="You cannot DM yourself")
+
+    a_id, b_id = sorted([current_user_id, target.id], key=str)
+
+    existing = db.query(DirectConversation).filter_by(
+        user_a_id=a_id,
+        user_b_id=b_id,
+    ).first()
+
+    if existing:
+        return existing
+
+    dm = DirectConversation(user_a_id=a_id, user_b_id=b_id)
+    db.add(dm)
+    db.commit()
+    db.refresh(dm)
+    return dm
+
+
+def is_dm_participant(db: Session, dm_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    dm = db.query(DirectConversation).filter(DirectConversation.id == dm_id).first()
+    if not dm:
+        return False
+    return str(user_id) in [str(dm.user_a_id), str(dm.user_b_id)]
+
+
+def get_recent_dm_messages(db: Session, dm_id: uuid.UUID, limit: int = 50) -> list[DirectMessage]:
+    return (
+        db.query(DirectMessage)
+        .filter(DirectMessage.direct_conversation_id == dm_id)
+        .order_by(DirectMessage.created_at.desc())
+        .limit(limit)
+        .all()
+    )

@@ -39,6 +39,8 @@ const Login: React.FC = () => {
 		password: false,
 	});
 	const [errors, setErrors] = useState<LoginFormErrors>({});
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [apiError, setApiError] = useState<string | null>(null);
 
 	const handleChange = (field: keyof LoginFormValues, value: string) => {
 		const nextValues = { ...formValues, [field]: value };
@@ -55,7 +57,7 @@ const Login: React.FC = () => {
 		setErrors(validateLoginForm(formValues));
 	};
 
-	const handleLogin = (e: React.FormEvent) => {
+	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		const validationErrors = validateLoginForm(formValues);
@@ -66,7 +68,38 @@ const Login: React.FC = () => {
 			return;
 		}
 
-		navigate('/dashboard');
+		setIsSubmitting(true);
+		setApiError(null);
+
+		try {
+			const body = new URLSearchParams();
+			body.set('username', formValues.email); // OAuth2 convention field name
+			body.set('password', formValues.password);
+
+			const response = await fetch('/api/v1/auth/login', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				body: body.toString(),
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data?.detail || 'Login failed');
+			}
+
+			localStorage.setItem('clovio_access_token', data.access_token);
+			localStorage.setItem('clovio_token_type', data.token_type || 'bearer');
+			localStorage.setItem('clovio_user_email', formValues.email);
+
+			navigate('/dashboard');
+		} catch (error) {
+			setApiError(error instanceof Error ? error.message : 'Unexpected error occurred');
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	return (
@@ -166,12 +199,17 @@ const Login: React.FC = () => {
 								</button>
 							</div>
 						</div>
-
+						{apiError && (
+							<p className="text-sm text-red-500" role="alert">
+								{apiError}
+							</p>
+						)}
 						<button
 							type="submit"
-							className="mt-4 w-full rounded-2xl bg-[#7c3aed] py-4 text-base font-bold text-white shadow-xl shadow-purple-400/30 transition-all hover:brightness-110"
+							disabled={isSubmitting}
+							className="mt-4 w-full rounded-2xl bg-[#7c3aed] py-4 text-base font-bold text-white shadow-xl shadow-purple-400/30 transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
 						>
-							Log in
+							{isSubmitting ? 'Logging in...' : 'Log in'}
 						</button>
 					</form>
 				</div>

@@ -56,6 +56,8 @@ const SignUp: React.FC = () => {
 		confirmPassword: false,
 	});
 	const [errors, setErrors] = useState<SignUpFormErrors>({});
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [apiError, setApiError] = useState<string | null>(null);
 
 	const handleChange = (field: keyof SignUpFormValues, value: string) => {
 		const nextValues = { ...formValues, [field]: value };
@@ -72,7 +74,7 @@ const SignUp: React.FC = () => {
 		setErrors(validateSignUpForm(formValues));
 	};
 
-	const handleSignUp = (e: React.FormEvent) => {
+	const handleSignUp = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		const validationErrors = validateSignUpForm(formValues);
@@ -88,7 +90,38 @@ const SignUp: React.FC = () => {
 			return;
 		}
 
-		navigate('/dashboard');
+		setIsSubmitting(true);
+		setApiError(null);
+
+		try {
+			const response = await fetch('/api/v1/auth/signup', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					email: formValues.email,
+					password: formValues.password,
+					full_name: formValues.fullName,
+				}),
+			});
+
+			const data = await response.json();
+
+			if (!response.ok) {
+				throw new Error(data?.detail || 'Signup failed');
+			}
+
+			localStorage.setItem('clovio_access_token', data.access_token);
+			localStorage.setItem('clovio_token_type', data.token_type || 'bearer');
+			localStorage.setItem('clovio_user_email', formValues.email);
+
+			navigate('/dashboard');
+		} catch (error) {
+			setApiError(error instanceof Error ? error.message : 'Unexpected error occurred');
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
 
 	return (
@@ -237,11 +270,18 @@ const SignUp: React.FC = () => {
 							)}
 						</div>
 
+						{apiError && (
+							<p className="text-sm text-red-500" role="alert">
+								{apiError}
+							</p>
+						)}
+
 						<button
 							type="submit"
-							className="mt-4 w-full rounded-2xl bg-[#7c3aed] py-4 text-base font-bold text-white shadow-xl shadow-purple-400/30 transition-all hover:brightness-110"
+							disabled={isSubmitting}
+							className="mt-4 w-full rounded-2xl bg-[#7c3aed] py-4 text-base font-bold text-white shadow-xl shadow-purple-400/30 transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
 						>
-							Sign up
+							{isSubmitting ? 'Creating account...' : 'Sign up'}
 						</button>
 					</form>
 				</div>

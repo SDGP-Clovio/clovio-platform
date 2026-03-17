@@ -1,5 +1,6 @@
 import axios from "axios";
 
+// Send API requests to the local Vite proxy instead of directly to port 8000
 const API_BASE = "http://localhost:8000";
 
 const apiClient = axios.create({
@@ -11,7 +12,18 @@ const apiClient = axios.create({
 });
 
 export const generateMilestones = async (projectDescription: string, teamMembers: string[]) => {
-    const response = await apiClient.post("/projects/breakdown", { description: projectDescription, team_members: teamMembers });
+    const response = await apiClient.post("/projects/breakdown", { 
+        description: projectDescription, 
+        team_members: teamMembers.map(name => ({
+            name,
+            skills: [
+                {
+                    name: "general",   // or "unknown" / "none"
+                    level: 1
+                }
+            ]
+        }))
+    });
     return response.data;
 };
 

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
+from datetime import datetime
 
 # Skill level labels for human-readable output
 _LEVEL_LABELS = {
@@ -86,3 +87,23 @@ class ProjectPlan(BaseModel):
 
 class ProgressRequest(BaseModel):
     milestones: List[Milestone]  # each Milestone contains its tasks
+
+
+# 1. Base properties every Project needs
+class ProjectBase(BaseModel):
+    name: str
+    description: str  # Removed Optional: Database strictly requires a description
+    status: str = "planned"  # Lowercase to perfectly match the Database Enum
+    created_by: int  # Changed from owner_id to perfectly match the Database column
+
+# 2. Properties required when the frontend creates a new Project
+class ProjectCreate(ProjectBase):
+    pass
+
+# 3. Properties returned when sending a Project back to the frontend
+class ProjectResponse(ProjectBase):
+    id: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

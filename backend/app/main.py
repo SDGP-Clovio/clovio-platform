@@ -6,6 +6,13 @@ from app.api.projects import router as projects_router   # Import the projects r
 from app.api.milestones import router as milestones_router   # Import the milestones router to register it with the app
 from app.api.fairness import router as fairness_router   # Import the fairness router to register it with the app
 from app.api.progress import router as progress_router # Import the progress router to register it with the app
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 
 # Initialize the App 
 app = FastAPI(
@@ -17,7 +24,7 @@ app = FastAPI(
 # CORS – allow the React frontend to call the API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -63,7 +63,7 @@ def signup(payload: SignUpRequest):
 
     fake_user_db[email] = {
         "email": email,
-        "password": payload.password
+        "password": hash_password(payload.password)
     }
 
     token = create_access_token({"sub": email})

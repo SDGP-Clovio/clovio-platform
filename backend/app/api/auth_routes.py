@@ -7,7 +7,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.core.auth import create_access_token, get_current_user, hash_password, verify_password
 from app.schemas.auth_schema import TokenResponse, SignUpRequest
-from app.core.auth import verify_password
 
 router = APIRouter(
     prefix="/api/v1/auth",

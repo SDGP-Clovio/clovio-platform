@@ -84,10 +84,19 @@ const Login: React.FC = () => {
 				body: body.toString(),
 			});
 
-			const data = await response.json();
+			let data: { access_token?: string; token_type?: string; detail?: string } | null = null;
+			try {
+				data = await response.json();
+			} catch {
+				// Server returned an empty or non-JSON body
+			}
 
 			if (!response.ok) {
-				throw new Error(data?.detail || 'Login failed');
+				throw new Error(data?.detail || `Server error: ${response.status}`);
+			}
+
+			if (!data?.access_token) {
+				throw new Error('Login failed: no token received');
 			}
 
 			localStorage.setItem('clovio_access_token', data.access_token);

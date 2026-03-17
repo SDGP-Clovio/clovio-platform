@@ -31,8 +31,8 @@ export const useTaskEngine = () => {
 
             //Generate tasks for each milestone
             const milestonesWithTasks = await Promise.all(
-                milestoneData.map(async (m, index) => {
-                    const rawTasks = await generateTasks(index.toString(), {
+                milestoneData.map(async (m) => {
+                    const rawTasks = await generateTasks(m.id, {
                         project_description: projectDescription,
                         milestone_title: m.title,
                         milestone_effort: m.effort,
@@ -46,10 +46,7 @@ export const useTaskEngine = () => {
                             ]
                         })),
                         workload_summary: "Distributed based on effort",
-                        all_milestones: milestoneData.map(m => ({
-                            title: m.title,
-                            effort_points: m.effort
-                        }))
+                        all_milestones: plan.milestones
                     });
                     const tasks: Task[] = rawTasks.map((t: any, index: number) => ({
                         id: `${m.id}-${index}`, // 🔥 guaranteed unique

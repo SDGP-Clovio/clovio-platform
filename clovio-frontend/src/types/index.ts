@@ -50,7 +50,7 @@ export interface Task {
   id: string;
   title: string;
   assignee?: string;
-  status: "todo" | "in-progress" | "complete";
+  status: "todo" | "in_progress" | "done";
   skill_gap?: boolean;
 }
 

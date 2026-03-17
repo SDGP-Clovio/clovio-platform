@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import Avatar from '../UI/Avatar';
-import { User, Briefcase, Plus, X, Lightbulb, Clock } from 'lucide-react';
+import { User, Briefcase, Plus, X, Lightbulb, Clock, Pencil, Check } from 'lucide-react';
 import type { Skill, SkillLevel, DayAvailability } from '../../types/types';
 
 const SUGGESTED_SKILLS = [
@@ -50,7 +50,10 @@ const DEFAULT_SLOTS: DayAvailability[] = DAY_NAMES.map((_, i) => ({
 
 /* ══════════════════════════════════════════════════════════════════════════ */
 const SettingsPanel: React.FC = () => {
-    const { currentUser, addSkill, removeSkill, updateSkillLevel, updateDefaultAvailability } = useApp();
+    const { currentUser, setCurrentUser, addSkill, removeSkill, updateSkillLevel, updateDefaultAvailability } = useApp();
+
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
+    const [editForm, setEditForm] = useState({ name: '' });
 
     const [skillInput, setSkillInput] = useState('');
     const [newLevel, setNewLevel] = useState<SkillLevel>('beginner');
@@ -100,6 +103,13 @@ const SettingsPanel: React.FC = () => {
         (s) => !userSkills.some((us) => us.name === s)
     );
 
+    const handleSaveProfile = () => {
+        if (currentUser && editForm.name.trim()) {
+            setCurrentUser({ ...currentUser, name: editForm.name.trim() });
+            setIsEditingProfile(false);
+        }
+    };
+
     const handleAdd = () => {
         if (!skillInput.trim()) return;
         addSkill({ name: skillInput.trim(), level: newLevel });
@@ -123,16 +133,38 @@ const SettingsPanel: React.FC = () => {
                         </span>
                     </div>
                     <div className="space-y-0 divide-y divide-slate-50">
-                        {[
-                            { label: 'Full Name', value: currentUser.name },
-                            { label: 'Email',     value: currentUser.email },
-                            { label: 'Role',      value: currentUser.role },
-                        ].map(({ label, value }) => (
-                            <div key={label} className="flex items-center justify-between py-3">
-                                <span className="text-xs text-slate-400 font-medium">{label}</span>
-                                <span className="text-sm text-slate-700 font-semibold capitalize">{value}</span>
-                            </div>
-                        ))}
+                        <div className="flex items-center justify-between py-3">
+                            <span className="text-xs text-slate-400 font-medium">Full Name</span>
+                            {isEditingProfile ? (
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={editForm.name}
+                                        onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') handleSaveProfile(); if (e.key === 'Escape') setIsEditingProfile(false); }}
+                                        autoFocus
+                                        className="text-sm text-slate-700 font-semibold border border-slate-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-purple-500 w-full max-w-[150px] text-right"
+                                    />
+                                    <button onClick={handleSaveProfile} className="text-emerald-600 p-1 hover:bg-emerald-50 rounded transition-colors"><Check className="w-3.5 h-3.5" /></button>
+                                    <button onClick={() => setIsEditingProfile(false)} className="text-slate-400 p-1 hover:bg-slate-50 rounded transition-colors"><X className="w-3.5 h-3.5" /></button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 group">
+                                    <span className="text-sm text-slate-700 font-semibold capitalize">{currentUser.name}</span>
+                                    <button onClick={() => { setEditForm({ name: currentUser.name }); setIsEditingProfile(true); }} className="text-slate-400 opacity-0 group-hover:opacity-100 hover:text-purple-600 transition-all">
+                                        <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex items-center justify-between py-3">
+                            <span className="text-xs text-slate-400 font-medium">Email</span>
+                            <span className="text-sm text-slate-700 font-semibold">{currentUser.email}</span>
+                        </div>
+                        <div className="flex items-center justify-between py-3">
+                            <span className="text-xs text-slate-400 font-medium">Role</span>
+                            <span className="text-sm text-slate-700 font-semibold capitalize">{currentUser.role}</span>
+                        </div>
                     </div>
                 </Section>
 

@@ -28,6 +28,8 @@ const validateSignUpForm = (values: SignUpFormValues): SignUpFormErrors => {
 
 	if (!values.password.trim()) {
 		errors.password = 'Password is required.';
+	} else if (values.password.length < 8) {
+		errors.password = 'Password must be at least 8 characters.';
 	}
 
 	if (!values.confirmPassword.trim()) {

@@ -5,19 +5,22 @@ Authentication API routes.
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.core.auth import create_access_token, get_current_user
+from app.core.auth import create_access_token, get_current_user, hash_password, verify_password
 from app.schemas.auth_schema import TokenResponse, SignUpRequest
+from app.core.auth import verify_password
 
 router = APIRouter(
     prefix="/api/v1/auth",
     tags=["Authentication"]
 )
 
+
 # Temporary in-memory user store (replace with DB later)
+# Passwords are stored pre-hashed using bcrypt so verify_password() works correctly.
 fake_user_db = {
     "admin@clovio.dev": {
         "email": "admin@clovio.dev",
-        "password": "admin123"
+        "password": hash_password("admin123")
     }
 }
 
@@ -31,7 +34,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     email = form_data.username
     user = fake_user_db.get(email)
 
-    if not user or user["password"] != form_data.password:
+    if not user or not verify_password(form_data.password, user["password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password"

@@ -1,4 +1,3 @@
-# app/models/chat.py
 import uuid
 from sqlalchemy import Column, Text, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID

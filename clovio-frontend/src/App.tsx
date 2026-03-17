@@ -1,8 +1,8 @@
-import TaskEngine from "./TaskEngine"
+import TaskEnginePage from "./TaskDistributionPage";
 
 
 function App() {
-  return <TaskEngine />;
+  return (<TaskEnginePage />);
 }
 
 export default App

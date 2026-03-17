@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface DistributionProps {
     projectDescription: string;
     setProjectDescription: (val: string) => void;
@@ -9,8 +11,8 @@ interface DistributionProps {
 
 export default function ProjectInputForm({ projectDescription, setProjectDescription, file, setFile, onDistribute, loading }: DistributionProps) {
 
-    const handleFileChange = (e: Event) => {
-        const input = e.target as HTMLInputElement;
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const input = e.target;
 
         if (input.files && input.files.length > 0) {
             setFile(input.files[0]);
@@ -27,7 +29,7 @@ export default function ProjectInputForm({ projectDescription, setProjectDescrip
             {/* Prompt */}
             <p className="text-sm text-gray-600">
                 Enter a project description or upload a specification document.
-                Clovio will generate milestones and tasks automatically.
+                Clovio will take care of the task distribution.
             </p>
 
             {/* Description input */}
@@ -43,7 +45,7 @@ export default function ProjectInputForm({ projectDescription, setProjectDescrip
             <input
                 type="file"
                 accept=".pdf,.doc,.docx,.txt"
-                onChange={(e) => handleFileChange(e.nativeEvent)}
+                onChange={handleFileChange}
                 className="border rounded p-2"
             />
 

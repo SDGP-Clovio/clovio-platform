@@ -9,6 +9,8 @@ export const useTaskEngine = () => {
     const [projectDescription, setProjectDescription] = useState("");
     const [milestones, setMilestones] = useState<Milestone[]>([]);
     const [loading, setLoading] = useState(false);
+    const [file, setFile] = useState<File | null>(null);
+
 
     const distributeTasks = async (teamMembers: string[]) => {
         try {
@@ -16,7 +18,7 @@ export const useTaskEngine = () => {
 
             //Generating the milestones
             const milestoneData: Milestone[] = await generateMilestones(projectDescription, teamMembers);
-
+            console.log("Response from /projects/breakdown:", milestoneData);
             //Generate tasks for each milestone
             const milestonesWithTasks = await Promise.all(
                 milestoneData.map(async (m) => {
@@ -41,6 +43,8 @@ export const useTaskEngine = () => {
     return {
         projectDescription,
         setProjectDescription,
+        file,
+        setFile,
         milestones,
         loading,
         distributeTasks,

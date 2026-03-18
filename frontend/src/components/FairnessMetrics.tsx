@@ -12,10 +12,11 @@ import type { ProjectPlan } from "../types";
 
 interface FairnessMetricsProps {
   fairnessScore?: number;
+  busFactor?: number;
   plan: ProjectPlan;
 }
 
-export default function FairnessMetrics({ fairnessScore = 75, plan }: FairnessMetricsProps) {
+export default function FairnessMetrics({ fairnessScore = 75, busFactor = 65, plan }: FairnessMetricsProps) {
   // Calculate bus factor (how dependent on specific people)
   const allTasks = plan.milestones.flatMap(m => m.tasks);
   const memberTaskMap: Record<string, number> = {};
@@ -28,11 +29,6 @@ export default function FairnessMetrics({ fairnessScore = 75, plan }: FairnessMe
 
   const totalTasks = allTasks.length;
   const uniqueMembers = Object.keys(memberTaskMap).length;
-  
-  // Bus factor: if one person has >40% of tasks, it's risky
-  const maxTasksByOne = Math.max(...Object.values(memberTaskMap), 0);
-  const concentrationRatio = totalTasks > 0 ? (maxTasksByOne / totalTasks) * 100 : 0;
-  const busFactorScore = Math.max(0, 100 - concentrationRatio);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col items-center gap-4">
@@ -56,9 +52,9 @@ export default function FairnessMetrics({ fairnessScore = 75, plan }: FairnessMe
         {/* Bus Factor */}
         <div className="flex flex-col items-center gap-2">
           <div className="relative">
-            <CircularProgress value={Math.round(busFactorScore)} size={70} stroke={5} />
+            <CircularProgress value={busFactor} size={70} stroke={5} />
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-[11px] font-bold text-gray-900">{Math.round(busFactorScore)}%</span>
+              <span className="text-[11px] font-bold text-gray-900">{busFactor}%</span>
             </div>
           </div>
           <div className="text-center">

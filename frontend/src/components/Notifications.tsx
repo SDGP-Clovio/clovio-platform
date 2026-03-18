@@ -78,7 +78,7 @@ export default function Notifications({ plan }: NotificationsProps) {
 
   if (allNotifs.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4 col-span-1 md:col-span-2">
+      <div className="bg-white rounded-lg border border-gray-200 p-4">
         <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Notifications</p>
         <p className="text-center text-green-600 text-sm">✓ All systems nominal</p>
       </div>
@@ -86,7 +86,7 @@ export default function Notifications({ plan }: NotificationsProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 col-span-1 md:col-span-2 max-h-48 overflow-y-auto">
+    <div className="bg-white rounded-lg border border-gray-200 p-4">
       <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-3">Notifications & Alerts</p>
       <div className="space-y-2">
         {allNotifs.map((notif, idx) => (

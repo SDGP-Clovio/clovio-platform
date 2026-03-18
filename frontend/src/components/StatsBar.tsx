@@ -5,22 +5,30 @@
  * - Tasks completed
  * - Days remaining
  * - Milestones progress
- * - Overall velocity
+ * - Estimated completion date
  */
 
 import type { ProjectPlan } from "../types";
-import { calcTaskCompletion, calcMilestoneCompletion, calcDaysRemaining } from "../utils/metrics";
+import { calcTaskCompletion, calcMilestoneCompletion, calcDaysRemaining, predictCompletionDate } from "../utils/metrics";
 
 interface StatsBarProps {
   plan: ProjectPlan;
   dueDate: string;
-  velocity: number;
 }
 
-export default function StatsBar({ plan, dueDate, velocity }: StatsBarProps) {
+export default function StatsBar({ plan, dueDate }: StatsBarProps) {
   const taskCompletion = calcTaskCompletion(plan.milestones);
   const milestoneCompletion = calcMilestoneCompletion(plan.milestones);
   const daysRemaining = calcDaysRemaining(dueDate);
+
+  // Calculate predicted completion date
+  const allTasks = plan.milestones.flatMap(m => m.tasks);
+  const mockTrends: Array<{ date: string; completed: number }> = [];
+  const prediction = predictCompletionDate(allTasks, 0, mockTrends);
+  const completionDate = prediction.date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 
   const stats = [
     {
@@ -42,9 +50,9 @@ export default function StatsBar({ plan, dueDate, velocity }: StatsBarProps) {
       color: "#8B5CF6",
     },
     {
-      label: "Velocity",
-      value: `${velocity} tasks/wk`,
-      icon: "📊",
+      label: "Est. Completion",
+      value: completionDate,
+      icon: "📅",
       color: "#0891B2",
     },
   ];

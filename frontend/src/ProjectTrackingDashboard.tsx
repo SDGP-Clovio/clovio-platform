@@ -4,8 +4,7 @@ import Sidebar from "./components/NavBar";
 import { useState } from "react";
 
 import { PROJECTS, MOCK_PLAN } from "./types/mockData";
-import ProgressBanner from "./components/ProgressBanner";
-import { calcOverallProgress } from "./utils/metrics";
+import Dashboard from "./components/Dashboard";
 
 
 export default function ProjectTrackingDashboard() {
@@ -20,7 +19,12 @@ export default function ProjectTrackingDashboard() {
 
   if (!project) return <div>Project not found</div>;
 
-  const overallProgress = calcOverallProgress(MOCK_PLAN.milestones);
+  // MOCK: Default insights for the project
+  const mockInsights = [
+    "Kavithaki W. is the sole React expert — bus factor risk. Consider pairing with another member for knowledge sharing.",
+    "Project is maintaining steady progress with current velocity",
+    "No critical blockers identified - team is aligned",
+  ];
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -37,8 +41,13 @@ export default function ProjectTrackingDashboard() {
       <div className="flex flex-col flex-1 overflow-hidden">
         <TopBar project={project} />
 
-        <main className="flex-1 p-5 overflow-y-auto flex flex-col gap-5">
-          <ProgressBanner plan={MOCK_PLAN} overallProgress={overallProgress} />
+        <main className="flex-1 overflow-y-auto">
+          {/* MOCK: Using mock data and default dashboard component */}
+          <Dashboard 
+            projectId={id || "1"} 
+            plan={MOCK_PLAN}
+            mockInsights={mockInsights}
+          />
         </main>
       </div>
 

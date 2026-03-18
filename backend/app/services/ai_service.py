@@ -273,6 +273,12 @@ def generate_tasks_for_milestone(
             raw_content = raw_content.split("```")[1].split("```")[0].strip()
         # Parse JSON into list of dicts
         tasks_data = json.loads(raw_content)
+        
+        # Clamp complexity to valid range (1-10) to avoid Pydantic validation errors
+        for t in tasks_data:
+            if "complexity" in t and isinstance(t["complexity"], (int, float)):
+                t["complexity"] = max(1, min(int(t["complexity"]), 10))
+                
         # Convert each dict to a Task object
         return [Task(**t) for t in tasks_data]
     except Exception as e:

@@ -29,36 +29,36 @@ export const useTaskEngine = () => {
                 tasks: []
             }));
 
-            //Generate tasks for each milestone
-            const milestonesWithTasks = await Promise.all(
-                milestoneData.map(async (m) => {
-                    const rawTasks = await generateTasks(m.id, {
-                        project_description: projectDescription,
-                        milestone_title: m.title,
-                        milestone_effort: m.effort,
-                        team_members: teamMembers.map(name => ({
-                            name,
-                            skills: [
-                                {
-                                    name: "general",
-                                    level: 1
-                                }
-                            ]
-                        })),
-                        workload_summary: "Distributed based on effort",
-                        all_milestones: plan.milestones
-                    });
-                    const tasks: Task[] = rawTasks.map((t: any, index: number) => ({
-                        id: `${m.id}-${index}`, // 🔥 guaranteed unique
-                        title: t.name,
-                        assignee: t.assigned_to,
-                        status: t.status || "todo",
-                        skill_gap: t.is_skill_gap
-                    }));
+            //Generate tasks for each milestone sequentially to avoid rate limits
+            const milestonesWithTasks: Milestone[] = [];
+            for (const m of milestoneData) {
+                const rawTasks = await generateTasks(m.id, {
+                    project_description: projectDescription,
+                    milestone_title: m.title,
+                    milestone_effort: m.effort,
+                    team_members: teamMembers.map(name => ({
+                        name,
+                        skills: [
+                            {
+                                name: "general",
+                                level: 1
+                            }
+                        ]
+                    })),
+                    workload_summary: "Distributed based on effort",
+                    all_milestones: plan.milestones
+                });
 
-                    return { ...m, tasks };
-                })
-            );
+                const tasks: Task[] = rawTasks.map((t: any, index: number) => ({
+                    id: `${m.id}-${index}`, // 🔥 guaranteed unique
+                    title: t.name,
+                    assignee: t.assigned_to,
+                    status: t.status || "todo",
+                    skill_gap: t.is_skill_gap
+                }));
+
+                milestonesWithTasks.push({ ...m, tasks });
+            }
             setMilestones(milestonesWithTasks)
 
         } catch (error) {

@@ -53,14 +53,14 @@ export default function CircularProgress({
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
             transform={`rotate(-90 ${size / 2} ${size / 2})`}
-            style={{ transition: "stroke-dashoffset 0.5s ease" }}
+            style={{ transition: "stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1)", filter: `drop-shadow(0 2px 4px ${color}40)` }}
           />
         </svg>
         
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-sm font-bold" style={{ color }}>{value}%</p>
-          {label && <p className="text-[10px] text-gray-600 text-center">{label}</p>}
+          <p className="text-base font-black" style={{ color }}>{value}%</p>
+          {label && <p className="text-xs text-gray-600 text-center font-semibold">{label}</p>}
         </div>
       </div>
     </div>

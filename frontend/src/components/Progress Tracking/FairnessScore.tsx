@@ -26,19 +26,19 @@ export default function FairnessScore({ score = 75 }: FairnessScoreProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col items-center gap-3 h-full">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Fairness</p>
+    <div className="bg-white rounded-xl border border-gray-300 shadow-md hover:shadow-lg p-5 flex flex-col items-center gap-4 h-full transition-shadow duration-300">
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Fairness Score</p>
       
       <CircularProgress
         value={score}
-        size={80}
+        size={85}
         color={getScoreColor(score)}
         label=""
       />
       
       <div className="text-center">
-        <p className="text-xs font-semibold text-gray-700">{getScoreQuality(score)}</p>
-        <p className="text-[10px] text-gray-600 mt-0.5 leading-tight">Work distribution</p>
+        <p className="text-sm font-bold text-gray-800">{getScoreQuality(score)}</p>
+        <p className="text-xs text-gray-600 mt-1 leading-snug">Work distribution</p>
       </div>
     </div>
   );

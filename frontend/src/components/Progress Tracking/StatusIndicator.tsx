@@ -40,11 +40,11 @@ export default function StatusIndicator({ status, className = "" }: StatusIndica
   const current = config[status];
 
   return (
-    <div className={`${current.bgColor} ${current.borderColor} border rounded-full px-3 py-1.5 flex items-center gap-2 ${className}`}>
-      <span style={{ color: current.color }} className="text-sm font-bold">
+    <div className={`${current.bgColor} ${current.borderColor} border-2 rounded-full px-3 py-1.5 flex items-center gap-2 shadow-sm hover:shadow-md transition-shadow duration-300 ${className}`}>
+      <span style={{ color: current.color }} className="text-lg font-bold">
         {current.icon}
       </span>
-      <span style={{ color: current.color }} className="text-xs font-semibold">
+      <span style={{ color: current.color }} className="text-xs font-bold">
         {current.label}
       </span>
     </div>

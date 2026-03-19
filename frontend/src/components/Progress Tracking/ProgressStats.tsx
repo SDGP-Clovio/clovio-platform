@@ -83,26 +83,26 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
         };
 
         return (
-          <div key={idx} className={`bg-white rounded-lg border p-3 ${bgColors[stat.color as keyof typeof bgColors]}`}>
-            <div className="flex items-start justify-between mb-2">
-              <span className="text-base">{stat.icon}</span>
-              <p className={`text-[10px] font-semibold uppercase tracking-wider ${textColors[stat.color as keyof typeof textColors]}`}>
+          <div key={idx} className={`bg-white rounded-lg border hover:shadow-md hover:scale-105 transition-all duration-300 p-4 cursor-default ${bgColors[stat.color as keyof typeof bgColors]}`}>
+            <div className="flex items-start justify-between mb-3">
+              <span className="text-lg">{stat.icon}</span>
+              <p className={`text-xs font-bold uppercase tracking-wider ${textColors[stat.color as keyof typeof textColors]}`}>
                 {stat.label}
               </p>
             </div>
             
             {/* Value */}
-            <div className="flex items-baseline gap-1.5">
-              <p className={`text-xl font-bold ${textColors[stat.color as keyof typeof textColors]}`}>
+            <div className="flex items-baseline gap-2">
+              <p className={`text-2xl font-black ${textColors[stat.color as keyof typeof textColors]}`}>
                 {stat.value}
               </p>
               {stat.total && (
-                <p className={`text-xs ${textColors[stat.color as keyof typeof textColors]}`}>
+                <p className={`text-sm font-semibold ${textColors[stat.color as keyof typeof textColors]}`}>
                   / {stat.total}
                 </p>
               )}
               {stat.unit && (
-                <p className={`text-[10px] ${textColors[stat.color as keyof typeof textColors]}`}>
+                <p className={`text-xs font-semibold ${textColors[stat.color as keyof typeof textColors]}`}>
                   {stat.unit}
                 </p>
               )}
@@ -110,7 +110,7 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
 
             {/* Subtext */}
             {stat.subtext && (
-              <p className="text-[10px] text-gray-600 mt-1.5">{stat.subtext}</p>
+              <p className="text-xs text-gray-600 mt-2 font-medium">{stat.subtext}</p>
             )}
           </div>
         );

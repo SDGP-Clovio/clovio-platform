@@ -37,8 +37,8 @@ export default function RiskAssessment({ riskScore = 35, busFactorScore = 65 }: 
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col gap-4">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Risk Assessment</p>
+    <div className="bg-white rounded-xl border border-gray-300 shadow-md hover:shadow-lg p-5 flex flex-col gap-4 transition-shadow duration-300">
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Risk Assessment</p>
 
       {/* Two-column layout for scores */}
       <div className="grid grid-cols-2 gap-4">
@@ -76,25 +76,25 @@ export default function RiskAssessment({ riskScore = 35, busFactorScore = 65 }: 
       </div>
 
       {/* Risk Indicators */}
-      <div className="space-y-2 pt-3 border-t border-gray-200 max-h-32 overflow-y-auto">
+      <div className="space-y-2 pt-3 border-t border-gray-300 max-h-32 overflow-y-auto">
         {riskScore >= 50 && (
-          <div className="p-2 bg-red-50 rounded-lg border border-red-200">
-            <p className="text-xs font-semibold text-red-700">⚠️ High Risk</p>
-            <p className="text-[10px] text-red-600 mt-0.5">Review task assignments</p>
+          <div className="p-3 bg-red-50 rounded-lg border border-red-300 hover:bg-red-100 transition-colors duration-200">
+            <p className="text-xs font-bold text-red-700">⚠️ High Risk</p>
+            <p className="text-xs text-red-600 mt-1 leading-snug">Review task assignments</p>
           </div>
         )}
         
         {busFactorScore < 50 && (
-          <div className="p-2 bg-orange-50 rounded-lg border border-orange-200">
-            <p className="text-xs font-semibold text-orange-700">🚨 Bus Factor</p>
-            <p className="text-[10px] text-orange-600 mt-0.5">Knowledge concentrated on few</p>
+          <div className="p-3 bg-orange-50 rounded-lg border border-orange-300 hover:bg-orange-100 transition-colors duration-200">
+            <p className="text-xs font-bold text-orange-700">🚨 Bus Factor</p>
+            <p className="text-xs text-orange-600 mt-1 leading-snug">Knowledge concentrated on few</p>
           </div>
         )}
 
         {riskScore < 50 && busFactorScore >= 50 && (
-          <div className="p-2 bg-green-50 rounded-lg border border-green-200">
-            <p className="text-xs font-semibold text-green-700">✓ Healthy</p>
-            <p className="text-[10px] text-green-600 mt-0.5">Risk levels acceptable</p>
+          <div className="p-3 bg-green-50 rounded-lg border border-green-300 hover:bg-green-100 transition-colors duration-200">
+            <p className="text-xs font-bold text-green-700">✓ Healthy</p>
+            <p className="text-xs text-green-600 mt-1 leading-snug">Risk levels acceptable</p>
           </div>
         )}
       </div>

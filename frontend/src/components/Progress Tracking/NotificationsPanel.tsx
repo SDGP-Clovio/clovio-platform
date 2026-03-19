@@ -88,22 +88,23 @@ export default function NotificationsPanel({ plan, nextMeetingTime = "Today at 3
   ];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-4">Notifications</p>
+    <div className="bg-white rounded-xl border border-gray-300 shadow-md hover:shadow-lg p-5 transition-shadow duration-300">
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-4">Notifications</p>
 
       <div className="space-y-3 max-h-64 overflow-y-auto">
         {notifications.map((notif, idx) => (
           <div
             key={idx}
-            className={`p-3 rounded-lg border ${notif.borderColor} ${notif.bgColor} flex gap-3`}
+            className={`p-3 rounded-lg border-l-4 ${notif.borderColor} ${notif.bgColor} flex gap-3 hover:shadow-sm hover:scale-102 transition-all duration-200 cursor-pointer`}
+            style={{ borderLeftColor: notif.color }}
           >
-            <span className="text-lg flex-shrink-0">{notif.icon}</span>
+            <span className="text-xl flex-shrink-0">{notif.icon}</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs font-semibold" style={{ color: notif.color }}>
+                <p className="text-xs font-bold" style={{ color: notif.color }}>
                   {notif.title}
                 </p>
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold whitespace-nowrap" style={{ backgroundColor: notif.color + "20", color: notif.color }}>
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap" style={{ backgroundColor: notif.color + "20", color: notif.color }}>
                   {notif.type}
                 </span>
               </div>
@@ -114,8 +115,8 @@ export default function NotificationsPanel({ plan, nextMeetingTime = "Today at 3
       </div>
 
       {/* Action Button */}
-      <button className="w-full mt-4 py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-semibold text-gray-700 transition-colors">
-        View All Notifications
+      <button className="w-full mt-4 py-2.5 px-4 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold uppercase tracking-wide transition-all duration-200 border border-blue-200 hover:border-blue-300">
+        View All
       </button>
     </div>
   );

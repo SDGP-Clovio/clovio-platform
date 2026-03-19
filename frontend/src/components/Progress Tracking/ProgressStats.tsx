@@ -62,7 +62,7 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
       {stats.map((stat, idx) => {
         const bgColors = {
           blue: "bg-blue-50 border-blue-200",
@@ -83,26 +83,26 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
         };
 
         return (
-          <div key={idx} className={`bg-white rounded-lg border p-4 ${bgColors[stat.color as keyof typeof bgColors]}`}>
-            <div className="flex items-start justify-between mb-3">
-              <span className="text-lg">{stat.icon}</span>
-              <p className={`text-xs font-semibold uppercase tracking-widest ${textColors[stat.color as keyof typeof textColors]}`}>
+          <div key={idx} className={`bg-white rounded-lg border p-3 ${bgColors[stat.color as keyof typeof bgColors]}`}>
+            <div className="flex items-start justify-between mb-2">
+              <span className="text-base">{stat.icon}</span>
+              <p className={`text-[10px] font-semibold uppercase tracking-wider ${textColors[stat.color as keyof typeof textColors]}`}>
                 {stat.label}
               </p>
             </div>
             
             {/* Value */}
-            <div className="flex items-baseline gap-2">
-              <p className={`text-2xl font-bold ${textColors[stat.color as keyof typeof textColors]}`}>
+            <div className="flex items-baseline gap-1.5">
+              <p className={`text-xl font-bold ${textColors[stat.color as keyof typeof textColors]}`}>
                 {stat.value}
               </p>
               {stat.total && (
-                <p className={`text-sm ${textColors[stat.color as keyof typeof textColors]}`}>
+                <p className={`text-xs ${textColors[stat.color as keyof typeof textColors]}`}>
                   / {stat.total}
                 </p>
               )}
               {stat.unit && (
-                <p className={`text-xs ${textColors[stat.color as keyof typeof textColors]}`}>
+                <p className={`text-[10px] ${textColors[stat.color as keyof typeof textColors]}`}>
                   {stat.unit}
                 </p>
               )}
@@ -110,7 +110,7 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
 
             {/* Subtext */}
             {stat.subtext && (
-              <p className="text-xs text-gray-600 mt-2">{stat.subtext}</p>
+              <p className="text-[10px] text-gray-600 mt-1.5">{stat.subtext}</p>
             )}
           </div>
         );

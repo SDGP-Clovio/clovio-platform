@@ -6,6 +6,10 @@ import { useState } from "react";
 import { PROJECTS, MOCK_PLAN } from "./types/mockData";
 import ProgressBanner from "./components/ProgressBanner";
 import ProgressStats from "./components/Progress Tracking/ProgressStats";
+import FairnessScore from "./components/Progress Tracking/FairnessScore";
+import TeamPerformance from "./components/Progress Tracking/TeamPerformance";
+import RiskAssessment from "./components/Progress Tracking/RiskAssessment";
+import NotificationsPanel from "./components/Progress Tracking/NotificationsPanel";
 import { calcOverallProgress } from "./utils/metrics";
 
 
@@ -40,8 +44,28 @@ export default function ProjectTrackingDashboard() {
         <TopBar project={project} />
 
         <main className="flex-1 p-5 overflow-y-auto flex flex-col gap-5">
+          {/* Top Section */}
           <ProgressBanner overallProgress={overallProgress} />
           <ProgressStats plan={MOCK_PLAN} dueDate={dueDate} />
+
+          {/* 3-Column Grid Layout */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+            {/* Left Column - Fairness Score */}
+            <div>
+              <FairnessScore score={75} />
+            </div>
+
+            {/* Middle Column - Team Performance (taller) */}
+            <div className="lg:col-span-2">
+              <TeamPerformance plan={MOCK_PLAN} />
+            </div>
+
+            {/* Right Column - Risk Assessment */}
+            <div className="flex flex-col gap-5">
+              <RiskAssessment riskScore={35} busFactorScore={65} />
+              <NotificationsPanel plan={MOCK_PLAN} />
+            </div>
+          </div>
         </main>
       </div>
 

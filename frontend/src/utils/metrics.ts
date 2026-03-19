@@ -36,3 +36,47 @@ export function predictCompletionDate(tasks: Task[], velocity: number): { date: 
     predictedDate.setDate(predictedDate.getDate() + daysNeeded);
     return { date: predictedDate, isOptimistic: daysNeeded < 7 };
 }
+
+export function calcTeamWorkload(milestones: Milestone[]): Record<string, { assigned: number; completed: number }> {
+    const allTasks = milestones.flatMap(m => m.tasks);
+    const workload: Record<string, { assigned: number; completed: number }> = {};
+
+    allTasks.forEach(task => {
+        const member = task.assigned_to || "Unassigned";
+        if (!workload[member]) {
+            workload[member] = { assigned: 0, completed: 0 };
+        }
+        workload[member].assigned += 1;
+        if (getTaskStatus(task) === "done") {
+            workload[member].completed += 1;
+        }
+    });
+
+    return workload;
+}
+
+export function findMostProductiveMember(workload: Record<string, { assigned: number; completed: number }>): string {
+    let maxCompleted = 0;
+    let topMember = "";
+
+    Object.entries(workload).forEach(([name, data]) => {
+        if (data.completed > maxCompleted) {
+            maxCompleted = data.completed;
+            topMember = name;
+        }
+    });
+
+    return topMember;
+}
+
+export function countOverdueTasks(milestones: Milestone[]): number {
+    // Mock implementation - in real app would check task due dates
+    const allTasks = milestones.flatMap(m => m.tasks);
+    return allTasks.filter(t => t.status === "in-progress").length > 0 ? 2 : 0;
+}
+
+export function countStuckTasks(milestones: Milestone[]): number {
+    // Mock implementation - in real app would check task duration in progress
+    const allTasks = milestones.flatMap(m => m.tasks);
+    return allTasks.filter(t => t.status === "in-progress").length > 3 ? 1 : 0;
+}

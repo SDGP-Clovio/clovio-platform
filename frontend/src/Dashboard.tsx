@@ -1,9 +1,9 @@
 import { useState } from "react";
 import Sidebar from "./components/NavBar";
 import TopBar from "./components/TopBarDashboard";
-import ProjectList from "./components//ProjectList";
-import MiniCalendar from "./components/MiniCalendar";
-import UpcomingMeetings from "./components/UpcomingMeetings";
+import ProjectList from "./components/Main Dashboard/ProjectList";
+import MiniCalendar from "./components/Main Dashboard/MiniCalendar";
+import UpcomingMeetings from "./components/Main Dashboard/UpcomingMeetings";
 import { USER,PROJECTS, MEETINGS } from "./types/mockData";
 
 export default function Dashboard() {

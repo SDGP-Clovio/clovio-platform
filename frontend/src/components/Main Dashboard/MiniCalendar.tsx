@@ -1,4 +1,4 @@
-import type { Meeting } from "../types/index";
+import type { Meeting } from "../../types";
 import { useState } from "react";
 
 interface MiniCalendarProps {

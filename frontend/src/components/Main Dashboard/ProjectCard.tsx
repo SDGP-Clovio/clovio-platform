@@ -1,4 +1,4 @@
-import type { Project } from "../types/index";
+import type { Project } from "../../types";
 import CircularProgress from "./CircularProgress";
 
 interface ProjectCardProps {
@@ -103,7 +103,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       {/* Member avatar stack */}
       <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
         <div className="flex">
-          {visibleMembers.map((member, i) => (
+          {visibleMembers.map((member: any, i: number) => (
             <div
               key={i}
               className="w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[9px] font-bold text-white"

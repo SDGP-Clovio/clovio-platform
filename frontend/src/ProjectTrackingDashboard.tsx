@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { PROJECTS, MOCK_PLAN } from "./types/mockData";
 import ProgressBanner from "./components/ProgressBanner";
+import ProgressStats from "./components/Progress Tracking/ProgressStats";
 import { calcOverallProgress } from "./utils/metrics";
 
 
@@ -21,6 +22,7 @@ export default function ProjectTrackingDashboard() {
   if (!project) return <div>Project not found</div>;
 
   const overallProgress = calcOverallProgress(MOCK_PLAN.milestones);
+  const dueDate = "2026-05-15"; // Mock due date
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -38,7 +40,8 @@ export default function ProjectTrackingDashboard() {
         <TopBar project={project} />
 
         <main className="flex-1 p-5 overflow-y-auto flex flex-col gap-5">
-          <ProgressBanner plan={MOCK_PLAN} overallProgress={overallProgress} />
+          <ProgressBanner overallProgress={overallProgress} />
+          <ProgressStats plan={MOCK_PLAN} dueDate={dueDate} />
         </main>
       </div>
 

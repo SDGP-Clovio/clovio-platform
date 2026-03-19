@@ -10,6 +10,7 @@ import FairnessScore from "./components/Progress Tracking/FairnessScore";
 import TeamPerformance from "./components/Progress Tracking/TeamPerformance";
 import RiskAssessment from "./components/Progress Tracking/RiskAssessment";
 import NotificationsPanel from "./components/Progress Tracking/NotificationsPanel";
+import AIInsights from "./components/Progress Tracking/AIInsights";
 import { calcOverallProgress } from "./utils/metrics";
 
 
@@ -49,19 +50,20 @@ export default function ProjectTrackingDashboard() {
           <ProgressStats plan={MOCK_PLAN} dueDate={dueDate} />
 
           {/* 3-Column Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-            {/* Left Column - Fairness Score */}
-            <div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+            {/* Left Column - Fairness Score + AI Insights */}
+            <div className="lg:col-span-3 flex flex-col gap-4">
               <FairnessScore score={75} />
+              <AIInsights overallProgress={overallProgress} />
             </div>
 
             {/* Middle Column - Team Performance (taller) */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-5">
               <TeamPerformance plan={MOCK_PLAN} />
             </div>
 
             {/* Right Column - Risk Assessment */}
-            <div className="flex flex-col gap-4">
+            <div className="lg:col-span-4 flex flex-col gap-4">
               <RiskAssessment riskScore={35} busFactorScore={65} />
               <NotificationsPanel plan={MOCK_PLAN} />
             </div>

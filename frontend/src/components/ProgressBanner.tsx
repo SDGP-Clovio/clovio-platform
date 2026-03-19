@@ -17,14 +17,14 @@ export default function ProgressBanner({
   const status = getStatus(overallProgress);
 
   return (
-    <div className={`bg-white rounded-2xl border border-black-100 shadow-sm p-5 ${className}`}>
-      <div className="flex items-center justify-between mb-4">
+    <div className={`bg-white rounded-xl border border-gray-200 shadow-sm p-4 ${className}`}>
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <p className="text-[12px] font-bold text-slate-400 uppercase tracking-widest">Overall Project Progress</p>
+          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Overall Project Progress</p>
         </div>
         <div className="flex items-center gap-3">
           <span
-            className="text-2xl font-black"
+            className="text-xl font-black"
             style={{ background: "linear-gradient(135deg,#2563eb,#0891b2)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
           >
             {overallProgress}%
@@ -34,7 +34,7 @@ export default function ProgressBanner({
       </div>
 
       {/* Master progress bar */}
-      <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+      <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-1000"
           style={{

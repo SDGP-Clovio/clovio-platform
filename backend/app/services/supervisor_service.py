@@ -157,7 +157,22 @@ class SupervisorService:
 
         return SupervisorContributionsResponse(project_id=project_id, contributions=contributions)
 
-    
+    def get_fairness(self, supervisor_id: int, project_id: int) -> SupervisorFairnessResponse:
+        contribution_response = self.get_contributions(supervisor_id=supervisor_id, project_id=project_id)
+        percentages = [item.contribution_percent for item in contribution_response.contributions]
+
+        if len(percentages) <= 1:
+            fairness_score = 100.0
+        else:
+            variance = pvariance(percentages)
+            fairness_score = max(0.0, round(100.0 - min(100.0, variance), 2))
+
+        return SupervisorFairnessResponse(
+            project_id=project_id,
+            fairness_score=fairness_score,
+            imbalance_flag=fairness_score < 60.0,
+        )
+
     @staticmethod
     def _to_int(value: Any) -> Optional[int]:
         try:

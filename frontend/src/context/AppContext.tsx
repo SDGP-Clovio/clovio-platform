@@ -60,6 +60,8 @@ interface AppContextState {
     // Tasks
     tasks: Task[];
     updateTaskStatus: (taskId: string, status: Task['status']) => void;
+    updateTask: (taskId: string, patch: Partial<Task>) => void;
+    addTaskComment: (taskId: string, content: string) => void;
     addTask: (task: Task) => void;
     deleteTask: (taskId: string) => void;
 
@@ -250,6 +252,51 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         updateDashboardStats();
     };
 
+    const updateTask = (taskId: string, patch: Partial<Task>) => {
+        setTasks((prevTasks) =>
+            prevTasks.map((task) =>
+                task.id === taskId
+                    ? { ...task, ...patch, updatedAt: new Date() }
+                    : task
+            )
+        );
+        updateDashboardStats();
+    };
+
+    const addTaskComment = (taskId: string, content: string) => {
+        if (!currentUser) return;
+        const newComment = {
+            id: `c${Date.now()}`,
+            userId: currentUser.id,
+            content,
+            createdAt: new Date(),
+        };
+
+        setTasks((prevTasks) =>
+            prevTasks.map((task) => {
+                if (task.id === taskId) {
+                    const comments = task.comments ? [...task.comments, newComment] : [newComment];
+                    return { ...task, comments, updatedAt: new Date() };
+                }
+                return task;
+            })
+        );
+        
+        const task = tasks.find((t) => t.id === taskId);
+        if (task) {
+            const activity: Activity = {
+                id: `a${Date.now()}`,
+                type: 'comment_added',
+                userId: currentUser.id,
+                projectId: task.projectId,
+                taskId: task.id,
+                timestamp: new Date(),
+                description: `${currentUser.name} commented on "${task.title}"`,
+            };
+            addActivity(activity);
+        }
+    };
+
     const addTask = (task: Task) => {
         setTasks((prevTasks) => [...prevTasks, task]);
 
@@ -346,6 +393,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         deleteProject,
         tasks,
         updateTaskStatus,
+        updateTask,
+        addTaskComment,
         addTask,
         deleteTask,
         meetings,

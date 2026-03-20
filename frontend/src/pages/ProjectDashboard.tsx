@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings } from 'lucide-react';
 import FairnessScoreWidget from '../components/Dashboard/FairnessScoreWidget';
 import KanbanBoard from '../components/Kanban/KanbanBoard';
+import TasksTabView from '../components/Tasks/TasksTabView';
 import Avatar from '../components/UI/Avatar';
 import MeetingScheduler from '../components/Meetings/MeetingScheduler';
 import NotificationDropdown from '../components/Notifications/NotificationDropdown';
@@ -14,7 +15,7 @@ const ProjectDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { id: projectId } = useParams<{ id: string }>();
     const { currentUser, projects, dashboardStats, setActiveProject } = useApp();
-    const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'meetings' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'settings'>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Find the project by ID
@@ -51,7 +52,7 @@ const ProjectDashboard: React.FC = () => {
 
     const navItems = [
         { id: 'overview',  label: 'Dashboard',    icon: LayoutDashboard },
-        { id: 'kanban',    label: 'Kanban Board',  icon: ListTodo },
+        { id: 'tasks',     label: 'Tasks',         icon: ListTodo },
         { id: 'meetings',  label: 'Meetings',      icon: Calendar },
         { id: 'settings',  label: 'Settings',      icon: Settings },
     ];
@@ -91,7 +92,7 @@ const ProjectDashboard: React.FC = () => {
                             <button
                                 key={item.id}
                                 onClick={() => {
-                                    setActiveTab(item.id as 'overview' | 'kanban' | 'meetings');
+                                    setActiveTab(item.id as 'overview' | 'tasks' | 'meetings' | 'settings');
                                     setSidebarOpen(false);
                                 }}
                                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
@@ -155,7 +156,7 @@ const ProjectDashboard: React.FC = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800">
-                                {activeTab === 'overview' ? 'Project Dashboard' : activeTab === 'kanban' ? 'Kanban Board' : activeTab === 'meetings' ? 'Meetings' : 'Project Settings'}
+                                {activeTab === 'overview' ? 'Project Dashboard' : activeTab === 'tasks' ? 'Tasks' : activeTab === 'meetings' ? 'Meetings' : 'Project Settings'}
                             </h1>
                             <p className="text-slate-500 mt-0.5 text-sm">{project.name}</p>
                         </div>
@@ -240,7 +241,7 @@ const ProjectDashboard: React.FC = () => {
                                                 <p className="text-sm text-slate-500 mt-0.5">Preview your tasks</p>
                                             </div>
                                             <button
-                                                onClick={() => setActiveTab('kanban')}
+                                                onClick={() => setActiveTab('tasks')}
                                                 className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
                                             >
                                                 View Full Board
@@ -254,15 +255,9 @@ const ProjectDashboard: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                    ) : activeTab === 'kanban' ? (
-                        // Full Kanban Board View
-                        <div className="bg-white rounded-xl border border-slate-100 p-6 min-h-[600px]">
-                            <div className="mb-4">
-                                <h2 className="text-lg font-bold text-slate-800">Kanban Board</h2>
-                                <p className="text-sm text-slate-500 mt-0.5">Manage your tasks and workflow</p>
-                            </div>
-                            <KanbanBoard />
-                        </div>
+                    ) : activeTab === 'tasks' ? (
+                        // Milestones & Kanban Tasks View
+                        <TasksTabView projectId={project.id} />
                     ) : activeTab === 'meetings' ? (
                         // Meetings Tab
                         <MeetingScheduler

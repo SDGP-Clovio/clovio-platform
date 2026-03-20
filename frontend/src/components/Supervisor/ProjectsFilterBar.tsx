@@ -16,10 +16,56 @@ export default function ProjectsFilterBar({ filters, onFiltersChange }: Projects
 			/>
 
 			<div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full lg:w-auto">
-				{/* Placeholder for status dropdown */}
-				<div className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-400">Status</div>
-				<div className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-400">Risk</div>
-				<div className="px-3 py-2 rounded-lg border border-gray-200 text-sm text-gray-400">Progress</div>
+				<select
+					value={filters.status}
+					onChange={(event) =>
+						onFiltersChange({
+							...filters,
+							status: event.target.value as SupervisorProjectFilters["status"],
+						})
+					}
+					className="px-3 py-2 rounded-lg border border-gray-200 text-sm"
+				>
+					{(["All", "On Track", "At Risk", "Overdue", "Completed"] as const).map((value) => (
+						<option key={value} value={value}>
+							Status: {value}
+						</option>
+					))}
+				</select>
+
+				<select
+					value={filters.risk}
+					onChange={(event) =>
+						onFiltersChange({
+							...filters,
+							risk: event.target.value as SupervisorProjectFilters["risk"],
+						})
+					}
+					className="px-3 py-2 rounded-lg border border-gray-200 text-sm"
+				>
+					{(["All", "Low", "Medium", "High"] as const).map((value) => (
+						<option key={value} value={value}>
+							Risk: {value}
+						</option>
+					))}
+				</select>
+
+				<select
+					value={filters.progress}
+					onChange={(event) =>
+						onFiltersChange({
+							...filters,
+							progress: event.target.value as SupervisorProjectFilters["progress"],
+						})
+					}
+					className="px-3 py-2 rounded-lg border border-gray-200 text-sm"
+				>
+					{(["All", "0-25", "26-50", "51-75", "76-100"] as const).map((value) => (
+						<option key={value} value={value}>
+							Progress: {value}
+						</option>
+					))}
+				</select>
 			</div>
 		</section>
 	);

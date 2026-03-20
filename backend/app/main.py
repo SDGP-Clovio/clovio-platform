@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from app.schemas.project import ProjectPlan, ProjectRequest
 from app.services.ai_service import generate_task_breakdown
+from app.schemas.project import ProjectPlan, ProjectRequest
 from app.api.supervisor import router as supervisor_router
 
 # Initialize the App 

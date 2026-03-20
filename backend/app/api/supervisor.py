@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 from typing import Any, Mapping
+
 from fastapi import APIRouter, Depends, HTTPException
-from app.services.supervisor_provider import get_supervisor_data_provider
-from app.services.supervisor_service import SupervisorDataProvider, SupervisorService
-from app.services.report_service import SupervisorReportService
+from fastapi.responses import Response
+
 from app.schemas.supervisor import (
     SupervisorAlertsResponse,
     SupervisorContributionsResponse,
@@ -10,6 +12,9 @@ from app.schemas.supervisor import (
     SupervisorProjectDetailResponse,
     SupervisorProjectsResponse,
 )
+from app.services.report_service import SupervisorReportService
+from app.services.supervisor_provider import get_supervisor_data_provider
+from app.services.supervisor_service import SupervisorDataProvider, SupervisorService
 
 router = APIRouter(prefix="/supervisor", tags=["Supervisor"])
 
@@ -26,15 +31,7 @@ def get_supervisor_user() -> Mapping[str, Any]:
         detail="Supervisor auth dependency is not configured. Wire existing JWT/role dependency.",
     )
 
-def _extract_user_id(user_payload: Mapping[str, Any]) -> int:
-    raw_id = user_payload.get("id")
-    if raw_id is None:
-        raise HTTPException(status_code=401, detail="Authenticated user payload missing id")
-    try:
-        return int(raw_id)
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=401, detail="Authenticated user id is invalid")
-     
+
 def get_supervisor_service(
     provider: SupervisorDataProvider = Depends(get_supervisor_data_provider),
 ) -> SupervisorService:
@@ -44,6 +41,17 @@ def get_supervisor_service(
 def get_report_service() -> SupervisorReportService:
     return SupervisorReportService()
 
+
+def _extract_user_id(user_payload: Mapping[str, Any]) -> int:
+    raw_id = user_payload.get("id")
+    if raw_id is None:
+        raise HTTPException(status_code=401, detail="Authenticated user payload missing id")
+    try:
+        return int(raw_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=401, detail="Authenticated user id is invalid")
+
+
 @router.get("/projects", response_model=SupervisorProjectsResponse)
 def get_supervisor_projects(
     current_user: Mapping[str, Any] = Depends(get_supervisor_user),
@@ -51,6 +59,7 @@ def get_supervisor_projects(
 ) -> SupervisorProjectsResponse:
     supervisor_id = _extract_user_id(current_user)
     return service.get_projects(supervisor_id=supervisor_id)
+
 
 @router.get("/project/{project_id}", response_model=SupervisorProjectDetailResponse)
 def get_supervisor_project_detail(
@@ -61,6 +70,7 @@ def get_supervisor_project_detail(
     supervisor_id = _extract_user_id(current_user)
     return service.get_project_detail(supervisor_id=supervisor_id, project_id=project_id)
 
+
 @router.get("/project/{project_id}/contributions", response_model=SupervisorContributionsResponse)
 def get_supervisor_project_contributions(
     project_id: int,
@@ -70,6 +80,7 @@ def get_supervisor_project_contributions(
     supervisor_id = _extract_user_id(current_user)
     return service.get_contributions(supervisor_id=supervisor_id, project_id=project_id)
 
+
 @router.get("/project/{project_id}/fairness", response_model=SupervisorFairnessResponse)
 def get_supervisor_project_fairness(
     project_id: int,
@@ -78,6 +89,7 @@ def get_supervisor_project_fairness(
 ) -> SupervisorFairnessResponse:
     supervisor_id = _extract_user_id(current_user)
     return service.get_fairness(supervisor_id=supervisor_id, project_id=project_id)
+
 
 @router.get("/project/{project_id}/alerts", response_model=SupervisorAlertsResponse)
 def get_supervisor_project_alerts(
@@ -112,3 +124,4 @@ def generate_supervisor_project_report(
         media_type="application/pdf",
         headers={"Content-Disposition": f'attachment; filename="project_{project_id}_summary.pdf"'},
     )
+

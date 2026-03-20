@@ -21,6 +21,23 @@ from app.schemas.supervisor import (
 )
 
 
+class SupervisorDataProvider(Protocol):
+    def get_projects_for_supervisor(self, supervisor_id: int) -> Sequence[Mapping[str, Any]]:
+        ...
+
+    def get_project_by_id(self, project_id: int, supervisor_id: int) -> Optional[Mapping[str, Any]]:
+        ...
+
+    def get_team_members(self, project_id: int) -> Sequence[Mapping[str, Any]]:
+        ...
+
+    def get_tasks(self, project_id: int) -> Sequence[Mapping[str, Any]]:
+        ...
+
+    def get_contribution_logs(self, project_id: int) -> Sequence[Mapping[str, Any]]:
+        ...
+
+
 @dataclass
 class SupervisorService:
     provider: SupervisorDataProvider
@@ -40,17 +57,6 @@ class SupervisorService:
         )
 
         return SupervisorProjectsResponse(overview=overview, projects=items)
-
-    def _map_project_item(self, record: Mapping[str, Any]) -> SupervisorProjectItem:
-        return SupervisorProjectItem(
-            id=int(record.get("id")),
-            name=str(record.get("name", "")),
-            status=str(record.get("status", "Unknown")),
-            completion_percent=self._to_float(record.get("completion_percent"), fallback=0.0),
-            risk_level=str(record.get("risk_level", "Medium")),
-            team_size=int(record.get("team_size", 0)),
-            due_date=self._to_date(record.get("due_date")),
-        )
 
     def get_project_detail(self, supervisor_id: int, project_id: int) -> SupervisorProjectDetailResponse:
         project = self.provider.get_project_by_id(project_id, supervisor_id)
@@ -74,36 +80,6 @@ class SupervisorService:
             timeline=timeline,
         )
 
-    def _build_timeline(
-        self,
-        project: Mapping[str, Any],
-        tasks: Sequence[Mapping[str, Any]],
-    ) -> list[SupervisorTimelineItem]:
-        timeline: list[SupervisorTimelineItem] = []
-
-        start_date = self._to_date(project.get("start_date"))
-        due_date = self._to_date(project.get("due_date"))
-
-        if start_date:
-            timeline.append(SupervisorTimelineItem(date=start_date, title="Project Started", status="completed"))
-
-        for task in tasks:
-            completed_at = self._to_date(task.get("completed_at"))
-            if completed_at:
-                timeline.append(
-                    SupervisorTimelineItem(
-                        date=completed_at,
-                        title=str(task.get("title", "Task update")),
-                        status=str(task.get("status", "done")),
-                    )
-                )
-
-        if due_date:
-            timeline.append(SupervisorTimelineItem(date=due_date, title="Project Due Date", status="upcoming"))
-
-        timeline.sort(key=lambda item: item.date)
-        return timeline
-    
     def get_contributions(self, supervisor_id: int, project_id: int) -> SupervisorContributionsResponse:
         project = self.provider.get_project_by_id(project_id, supervisor_id)
         if not project:
@@ -209,6 +185,47 @@ class SupervisorService:
 
         return SupervisorAlertsResponse(project_id=project_id, alerts=alerts)
 
+    def _map_project_item(self, record: Mapping[str, Any]) -> SupervisorProjectItem:
+        return SupervisorProjectItem(
+            id=int(record.get("id")),
+            name=str(record.get("name", "")),
+            status=str(record.get("status", "Unknown")),
+            completion_percent=self._to_float(record.get("completion_percent"), fallback=0.0),
+            risk_level=str(record.get("risk_level", "Medium")),
+            team_size=int(record.get("team_size", 0)),
+            due_date=self._to_date(record.get("due_date")),
+        )
+
+    def _build_timeline(
+        self,
+        project: Mapping[str, Any],
+        tasks: Sequence[Mapping[str, Any]],
+    ) -> list[SupervisorTimelineItem]:
+        timeline: list[SupervisorTimelineItem] = []
+
+        start_date = self._to_date(project.get("start_date"))
+        due_date = self._to_date(project.get("due_date"))
+
+        if start_date:
+            timeline.append(SupervisorTimelineItem(date=start_date, title="Project Started", status="completed"))
+
+        for task in tasks:
+            completed_at = self._to_date(task.get("completed_at"))
+            if completed_at:
+                timeline.append(
+                    SupervisorTimelineItem(
+                        date=completed_at,
+                        title=str(task.get("title", "Task update")),
+                        status=str(task.get("status", "done")),
+                    )
+                )
+
+        if due_date:
+            timeline.append(SupervisorTimelineItem(date=due_date, title="Project Due Date", status="upcoming"))
+
+        timeline.sort(key=lambda item: item.date)
+        return timeline
+
     @staticmethod
     def _to_int(value: Any) -> Optional[int]:
         try:
@@ -241,22 +258,3 @@ class SupervisorService:
             except ValueError:
                 return None
         return None
-    
-    # ... other methods
-
-class SupervisorDataProvider(Protocol):
-    def get_projects_for_supervisor(self, supervisor_id: int) -> Sequence[Mapping[str, Any]]:
-        ...
-
-    def get_project_by_id(self, project_id: int, supervisor_id: int) -> Optional[Mapping[str, Any]]:
-        ...
-
-    def get_team_members(self, project_id: int) -> Sequence[Mapping[str, Any]]:
-        ...
-
-    def get_tasks(self, project_id: int) -> Sequence[Mapping[str, Any]]:
-        ...
-
-    def get_contribution_logs(self, project_id: int) -> Sequence[Mapping[str, Any]]:
-        ...
-

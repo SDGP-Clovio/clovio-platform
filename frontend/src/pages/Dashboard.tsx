@@ -4,7 +4,7 @@ import TopBar from "../components/MainDashboard/TopBarDashboard";
 import ProjectList from "../components/MainDashboard/ProjectList";
 import MiniCalendar from "../components/MainDashboard/MiniCalendar";
 import UpcomingMeetings from "../components/MainDashboard/UpcomingMeetings";
-import { USER,PROJECTS, MEETINGS } from "../types/mockdata";
+import { USER,PROJECTS, MEETINGS } from "../types/mockData";
 
 export default function Dashboard() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);

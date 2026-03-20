@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from app.schemas.project import ProjectPlan, ProjectRequest
 from app.services.ai_service import generate_task_breakdown
+from app.api.supervisor import router as supervisor_router
 
 # Initialize the App 
 app = FastAPI(
@@ -8,6 +9,8 @@ app = FastAPI(
     version="0.1.0",
     description="AI-powered project planning and task breakdown API."
 )
+
+app.include_router(supervisor_router)
 
 # 2. The Health Check (Just to see if lights are on)
 @app.get("/")

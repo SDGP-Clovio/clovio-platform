@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { LayoutList, Trello, Wand2, Calendar, CheckCircle2, Circle, Clock } from 'lucide-react';
 import KanbanBoard from '../Kanban/KanbanBoard';
 import Avatar from '../UI/Avatar';
+import Modal from '../UI/Modal';
+import TaskDetailModal from '../Kanban/TaskDetailModal';
 import { getUserById, mockTasks } from '../../data/mockData';
 import type { Task } from '../../types/types';
 
@@ -11,6 +13,8 @@ interface TasksTabViewProps {
 
 const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
     const [viewMode, setViewMode] = useState<'milestones' | 'kanban'>('milestones');
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
     // In a real app, tasks would be fetched per project.
     // We are borrowing the logic from KanbanBoard/mockData for simplicity.
@@ -58,6 +62,11 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
         if (status === 'done') return 'bg-emerald-100 text-emerald-700 border-emerald-200';
         if (status === 'in-progress') return 'bg-amber-100 text-amber-700 border-amber-200';
         return 'bg-slate-100 text-slate-600 border-slate-200';
+    };
+
+    const handleTaskClick = (task: Task) => {
+        setSelectedTask(task);
+        setIsDetailModalOpen(true);
     };
 
     return (
@@ -138,7 +147,8 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                                         return (
                                             <div
                                                 key={task.id}
-                                                className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-100 hover:border-purple-200 hover:shadow-md transition-all group"
+                                                onClick={() => handleTaskClick(task)}
+                                                className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-100 hover:border-purple-200 hover:shadow-md transition-all group cursor-pointer"
                                             >
                                                 <div className="flex items-center gap-4 flex-1 min-w-0">
                                                     {/* Status Icon */}
@@ -205,6 +215,21 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                         </div>
                     ))}
                 </div>
+            )}
+
+            {/* Task Detail Modal */}
+            {selectedTask && (
+                <Modal
+                    isOpen={isDetailModalOpen}
+                    onClose={() => setIsDetailModalOpen(false)}
+                    title="Task Details"
+                    size="lg"
+                >
+                    <TaskDetailModal
+                        task={selectedTask}
+                        onClose={() => setIsDetailModalOpen(false)}
+                    />
+                </Modal>
             )}
         </div>
     );

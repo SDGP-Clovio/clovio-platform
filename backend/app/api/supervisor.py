@@ -3,7 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.services.supervisor_provider import get_supervisor_data_provider
 from app.services.supervisor_service import SupervisorDataProvider, SupervisorService
 from app.services.report_service import SupervisorReportService
-
+from app.schemas.supervisor import (
+    SupervisorAlertsResponse,
+    SupervisorContributionsResponse,
+    SupervisorFairnessResponse,
+    SupervisorProjectDetailResponse,
+    SupervisorProjectsResponse,
+)
 
 router = APIRouter(prefix="/supervisor", tags=["Supervisor"])
 
@@ -37,4 +43,12 @@ def get_supervisor_service(
 
 def get_report_service() -> SupervisorReportService:
     return SupervisorReportService()
+
+@router.get("/projects", response_model=SupervisorProjectsResponse)
+def get_supervisor_projects(
+    current_user: Mapping[str, Any] = Depends(get_supervisor_user),
+    service: SupervisorService = Depends(get_supervisor_service),
+) -> SupervisorProjectsResponse:
+    supervisor_id = _extract_user_id(current_user)
+    return service.get_projects(supervisor_id=supervisor_id)
 

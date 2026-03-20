@@ -34,6 +34,21 @@ export default function ProgressChartCard({ project }: ProgressChartCardProps) {
 					<p className="text-xl font-bold text-[#1A1A1A] mt-1">{project.task_completion_total}</p>
 				</article>
 			</div>
+
+			<div className="mt-5">
+				<p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Timeline</p>
+				<ul className="space-y-2">
+					{project.timeline.map((item) => (
+						<li key={`${item.date}-${item.title}`} className="flex items-start gap-3 text-sm">
+							<span className="mt-2 w-2 h-2 rounded-full bg-[#B179DF] flex-shrink-0" />
+							<div>
+								<p className="font-semibold text-[#1A1A1A]">{item.title}</p>
+								<p className="text-gray-500">{item.date} - {item.status}</p>
+							</div>
+						</li>
+					))}
+				</ul>
+			</div>
 		</section>
 	);
 }

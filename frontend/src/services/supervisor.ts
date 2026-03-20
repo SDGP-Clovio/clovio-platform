@@ -51,3 +51,11 @@ function fallbackProjects(): SupervisorProjectsResponse {
 		projects,
 	};
 }
+
+export async function getSupervisorProjects(): Promise<SupervisorProjectsResponse> {
+	try {
+		return await requestJson<SupervisorProjectsResponse>(`${SUPERVISOR_BASE}/projects`);
+	} catch {
+		return fallbackProjects();
+	}
+}

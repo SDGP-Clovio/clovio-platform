@@ -104,6 +104,60 @@ class SupervisorService:
         timeline.sort(key=lambda item: item.date)
         return timeline
     
+    def get_contributions(self, supervisor_id: int, project_id: int) -> SupervisorContributionsResponse:
+        project = self.provider.get_project_by_id(project_id, supervisor_id)
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        members = list(self.provider.get_team_members(project_id))
+        tasks = list(self.provider.get_tasks(project_id))
+        logs = list(self.provider.get_contribution_logs(project_id))
+
+        completed_by_user: dict[int, int] = {}
+        updates_by_user: dict[int, int] = {}
+
+        for task in tasks:
+            if str(task.get("status", "")).lower() not in {"done", "completed"}:
+                continue
+            assignee_id = self._to_int(task.get("assigned_to_id"))
+            if assignee_id is None:
+                continue
+            completed_by_user[assignee_id] = completed_by_user.get(assignee_id, 0) + 1
+
+        for log in logs:
+            user_id = self._to_int(log.get("user_id"))
+            if user_id is None:
+                continue
+            updates_by_user[user_id] = updates_by_user.get(user_id, 0) + 1
+
+        scores: dict[int, float] = {}
+        for member in members:
+            user_id = int(member.get("id"))
+            task_weight = completed_by_user.get(user_id, 0) * 0.7
+            update_weight = updates_by_user.get(user_id, 0) * 0.3
+            scores[user_id] = task_weight + update_weight
+
+        score_total = sum(scores.values())
+        contributions: list[SupervisorContributionItem] = []
+
+        for member in members:
+            user_id = int(member.get("id"))
+            score = scores.get(user_id, 0.0)
+            contribution_percent = round((score / score_total) * 100.0, 2) if score_total > 0 else 0.0
+            contributions.append(
+                SupervisorContributionItem(
+                    user_id=user_id,
+                    name=str(member.get("name", "Unknown")),
+                    contribution_percent=contribution_percent,
+                    tasks_completed=completed_by_user.get(user_id, 0),
+                    updates_count=updates_by_user.get(user_id, 0),
+                    activity_score=round(score, 2),
+                )
+            )
+
+        return SupervisorContributionsResponse(project_id=project_id, contributions=contributions)
+
+    
     @staticmethod
     def _to_int(value: Any) -> Optional[int]:
         try:

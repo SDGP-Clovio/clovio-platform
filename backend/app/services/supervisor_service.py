@@ -173,6 +173,42 @@ class SupervisorService:
             imbalance_flag=fairness_score < 60.0,
         )
 
+    def get_alerts(self, supervisor_id: int, project_id: int) -> SupervisorAlertsResponse:
+        contribution_response = self.get_contributions(supervisor_id=supervisor_id, project_id=project_id)
+        detail = self.get_project_detail(supervisor_id=supervisor_id, project_id=project_id)
+
+        alerts: list[SupervisorAlertItem] = []
+
+        for contribution in contribution_response.contributions:
+            if contribution.contribution_percent < 10.0:
+                alerts.append(
+                    SupervisorAlertItem(
+                        level="warning",
+                        message=f"Low activity detected for {contribution.name}",
+                        user_id=contribution.user_id,
+                    )
+                )
+
+        if detail.status.lower() in {"delayed", "overdue"}:
+            alerts.append(
+                SupervisorAlertItem(
+                    level="critical",
+                    message="Project delay warning: status indicates delay/overdue",
+                )
+            )
+
+        if detail.task_completion_total > 0:
+            completion_ratio = detail.task_completion_done / detail.task_completion_total
+            if completion_ratio < 0.5:
+                alerts.append(
+                    SupervisorAlertItem(
+                        level="warning",
+                        message="Project progress is below 50% of tasks completed",
+                    )
+                )
+
+        return SupervisorAlertsResponse(project_id=project_id, alerts=alerts)
+
     @staticmethod
     def _to_int(value: Any) -> Optional[int]:
         try:

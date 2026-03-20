@@ -78,3 +78,12 @@ def get_supervisor_project_fairness(
 ) -> SupervisorFairnessResponse:
     supervisor_id = _extract_user_id(current_user)
     return service.get_fairness(supervisor_id=supervisor_id, project_id=project_id)
+
+@router.get("/project/{project_id}/alerts", response_model=SupervisorAlertsResponse)
+def get_supervisor_project_alerts(
+    project_id: int,
+    current_user: Mapping[str, Any] = Depends(get_supervisor_user),
+    service: SupervisorService = Depends(get_supervisor_service),
+) -> SupervisorAlertsResponse:
+    supervisor_id = _extract_user_id(current_user)
+    return service.get_alerts(supervisor_id=supervisor_id, project_id=project_id)

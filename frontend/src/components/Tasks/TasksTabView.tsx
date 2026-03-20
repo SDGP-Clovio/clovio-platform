@@ -4,8 +4,9 @@ import KanbanBoard from '../Kanban/KanbanBoard';
 import Avatar from '../UI/Avatar';
 import Modal from '../UI/Modal';
 import TaskDetailModal from '../Kanban/TaskDetailModal';
-import { getUserById, mockTasks } from '../../data/mockData';
+import { getUserById } from '../../data/mockData';
 import type { Task } from '../../types/types';
+import { useApp } from '../../context/AppContext';
 
 interface TasksTabViewProps {
     projectId: string;
@@ -16,9 +17,11 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
+    const { tasks } = useApp();
+
     // In a real app, tasks would be fetched per project.
-    // We are borrowing the logic from KanbanBoard/mockData for simplicity.
-    const projectTasks: Task[] = mockTasks.filter((t: Task) => t.projectId === projectId);
+    // Use tasks from context so updates reflect immediately.
+    const projectTasks: Task[] = tasks.filter((t: Task) => t.projectId === projectId);
 
     // Mock milestones derivation
     // We'll group them purely for visual representation since there's no native milestone structure.
@@ -218,7 +221,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
             )}
 
             {/* Task Detail Modal */}
-            {selectedTask && (
+            {selectedTask && tasks.find(t => t.id === selectedTask.id) && (
                 <Modal
                     isOpen={isDetailModalOpen}
                     onClose={() => setIsDetailModalOpen(false)}
@@ -226,7 +229,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                     size="lg"
                 >
                     <TaskDetailModal
-                        task={selectedTask}
+                        task={tasks.find(t => t.id === selectedTask.id)!}
                         onClose={() => setIsDetailModalOpen(false)}
                     />
                 </Modal>

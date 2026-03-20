@@ -90,7 +90,7 @@ const KanbanBoard: React.FC = () => {
             </div>
 
             {/* Task Detail Modal */}
-            {selectedTask && (
+            {selectedTask && tasks.find(t => t.id === selectedTask.id) && (
                 <Modal
                     isOpen={isDetailModalOpen}
                     onClose={() => setIsDetailModalOpen(false)}
@@ -98,7 +98,7 @@ const KanbanBoard: React.FC = () => {
                     size="lg"
                 >
                     <TaskDetailModal
-                        task={selectedTask}
+                        task={tasks.find(t => t.id === selectedTask.id)!}
                         onClose={() => setIsDetailModalOpen(false)}
                     />
                 </Modal>

@@ -66,6 +66,10 @@ export default function ProjectsTable({ projects, onOpenProject }: ProjectsTable
 					</tbody>
 				</table>
 			</div>
+
+			{projects.length === 0 && (
+				<div className="py-8 text-center text-sm text-gray-500">No projects match the selected filters.</div>
+			)}
 		</section>
 	);
 }

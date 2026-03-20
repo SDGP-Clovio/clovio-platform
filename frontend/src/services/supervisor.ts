@@ -107,3 +107,47 @@ export async function getSupervisorContributions(
 		};
 	}
 }
+
+export async function getSupervisorFairness(projectId: number): Promise<SupervisorFairnessResponse> {
+	try {
+		return await requestJson<SupervisorFairnessResponse>(`${SUPERVISOR_BASE}/project/${projectId}/fairness`);
+	} catch {
+		return {
+			project_id: projectId,
+			fairness_score: 78,
+			imbalance_flag: false,
+		};
+	}
+}
+
+export async function getSupervisorAlerts(projectId: number): Promise<SupervisorAlertsResponse> {
+	try {
+		return await requestJson<SupervisorAlertsResponse>(`${SUPERVISOR_BASE}/project/${projectId}/alerts`);
+	} catch {
+		return {
+			project_id: projectId,
+			alerts: [
+				{
+					level: "warning",
+					message: "Low activity detected for one member in the last 7 days",
+					user_id: 4,
+				},
+			],
+		};
+	}
+}
+
+export async function downloadSupervisorReport(projectId: number): Promise<void> {
+	const response = await fetch(`${SUPERVISOR_BASE}/project/${projectId}/report`);
+	if (!response.ok) {
+		throw new Error("Failed to download report");
+	}
+
+	const blob = await response.blob();
+	const objectUrl = URL.createObjectURL(blob);
+	const anchor = document.createElement("a");
+	anchor.href = objectUrl;
+	anchor.download = `project_${projectId}_summary.pdf`;
+	anchor.click();
+	URL.revokeObjectURL(objectUrl);
+}

@@ -15,3 +15,12 @@ def get_supervisor_user() -> Mapping[str, Any]:
         status_code=500,
         detail="Supervisor auth dependency is not configured. Wire existing JWT/role dependency.",
     )
+
+def _extract_user_id(user_payload: Mapping[str, Any]) -> int:
+    raw_id = user_payload.get("id")
+    if raw_id is None:
+        raise HTTPException(status_code=401, detail="Authenticated user payload missing id")
+    try:
+        return int(raw_id)
+    except (TypeError, ValueError):
+        raise HTTPException(status_code=401, detail="Authenticated user id is invalid")

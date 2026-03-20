@@ -1,10 +1,10 @@
 import { useState } from "react";
-import Sidebar from "./components/NavBar";
-import TopBar from "./components/TopBarDashboard";
-import ProjectList from "./components/Main Dashboard/ProjectList";
-import MiniCalendar from "./components/Main Dashboard/MiniCalendar";
-import UpcomingMeetings from "./components/Main Dashboard/UpcomingMeetings";
-import { USER,PROJECTS, MEETINGS } from "./types/mockData";
+import Sidebar from "../components/common/NavBar";
+import TopBar from "../components/MainDashboard/TopBarDashboard";
+import ProjectList from "../components/MainDashboard/ProjectList";
+import MiniCalendar from "../components/MainDashboard/MiniCalendar";
+import UpcomingMeetings from "../components/MainDashboard/UpcomingMeetings";
+import { USER,PROJECTS, MEETINGS } from "../types/mockdata";
 
 export default function Dashboard() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);

@@ -65,20 +65,20 @@ export default function AIInsights({ overallProgress }: AIInsightsProps) {
   const insights = generateInsights();
 
   return (
-    <div className="bg-white rounded-xl border border-gray-300 shadow-md hover:shadow-lg p-5 transition-shadow duration-300 h-full flex flex-col gap-3">
-      <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">AI Insights</p>
+    <div className="bg-white rounded-xl border border-gray-300 shadow-md hover:shadow-lg p-3 transition-shadow duration-300">
+      <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">AI Insights</p>
 
-      <div className="flex flex-col gap-2.5 flex-1">
+      <div className="flex flex-col gap-2">
         {insights.map((insight, idx) => (
           <div
             key={idx}
-            className={`p-3 rounded-lg border-l-4 ${insight.borderColor} ${insight.bgColor} hover:shadow-sm transition-all duration-200 cursor-pointer group`}
+            className={`p-2 rounded-lg border-l-4 ${insight.borderColor} ${insight.bgColor} hover:shadow-sm transition-all duration-200 cursor-pointer group`}
             style={{ borderLeftColor: insight.color }}
           >
-            <div className="flex items-start gap-2.5">
-              <span className="text-xl flex-shrink-0">{insight.icon}</span>
+            <div className="flex items-start gap-2">
+              <span className="text-lg flex-shrink-0">{insight.icon}</span>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold" style={{ color: insight.color }}>
+                <p className="text-xs font-bold leading-tight" style={{ color: insight.color }}>
                   {insight.title}
                 </p>
                 <p className="text-xs text-gray-600 mt-0.5 leading-snug group-hover:text-gray-700 transition-colors">
@@ -90,9 +90,9 @@ export default function AIInsights({ overallProgress }: AIInsightsProps) {
         ))}
       </div>
 
-      {/* Footer tip */}
-      <button className="w-full mt-auto pt-3 border-t border-gray-200 text-center text-[10px] font-semibold text-blue-600 hover:text-blue-700 transition-colors">
-        Get Recommendations
+      {/* Footer button - more compact */}
+      <button className="w-full mt-2 pt-2 border-t border-gray-200 text-center text-[10px] font-bold text-blue-600 hover:text-blue-700 transition-colors uppercase tracking-wider">
+        View More
       </button>
     </div>
   );

@@ -1,4 +1,4 @@
-import StatusIndicator from "./Progress Tracking/StatusIndicator";
+import StatusIndicator from "./StatusIndicator";
 
 export default function ProgressBanner({
   overallProgress,

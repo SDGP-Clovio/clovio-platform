@@ -1,17 +1,17 @@
 import { useParams } from "react-router-dom";
-import TopBar from "./components/TopBarProject";
-import Sidebar from "./components/NavBar";
+import TopBar from "../components/Progress/TopBarProject";
+import Sidebar from "../components/common/NavBar";
 import { useState } from "react";
 
-import { PROJECTS, MOCK_PLAN } from "./types/mockData";
-import ProgressBanner from "./components/ProgressBanner";
-import ProgressStats from "./components/Progress Tracking/ProgressStats";
-import FairnessScore from "./components/Progress Tracking/FairnessScore";
-import TeamPerformance from "./components/Progress Tracking/TeamPerformance";
-import RiskAssessment from "./components/Progress Tracking/RiskAssessment";
-import NotificationsPanel from "./components/Progress Tracking/NotificationsPanel";
-import AIInsights from "./components/Progress Tracking/AIInsights";
-import { calcOverallProgress } from "./utils/metrics";
+import { PROJECTS, MOCK_PLAN } from "../types/mockdata";
+import ProgressBanner from "../components/Progress/ProgressBanner";
+import ProgressStats from "../components/Progress/ProgressStats";
+import FairnessScore from "../components/Progress/FairnessScore";
+import TeamPerformance from "../components/Progress/TeamPerformance";
+import RiskAssessment from "../components/Progress/RiskAssessment";
+import NotificationsPanel from "../components/Progress/NotificationsPanel";
+import AIInsights from "../components/Progress/AIInsights";
+import { calcOverallProgress } from "../utils/metrics";
 
 
 export default function ProjectTrackingDashboard() {

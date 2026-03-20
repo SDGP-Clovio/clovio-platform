@@ -7,7 +7,7 @@
  * - Risk indicators and recommendations
  */
 
-import CircularProgress from "../CircularProgress";
+import CircularProgress from "./CircularProgress";
 
 interface RiskAssessmentProps {
   riskScore?: number;

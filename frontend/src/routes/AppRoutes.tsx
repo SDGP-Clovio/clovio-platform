@@ -1,9 +1,9 @@
-import Dashboard from "./pages/Dashboard"
+import Dashboard from "../pages/Dashboard"
 import { HashRouter, Routes, Route } from "react-router-dom";
-import ProjectTrackingDashboard from "./pages/ProjectTrackingDashboard";
+import ProjectTrackingDashboard from "../pages/ProjectTrackingDashboard";
 
 
-function App() {
+export default function AppRoutes() {
 
   return (
     <HashRouter>
@@ -14,5 +14,4 @@ function App() {
     </HashRouter>
   )
 }
-
-export default App
+ //DELETE

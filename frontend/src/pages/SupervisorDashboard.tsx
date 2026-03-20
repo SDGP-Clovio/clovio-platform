@@ -1,14 +1,52 @@
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Sidebar from "../components/common/NavBar";
 import OverviewCards from "../components/Supervisor/OverviewCards";
 import ProjectsTable from "../components/Supervisor/ProjectsTable";
+import { getSupervisorProjects } from "../services/supervisor";
+import type { SupervisorProjectsResponse } from "../types/supervisor";
 
 export default function SupervisorDashboard() {
 	const navigate = useNavigate();
 
 	const [sidebarExpanded, setSidebarExpanded] = useState(false);
 	const [activeNav, setActiveNav] = useState(0);
+	const [data, setData] = useState<SupervisorProjectsResponse | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState("");
+
+	useEffect(() => {
+		let isMounted = true;
+
+		const load = async () => {
+			setLoading(true);
+			setError("");
+
+			try {
+				const response = await getSupervisorProjects();
+				if (isMounted) {
+					setData(response);
+				}
+			} catch {
+				if (isMounted) {
+					setError("Unable to load supervisor dashboard.");
+				}
+			} finally {
+				if (isMounted) {
+					setLoading(false);
+				}
+			}
+		};
+
+		load();
+
+		return () => {
+			isMounted = false;
+		};
+	}, []);
+
+	const latestProjects = useMemo(() => data?.projects.slice(0, 5) ?? [], [data]);
 
 	return (
 		<div className="flex h-screen bg-gray-100">
@@ -35,8 +73,18 @@ export default function SupervisorDashboard() {
 				</header>
 
 				<main className="flex-1 overflow-y-auto p-5 space-y-4">
-					{/* Data will be loaded here */}
-					<p className="text-sm text-gray-500">Loading dashboard...</p>
+					{loading && <p className="text-sm text-gray-500">Loading dashboard...</p>}
+					{error && <p className="text-sm text-red-600">{error}</p>}
+
+					{data && (
+						<>
+							<OverviewCards overview={data.overview} />
+							<ProjectsTable
+								projects={latestProjects}
+								onOpenProject={(projectId) => navigate(`/supervisor/project/${projectId}`)}
+							/>
+						</>
+					)}
 				</main>
 			</div>
 		</div>

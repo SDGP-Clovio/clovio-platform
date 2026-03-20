@@ -25,3 +25,18 @@ class SupervisorProjectsResponse(BaseModel):
     overview: SupervisorProjectOverview
     projects: List[SupervisorProjectItem]
 
+class SupervisorTimelineItem(BaseModel):
+    date: date
+    title: str
+    status: str
+
+
+class SupervisorProjectDetailResponse(BaseModel):
+    id: int
+    name: str
+    status: str
+    completion_percent: float = Field(..., ge=0.0, le=100.0)
+    risk_level: str
+    task_completion_total: int = Field(..., ge=0)
+    task_completion_done: int = Field(..., ge=0)
+    timeline: List[SupervisorTimelineItem]

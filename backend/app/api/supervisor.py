@@ -60,3 +60,12 @@ def get_supervisor_project_detail(
 ) -> SupervisorProjectDetailResponse:
     supervisor_id = _extract_user_id(current_user)
     return service.get_project_detail(supervisor_id=supervisor_id, project_id=project_id)
+
+@router.get("/project/{project_id}/contributions", response_model=SupervisorContributionsResponse)
+def get_supervisor_project_contributions(
+    project_id: int,
+    current_user: Mapping[str, Any] = Depends(get_supervisor_user),
+    service: SupervisorService = Depends(get_supervisor_service),
+) -> SupervisorContributionsResponse:
+    supervisor_id = _extract_user_id(current_user)
+    return service.get_contributions(supervisor_id=supervisor_id, project_id=project_id)

@@ -52,9 +52,58 @@ class SupervisorService:
             due_date=self._to_date(record.get("due_date")),
         )
 
-    def get_project_detail(self, supervisor_id: int, project_id: int):
-        raise NotImplementedError
+    def get_project_detail(self, supervisor_id: int, project_id: int) -> SupervisorProjectDetailResponse:
+        project = self.provider.get_project_by_id(project_id, supervisor_id)
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
 
+        tasks = list(self.provider.get_tasks(project_id))
+        total_tasks = len(tasks)
+        done_tasks = sum(1 for task in tasks if str(task.get("status", "")).lower() in {"done", "completed"})
+
+        timeline = self._build_timeline(project=project, tasks=tasks)
+
+        return SupervisorProjectDetailResponse(
+            id=int(project.get("id", project_id)),
+            name=str(project.get("name", "")),
+            status=str(project.get("status", "Unknown")),
+            completion_percent=self._to_float(project.get("completion_percent"), fallback=0.0),
+            risk_level=str(project.get("risk_level", "Medium")),
+            task_completion_total=total_tasks,
+            task_completion_done=done_tasks,
+            timeline=timeline,
+        )
+
+    def _build_timeline(
+        self,
+        project: Mapping[str, Any],
+        tasks: Sequence[Mapping[str, Any]],
+    ) -> list[SupervisorTimelineItem]:
+        timeline: list[SupervisorTimelineItem] = []
+
+        start_date = self._to_date(project.get("start_date"))
+        due_date = self._to_date(project.get("due_date"))
+
+        if start_date:
+            timeline.append(SupervisorTimelineItem(date=start_date, title="Project Started", status="completed"))
+
+        for task in tasks:
+            completed_at = self._to_date(task.get("completed_at"))
+            if completed_at:
+                timeline.append(
+                    SupervisorTimelineItem(
+                        date=completed_at,
+                        title=str(task.get("title", "Task update")),
+                        status=str(task.get("status", "done")),
+                    )
+                )
+
+        if due_date:
+            timeline.append(SupervisorTimelineItem(date=due_date, title="Project Due Date", status="upcoming"))
+
+        timeline.sort(key=lambda item: item.date)
+        return timeline
+    
     @staticmethod
     def _to_int(value: Any) -> Optional[int]:
         try:

@@ -12,6 +12,39 @@ class SupervisorService:
     def get_project_detail(self, supervisor_id: int, project_id: int):
         raise NotImplementedError
 
+    @staticmethod
+    def _to_int(value: Any) -> Optional[int]:
+        try:
+            if value is None:
+                return None
+            return int(value)
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _to_float(value: Any, fallback: float) -> float:
+        try:
+            if value is None:
+                return fallback
+            return float(value)
+        except (TypeError, ValueError):
+            return fallback
+
+    @staticmethod
+    def _to_date(value: Any) -> Optional[date]:
+        if value is None:
+            return None
+        if isinstance(value, date):
+            return value
+        if isinstance(value, datetime):
+            return value.date()
+        if isinstance(value, str):
+            try:
+                return date.fromisoformat(value)
+            except ValueError:
+                return None
+        return None
+    
     # ... other methods
 
 class SupervisorDataProvider(Protocol):

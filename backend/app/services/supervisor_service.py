@@ -4,7 +4,15 @@ from typing import Any, Mapping, Optional, Protocol, Sequence
 
 @dataclass
 class SupervisorService:
-    pass
+    provider: SupervisorDataProvider
+
+    def get_projects(self, supervisor_id: int):
+        raise NotImplementedError
+
+    def get_project_detail(self, supervisor_id: int, project_id: int):
+        raise NotImplementedError
+
+    # ... other methods
 
 class SupervisorDataProvider(Protocol):
     def get_projects_for_supervisor(self, supervisor_id: int) -> Sequence[Mapping[str, Any]]:

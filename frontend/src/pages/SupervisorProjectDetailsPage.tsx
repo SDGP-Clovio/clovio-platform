@@ -2,9 +2,24 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Sidebar from "../components/common/NavBar";
+import AlertsPanel from "../components/Supervisor/AlertsPanel";
+import ContributionChartCard from "../components/Supervisor/ContributionChartCard";
+import FairnessCard from "../components/Supervisor/FairnessCard";
 import ProgressChartCard from "../components/Supervisor/ProgressChartCard";
-import { getSupervisorProjectDetails } from "../services/supervisor";
-import type { SupervisorProjectDetailResponse } from "../types/supervisor";
+import ReportActions from "../components/Supervisor/ReportActions";
+import {
+	downloadSupervisorReport,
+	getSupervisorAlerts,
+	getSupervisorContributions,
+	getSupervisorFairness,
+	getSupervisorProjectDetails,
+} from "../services/supervisor";
+import type {
+	SupervisorAlertsResponse,
+	SupervisorContributionsResponse,
+	SupervisorFairnessResponse,
+	SupervisorProjectDetailResponse,
+} from "../types/supervisor";
 
 export default function SupervisorProjectDetailsPage() {
 	const navigate = useNavigate();
@@ -15,6 +30,9 @@ export default function SupervisorProjectDetailsPage() {
 	const [activeNav, setActiveNav] = useState(1);
 
 	const [project, setProject] = useState<SupervisorProjectDetailResponse | null>(null);
+	const [contributions, setContributions] = useState<SupervisorContributionsResponse | null>(null);
+	const [fairness, setFairness] = useState<SupervisorFairnessResponse | null>(null);
+	const [alerts, setAlerts] = useState<SupervisorAlertsResponse | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
 
@@ -32,10 +50,21 @@ export default function SupervisorProjectDetailsPage() {
 			setError("");
 
 			try {
-				const detailData = await getSupervisorProjectDetails(projectId);
-				if (isMounted) {
-					setProject(detailData);
+				const [detailData, contributionData, fairnessData, alertsData] = await Promise.all([
+					getSupervisorProjectDetails(projectId),
+					getSupervisorContributions(projectId),
+					getSupervisorFairness(projectId),
+					getSupervisorAlerts(projectId),
+				]);
+
+				if (!isMounted) {
+					return;
 				}
+
+				setProject(detailData);
+				setContributions(contributionData);
+				setFairness(fairnessData);
+				setAlerts(alertsData);
 			} catch {
 				if (isMounted) {
 					setError("Unable to load project details.");
@@ -82,13 +111,23 @@ export default function SupervisorProjectDetailsPage() {
 					{loading && <p className="text-sm text-gray-500">Loading project details...</p>}
 					{error && <p className="text-sm text-red-600">{error}</p>}
 
-					{project && (
+					{project && contributions && fairness && alerts && (
 						<div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
 							<div className="xl:col-span-7">
 								<ProgressChartCard project={project} />
 							</div>
+
 							<div className="xl:col-span-5 space-y-4">
-								{/* Other cards will be added later */}
+								<FairnessCard score={fairness.fairness_score} imbalance={fairness.imbalance_flag} />
+								<ReportActions onDownload={() => downloadSupervisorReport(projectId)} />
+							</div>
+
+							<div className="xl:col-span-7">
+								<ContributionChartCard contributions={contributions.contributions} />
+							</div>
+
+							<div className="xl:col-span-5">
+								<AlertsPanel alerts={alerts.alerts} />
 							</div>
 						</div>
 					)}

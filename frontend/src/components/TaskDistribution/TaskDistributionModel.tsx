@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { Milestone, Task } from "../types/index";
+import type { Milestone, Task } from "../../types/index";
 
 interface TaskDistributionModelProps {
     milestones: Milestone[];

@@ -1,9 +1,9 @@
 import { useState } from "react";
-import ProjectInputForm from "./components/DistributionPrompt";
-import TaskDistributionModal from "./components/TaskDistributionModel";
+import ProjectInputForm from "./components/TaskDistribution/DistributionPrompt";
+import TaskDistributionModal from "./components/TaskDistribution/TaskDistributionModel";
 import { useTaskEngine } from "./hooks/TaskEngine";
-import Sidebar from "./components/NavBar";
-import TopBar from "./components/TopBar";
+import Sidebar from "./components/TaskDistribution/NavBar";
+import TopBar from "./components/TaskDistribution/TopBar";
 import { USER } from "./types/mockData";
 
 export default function TaskEnginePage() {

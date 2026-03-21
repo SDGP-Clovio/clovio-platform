@@ -2,19 +2,25 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings } from 'lucide-react';
-import FairnessScoreWidget from '../components/Dashboard/FairnessScoreWidget';
-import KanbanBoard from '../components/Kanban/KanbanBoard';
 import TasksTabView from '../components/Tasks/TasksTabView';
 import Avatar from '../components/UI/Avatar';
 import MeetingScheduler from '../components/Meetings/MeetingScheduler';
 import NotificationDropdown from '../components/Notifications/NotificationDropdown';
 import TeamAlertsDropdown from '../components/Kanban/TeamAlertsDropdown';
 import ProjectSettings from '../components/Projects/ProjectSettings';
+import ProgressBanner from '../components/Progress/ProgressBanner';
+import ProgressStats from '../components/Progress/ProgressStats';
+import FairnessScore from '../components/Progress/FairnessScore';
+import AIInsights from '../components/Progress/AIInsights';
+import TeamPerformance from '../components/Progress/TeamPerformance';
+import RiskAssessment from '../components/Progress/RiskAssessment';
+import { MOCK_PLAN } from '../types/mockdata';
+import { calcOverallProgress } from '../utils/metrics';
 
 const ProjectDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { id: projectId } = useParams<{ id: string }>();
-    const { currentUser, projects, dashboardStats, setActiveProject } = useApp();
+    const { currentUser, projects, setActiveProject } = useApp();
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'settings'>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -171,87 +177,29 @@ const ProjectDashboard: React.FC = () => {
                 {/* Content */}
                 <div className="p-6">
                     {activeTab === 'overview' ? (
-                        <div className="space-y-6">
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {/* Active Tasks */}
-                                <div className="bg-white rounded-2xl p-5 border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <ListTodo className="w-5 h-5 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-extrabold text-slate-800 leading-none">{dashboardStats.activeTasks}</p>
-                                        <p className="text-xs text-slate-400 mt-1 font-medium">Active Tasks</p>
-                                    </div>
+                        <div className="space-y-5">
+                            {/* Progress Banner */}
+                            <ProgressBanner overallProgress={calcOverallProgress(MOCK_PLAN.milestones)} />
+
+                            {/* Progress Stats */}
+                            <ProgressStats plan={MOCK_PLAN} dueDate="2026-05-15" />
+
+                            {/* 3-Column Grid */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                                {/* Left — Fairness Score + AI Insights */}
+                                <div className="lg:col-span-3 flex flex-col gap-5">
+                                    <FairnessScore score={75} />
+                                    <AIInsights overallProgress={calcOverallProgress(MOCK_PLAN.milestones)} />
                                 </div>
 
-                                {/* Completed Tasks */}
-                                <div className="bg-white rounded-2xl p-5 border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-extrabold text-slate-800 leading-none">{dashboardStats.completedTasks}</p>
-                                        <p className="text-xs text-slate-400 mt-1 font-medium">Completed</p>
-                                    </div>
+                                {/* Middle — Team Performance */}
+                                <div className="lg:col-span-5">
+                                    <TeamPerformance plan={MOCK_PLAN} />
                                 </div>
 
-                                {/* Upcoming Meetings */}
-                                <div className="bg-white rounded-2xl p-5 border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <Calendar className="w-5 h-5 text-purple-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-extrabold text-slate-800 leading-none">{dashboardStats.upcomingMeetings}</p>
-                                        <p className="text-xs text-slate-400 mt-1 font-medium">Upcoming Meetings</p>
-                                    </div>
-                                </div>
-
-                                {/* Project Progress */}
-                                <div className="bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 rounded-2xl p-5 text-white hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-2xl font-extrabold leading-none">{dashboardStats.projectProgress}%</p>
-                                        <p className="text-xs text-purple-200 mt-1 font-medium">Project Progress</p>
-                                        {/* Mini progress bar */}
-                                        <div className="mt-2 h-1 bg-white/20 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-white rounded-full transition-all"
-                                                style={{ width: `${dashboardStats.projectProgress}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            {/* Fairness Score & Kanban Preview */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                                <div className="lg:col-span-1">
-                                    <FairnessScoreWidget />
-                                </div>
-
-                                <div className="lg:col-span-2">
-                                    <div className="bg-white rounded-xl border border-slate-100 p-6">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-slate-800">Quick Kanban View</h3>
-                                                <p className="text-sm text-slate-500 mt-0.5">Preview your tasks</p>
-                                            </div>
-                                            <button
-                                                onClick={() => setActiveTab('tasks')}
-                                                className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
-                                            >
-                                                View Full Board
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                                            </button>
-                                        </div>
-                                        <div className="max-h-96 overflow-y-auto">
-                                            <KanbanBoard />
-                                        </div>
-                                    </div>
+                                {/* Right — Risk Assessment */}
+                                <div className="lg:col-span-4">
+                                    <RiskAssessment riskScore={35} busFactorScore={65} />
                                 </div>
                             </div>
                         </div>

@@ -420,6 +420,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         addActivity,
         dashboardStats,
         updateDashboardStats,
+        projectChats,
+        getProjectChat,
+        sendProjectMessage,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

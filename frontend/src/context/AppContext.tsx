@@ -107,6 +107,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [fairnessMetrics] = useState<FairnessMetrics>(mockFairnessMetrics);
     const [activities, setActivities] = useState<Activity[]>(mockActivities);
     const [dashboardStats, setDashboardStats] = useState<DashboardStats>(mockDashboardStats);
+    const [projectChats, setProjectChats] = useState<ProjectChat[]>(mockProjectChats);
 
     // Project Actions
     const createProject = (projectData: {

@@ -23,6 +23,15 @@ export default function CircularProgress({
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (value / 100) * circumference;
 
+  let textSizeClass = "text-base font-black";
+  if (size >= 160) {
+    textSizeClass = "text-4xl font-extrabold";
+  } else if (size >= 120) {
+    textSizeClass = "text-2xl font-bold";
+  } else if (size >= 80) {
+    textSizeClass = "text-lg font-bold";
+  }
+
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative" style={{ width: size, height: size }}>
@@ -59,7 +68,7 @@ export default function CircularProgress({
         
         {/* Center text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-base font-black" style={{ color }}>{value}%</p>
+          <p className={textSizeClass} style={{ color }}>{value}%</p>
           {label && <p className="text-xs text-gray-600 text-center font-semibold">{label}</p>}
         </div>
       </div>

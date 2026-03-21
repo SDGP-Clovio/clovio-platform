@@ -34,7 +34,7 @@ export default function ProgressBanner({
             value={overallProgress}
             size={180}
             color={color}
-            label=""
+            label="DONE"
           />
         </div>
       </div>

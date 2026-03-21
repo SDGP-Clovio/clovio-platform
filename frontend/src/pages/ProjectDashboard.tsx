@@ -55,6 +55,7 @@ const ProjectDashboard: React.FC = () => {
         { id: 'overview',  label: 'Dashboard',    icon: LayoutDashboard },
         { id: 'kanban',    label: 'Kanban Board',  icon: ListTodo },
         { id: 'meetings',  label: 'Meetings',      icon: Calendar },
+        { id: 'chat', label: 'Chat', icon: MessageSquare },
         { id: 'settings',  label: 'Settings',      icon: Settings },
     ];
 

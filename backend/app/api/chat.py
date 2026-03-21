@@ -228,3 +228,110 @@ def send_project_message(
         content=msg.content,
         created_at=msg.created_at,
     )
+
+
+@router.websocket("/ws/projects/{project_id}")
+async def ws_project_chat(project_id: int, websocket: WebSocket, token: str = Query(...)):
+    db = SessionLocal()
+    conversation_id = None
+    user = None
+    try:
+        user = _user_from_token(db, token)
+        conv = get_conversation_by_project(db, project_id)
+        conversation_id = conv.id
+
+        if not is_participant(db, conversation_id, user.id):
+            await websocket.close(code=4403, reason="Forbidden")
+            return
+
+        await manager.connect_group(conversation_id, websocket)
+
+        while True:
+            incoming = await websocket.receive_json()
+            content = str(incoming.get("content", "")).strip()
+            if not content:
+                continue
+
+            msg = Message(
+                conversation_id=conversation_id,
+                sender_id=user.id,
+                content=content,
+            )
+            db.add(msg)
+            db.commit()
+            db.refresh(msg)
+
+            await manager.broadcast_group(
+                conversation_id,
+                {
+                    "type": "group_message",
+                    "id": msg.id,
+                    "conversation_id": conversation_id,
+                    "sender_id": user.id,
+                    "sender_username": user.username,
+                    "content": msg.content,
+                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
+                },
+            )
+    except WebSocketDisconnect:
+        if conversation_id is not None:
+            await manager.disconnect_group(conversation_id, websocket)
+    except Exception:
+        try:
+            await websocket.close(code=1011, reason="Server error")
+        except Exception:
+            pass
+    finally:
+        db.close()
+
+
+@router.websocket("/ws/dm/{dm_id}")
+async def ws_dm_chat(dm_id: int, websocket: WebSocket, token: str = Query(...)):
+    db = SessionLocal()
+    user = None
+    try:
+        user = _user_from_token(db, token)
+
+        if not is_dm_participant(db, dm_id, user.id):
+            await websocket.close(code=4403, reason="Forbidden")
+            return
+
+        await manager.connect_dm(dm_id, websocket)
+
+        while True:
+            incoming = await websocket.receive_json()
+            content = str(incoming.get("content", "")).strip()
+            if not content:
+                continue
+
+            msg = DirectMessage(
+                direct_conversation_id=dm_id,
+                sender_id=user.id,
+                content=content,
+            )
+            db.add(msg)
+            db.commit()
+            db.refresh(msg)
+
+            await manager.broadcast_dm(
+                dm_id,
+                {
+                    "type": "dm_message",
+                    "id": msg.id,
+                    "dm_id": dm_id,
+                    "sender_id": user.id,
+                    "sender_username": user.username,
+                    "content": msg.content,
+                    "created_at": msg.created_at.isoformat() if msg.created_at else None,
+                },
+            )
+    except WebSocketDisconnect:
+        await manager.disconnect_dm(dm_id, websocket)
+    except Exception:
+        try:
+            await websocket.close(code=1011, reason="Server error")
+        except Exception:
+            pass
+    finally:
+        db.close()
+

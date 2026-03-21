@@ -27,6 +27,10 @@ const validateSignUpForm = (values: SignUpFormValues): SignUpFormErrors => {
 		errors.email = 'Enter a valid email address.';
 	}
 
+	if (!values.role) {
+		errors.role = 'Please select a role.';
+	}
+
 	if (!values.password.trim()) {
 		errors.password = 'Password is required.';
 	}

@@ -2,19 +2,25 @@ import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings } from 'lucide-react';
-import FairnessScoreWidget from '../components/Dashboard/FairnessScoreWidget';
-import KanbanBoard from '../components/Kanban/KanbanBoard';
 import TasksTabView from '../components/Tasks/TasksTabView';
 import Avatar from '../components/UI/Avatar';
 import MeetingScheduler from '../components/Meetings/MeetingScheduler';
 import NotificationDropdown from '../components/Notifications/NotificationDropdown';
 import TeamAlertsDropdown from '../components/Kanban/TeamAlertsDropdown';
 import ProjectSettings from '../components/Projects/ProjectSettings';
+import ProgressBanner from '../components/Progress/ProgressBanner';
+import ProgressStats from '../components/Progress/ProgressStats';
+import FairnessScore from '../components/Progress/FairnessScore';
+import AIInsights from '../components/Progress/AIInsights';
+import TeamPerformance from '../components/Progress/TeamPerformance';
+import RiskAssessment from '../components/Progress/RiskAssessment';
+import { MOCK_PLAN } from '../types/mockData';
+import { calcOverallProgress } from '../utils/metrics';
 
 const ProjectDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { id: projectId } = useParams<{ id: string }>();
-    const { currentUser, projects, dashboardStats, setActiveProject } = useApp();
+    const { currentUser, projects, setActiveProject } = useApp();
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'settings'>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -69,21 +75,19 @@ const ProjectDashboard: React.FC = () => {
 
             {/* Sidebar */}
             <aside
-                className={`fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 z-40 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+                className={`fixed left-0 top-0 h-screen w-64 bg-[#1a1b2e] text-white z-40 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                     }`}
             >
                 {/* Logo */}
-                <div className="p-6 border-b border-slate-200">
-                    <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-clovio-purple rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-purple-200">
-                            C
-                        </div>
-                        <span className="text-xl font-bold tracking-tight">Clovio</span>
+                <div className="flex items-center gap-2.5 px-6 pt-6 pb-5">
+                    <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center font-bold text-white text-sm shadow">
+                        C
                     </div>
+                    <span className="text-lg font-bold tracking-tight text-white">Clovio</span>
                 </div>
 
                 {/* Navigation */}
-                <nav className="p-4 space-y-2">
+                <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto">
                     {navItems.map((item) => {
                         const isActive = activeTab === item.id;
                         const Icon = item.icon;
@@ -95,57 +99,44 @@ const ProjectDashboard: React.FC = () => {
                                     setActiveTab(item.id as 'overview' | 'tasks' | 'meetings' | 'settings');
                                     setSidebarOpen(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                    ? 'bg-clovio-purple text-white shadow-lg shadow-purple-200'
-                                    : 'text-slate-600 hover:bg-slate-50'
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${isActive
+                                    ? 'bg-purple-600/20 text-purple-300 font-semibold'
+                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
                                     }`}
                             >
-                                <Icon className="w-5 h-5" />
-                                <span className="font-medium">{item.label}</span>
+                                <Icon className="w-4 h-4 flex-shrink-0" />
+                                <span className="flex-1 text-left">{item.label}</span>
                             </button>
                         );
                     })}
                 </nav>
 
                 {/* Back to MD + User Profile */}
-                <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200">
+                <div className="px-4 py-4 border-t border-white/5">
                     {/* Back to MD */}
-                    <div className="px-4 pt-3 pb-2">
+                    <div className="pb-3">
                         <button
                             onClick={() => navigate('/dashboard')}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-all"
                         >
-                            <ArrowLeft className="w-5 h-5" />
-                            <span className="font-medium">Back to Dashboard</span>
+                            <ArrowLeft className="w-4 h-4 flex-shrink-0" />
+                            <span className="flex-1 text-left">Back to Dashboard</span>
                         </button>
                     </div>
 
-                    {/* Divider */}
-                    <div className="mx-4 border-t border-slate-100" />
-
                     {/* User profile */}
-                    <div className="p-4">
-                        {currentUser && (
-                            <div>
-                                <div className="flex items-center gap-3 mb-3">
-                                    <Avatar name={currentUser.name} size="md" online />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-slate-800 truncate">
-                                            {currentUser.name}
-                                        </p>
-                                        <p className="text-xs text-slate-500 truncate">{currentUser.email}</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={handleLogout}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
-                                >
-                                    <LogOut className="w-4 h-4" />
-                                    Logout
-                                </button>
+                    {currentUser && (
+                        <div className="flex items-center gap-2.5 pt-2 border-t border-white/5">
+                            <Avatar name={currentUser.name} size="sm" online />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-white truncate">{currentUser.name}</p>
+                                <p className="text-[10px] text-slate-400 truncate">{currentUser.email}</p>
                             </div>
-                        )}
-                    </div>
+                            <button onClick={handleLogout} className="p-1 text-slate-500 hover:text-red-400 transition-colors" title="Logout">
+                                <LogOut className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </aside>
 
@@ -155,8 +146,9 @@ const ProjectDashboard: React.FC = () => {
                 <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-800">
-                                {activeTab === 'overview' ? 'Project Dashboard' : activeTab === 'tasks' ? 'Tasks' : activeTab === 'meetings' ? 'Meetings' : 'Project Settings'}
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Project</p>
+                            <h1 className="text-2xl font-extrabold text-slate-800">
+                                {activeTab === 'overview' ? 'Dashboard' : activeTab === 'tasks' ? 'Tasks' : activeTab === 'meetings' ? 'Meetings' : 'Settings'}
                             </h1>
                             <p className="text-slate-500 mt-0.5 text-sm">{project.name}</p>
                         </div>
@@ -171,87 +163,29 @@ const ProjectDashboard: React.FC = () => {
                 {/* Content */}
                 <div className="p-6">
                     {activeTab === 'overview' ? (
-                        <div className="space-y-6">
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                {/* Active Tasks */}
-                                <div className="bg-white rounded-2xl p-5 border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <ListTodo className="w-5 h-5 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-extrabold text-slate-800 leading-none">{dashboardStats.activeTasks}</p>
-                                        <p className="text-xs text-slate-400 mt-1 font-medium">Active Tasks</p>
-                                    </div>
+                        <div className="space-y-5">
+                            {/* Progress Banner */}
+                            <ProgressBanner overallProgress={calcOverallProgress(MOCK_PLAN.milestones)} />
+
+                            {/* Progress Stats */}
+                            <ProgressStats plan={MOCK_PLAN} dueDate="2026-05-15" />
+
+                            {/* 3-Column Grid */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+                                {/* Left — Fairness Score + AI Insights */}
+                                <div className="lg:col-span-3 flex flex-col gap-5">
+                                    <FairnessScore score={75} />
+                                    <AIInsights overallProgress={calcOverallProgress(MOCK_PLAN.milestones)} />
                                 </div>
 
-                                {/* Completed Tasks */}
-                                <div className="bg-white rounded-2xl p-5 border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-extrabold text-slate-800 leading-none">{dashboardStats.completedTasks}</p>
-                                        <p className="text-xs text-slate-400 mt-1 font-medium">Completed</p>
-                                    </div>
+                                {/* Middle — Team Performance */}
+                                <div className="lg:col-span-5">
+                                    <TeamPerformance plan={MOCK_PLAN} />
                                 </div>
 
-                                {/* Upcoming Meetings */}
-                                <div className="bg-white rounded-2xl p-5 border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <Calendar className="w-5 h-5 text-purple-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-extrabold text-slate-800 leading-none">{dashboardStats.upcomingMeetings}</p>
-                                        <p className="text-xs text-slate-400 mt-1 font-medium">Upcoming Meetings</p>
-                                    </div>
-                                </div>
-
-                                {/* Project Progress */}
-                                <div className="bg-gradient-to-br from-purple-500 via-purple-600 to-indigo-600 rounded-2xl p-5 text-white hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-2xl font-extrabold leading-none">{dashboardStats.projectProgress}%</p>
-                                        <p className="text-xs text-purple-200 mt-1 font-medium">Project Progress</p>
-                                        {/* Mini progress bar */}
-                                        <div className="mt-2 h-1 bg-white/20 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-white rounded-full transition-all"
-                                                style={{ width: `${dashboardStats.projectProgress}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-
-                            {/* Fairness Score & Kanban Preview */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                                <div className="lg:col-span-1">
-                                    <FairnessScoreWidget />
-                                </div>
-
-                                <div className="lg:col-span-2">
-                                    <div className="bg-white rounded-xl border border-slate-100 p-6">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div>
-                                                <h3 className="text-lg font-bold text-slate-800">Quick Kanban View</h3>
-                                                <p className="text-sm text-slate-500 mt-0.5">Preview your tasks</p>
-                                            </div>
-                                            <button
-                                                onClick={() => setActiveTab('tasks')}
-                                                className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
-                                            >
-                                                View Full Board
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                                            </button>
-                                        </div>
-                                        <div className="max-h-96 overflow-y-auto">
-                                            <KanbanBoard />
-                                        </div>
-                                    </div>
+                                {/* Right — Risk Assessment */}
+                                <div className="lg:col-span-4">
+                                    <RiskAssessment riskScore={35} busFactorScore={65} />
                                 </div>
                             </div>
                         </div>

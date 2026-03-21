@@ -77,8 +77,8 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
             {/* ── Top Bar: Header, Toggle, and Wizard Route ── */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-100">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">Project Tasks</h2>
-                    <p className="text-sm text-slate-500 mt-1">Manage, distribute, and track progress.</p>
+                    <h2 className="text-base font-bold text-slate-800">Project Tasks</h2>
+                    <p className="text-xs text-slate-500 mt-1">Manage, distribute, and track progress.</p>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -129,8 +129,8 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                             {/* Milestone Header */}
                             <div className="flex items-start justify-between mb-4">
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-800">{milestone.title}</h3>
-                                    <p className="text-sm text-slate-500 mt-0.5">{milestone.description}</p>
+                                    <h3 className="text-sm font-bold text-slate-800">{milestone.title}</h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">{milestone.description}</p>
                                 </div>
                                 <div className="flex flex-col items-end">
                                     <div className="flex items-center gap-1.5 text-slate-400 bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm">

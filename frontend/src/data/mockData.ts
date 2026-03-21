@@ -83,50 +83,57 @@ export const mockUsers: User[] = [
     },
 ];
 
-// Mock Projects
 export const mockProjects: Project[] = [
     {
         id: 'p1',
         name: 'Clovio - AI Collaboration Platform',
+        module: 'SE4010', // ✅ ADD
+        tag: 'AI Project', // ✅ ADD
         description: 'An AI-powered platform to fix the free-rider problem in academic group projects.',
         supervisorId: 's1',
         teamMembers: ['u1', 'u2', 'u3', 'u4'],
         createdAt: new Date('2026-01-15'),
         deadline: new Date('2026-05-01'),
-        fairnessScore: 0.18, // Excellent fairness (Gini coefficient)
+        fairnessScore: 0.18,
         status: 'active',
     },
     {
         id: 'p2',
         name: 'E-Commerce Mobile App',
-        description: 'Cross-platform mobile app for online shopping with payment integration and inventory management.',
+        module: 'SE4020',
+        tag: 'Mobile Dev',
+        description: 'Cross-platform mobile app...',
         supervisorId: 's1',
         teamMembers: ['u1', 'u2', 'u3'],
         createdAt: new Date('2026-01-20'),
         deadline: new Date('2026-04-15'),
-        fairnessScore: 0.42, // Warning level - unequal distribution
+        fairnessScore: 0.42,
         status: 'active',
     },
     {
         id: 'p3',
         name: 'Smart Campus Navigation',
-        description: 'Indoor navigation system using AR and IoT sensors to help students find classrooms and facilities.',
+        module: 'SE4030',
+        tag: 'IoT',
+        description: 'Indoor navigation system...',
         supervisorId: 's1',
         teamMembers: ['u2', 'u4'],
         createdAt: new Date('2026-02-01'),
         deadline: new Date('2026-04-30'),
-        fairnessScore: 0.15, // Excellent fairness
+        fairnessScore: 0.15,
         status: 'active',
     },
     {
         id: 'p4',
         name: 'Climate Data Visualization',
-        description: 'Interactive dashboard for analyzing and visualizing climate change data using machine learning.',
+        module: 'SE4040',
+        tag: 'Data Science',
+        description: 'Interactive dashboard...',
         supervisorId: 's1',
         teamMembers: ['u3', 'u4'],
         createdAt: new Date('2025-11-10'),
         deadline: new Date('2026-01-20'),
-        fairnessScore: 0.22, // Good fairness
+        fairnessScore: 0.22,
         status: 'completed',
     },
 ];

@@ -64,3 +64,19 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId }) => {
                     </div>
                 ))}
             </div>
+
+            <div className="flex-1 overflow-y-auto p-5 bg-slate-50/40 space-y-3">
+                {chat.messages.map((message) => {
+                    const sender = users.find((u) => u.id === message.senderId);
+                    const isMine = currentUser?.id === message.senderId;
+                    const isSystem = message.type === 'system';
+
+                    if (isSystem) {
+                        return (
+                            <div key={message.id} className="flex justify-center">
+                                <div className="text-xs text-slate-500 bg-slate-200/70 rounded-full px-3 py-1">
+                                    {message.content}
+                                </div>
+                            </div>
+                        );
+                    }

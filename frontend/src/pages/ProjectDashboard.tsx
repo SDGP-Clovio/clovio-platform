@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings, MessageSquare } from 'lucide-react';
 import FairnessScoreWidget from '../components/Dashboard/FairnessScoreWidget';
 import KanbanBoard from '../components/Kanban/KanbanBoard';
 import Avatar from '../components/UI/Avatar';
@@ -9,7 +9,6 @@ import MeetingScheduler from '../components/Meetings/MeetingScheduler';
 import NotificationDropdown from '../components/Notifications/NotificationDropdown';
 import TeamAlertsDropdown from '../components/Kanban/TeamAlertsDropdown';
 import ProjectSettings from '../components/Projects/ProjectSettings';
-import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings, MessageSquare } from 'lucide-react';
 import ProjectChatBox from '../components/Chat/ProjectChatBox';
 
 const ProjectDashboard: React.FC = () => {
@@ -280,6 +279,9 @@ const ProjectDashboard: React.FC = () => {
                             projectId={project.id}
                             projectMemberIds={project.teamMembers}
                         />
+                    ) : activeTab === 'chat' ? (
+                        // Chat Tab
+                        <ProjectChatBox projectId={project.id} />
                     ) : (
                         // Settings Tab
                         <ProjectSettings project={project} />

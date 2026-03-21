@@ -4,7 +4,6 @@ import type {
     Task,
     Meeting,
     FairnessMetrics,
-    ContributionData,
     Activity,
     GroupOverview,
     BusFactorAlert,

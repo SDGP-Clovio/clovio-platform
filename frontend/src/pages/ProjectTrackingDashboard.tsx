@@ -2,8 +2,9 @@ import { useParams } from "react-router-dom";
 import TopBar from "../components/Progress/TopBarProject";
 import Sidebar from "../components/common/NavBar";
 import { useState } from "react";
+import { useApp } from "../context/AppContext";
 
-import { PROJECTS, MOCK_PLAN } from "../types/mockData";
+import { MOCK_PLAN } from "../types/mockData";
 import ProgressBanner from "../components/Progress/ProgressBanner";
 import ProgressStats from "../components/Progress/ProgressStats";
 import FairnessScore from "../components/Progress/FairnessScore";
@@ -17,11 +18,12 @@ import { calcOverallProgress } from "../utils/metrics";
 export default function ProjectTrackingDashboard() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [activeNav, setActiveNav] = useState(0);
+  const { projects } = useApp();
 
   const { id } = useParams();
 
-  const project = PROJECTS.find(
-    (p) => p.id === Number(id)
+  const project = projects.find(
+    (p) => p.id === id
   );
 
   if (!project) return <div>Project not found</div>;

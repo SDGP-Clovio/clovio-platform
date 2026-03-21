@@ -55,6 +55,8 @@ export interface Task {
     createdBy: string; // User ID
     aiAssignmentReason?: string; // Explainable AI feature
     dueDate?: Date;
+    estimatedHours?: number;
+    actualHours?: number;
     createdAt: Date;
     updatedAt: Date;
     tags?: string[];

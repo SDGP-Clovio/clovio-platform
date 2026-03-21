@@ -122,6 +122,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const newProject: Project = {
             id: projectId,
             name: projectData.name,
+            module: projectData.courseName || 'General',
+            tag: 'active',
             description: projectData.description,
             status: 'active',
             fairnessScore: 0,

@@ -241,7 +241,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
             <TaskDistributionWizard
                 isOpen={isWizardOpen}
                 onClose={() => setIsWizardOpen(false)}
-                milestones={milestones as Milestone[]}
+                projectId={projectId}
             />
         </div>
     );

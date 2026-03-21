@@ -176,3 +176,11 @@ export interface ChatMessage {
     createdAt: Date;
     type: 'text' | 'system';
 }
+
+export interface ProjectChat {
+    id: string;
+    projectId: string;
+    memberIds: string[]; // User IDs in the project group chat
+    createdAt: Date;
+    messages: ChatMessage[];
+}

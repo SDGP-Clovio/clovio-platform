@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { Menu, X } from "lucide-react";
 
-import Sidebar from "../components/common/NavBar";
+import SupervisorSidebar from "../components/Supervisor/SupervisorSidebar";
 import AlertsPanel from "../components/Supervisor/AlertsPanel";
 import ContributionChartCard from "../components/Supervisor/ContributionChartCard";
 import FairnessCard from "../components/Supervisor/FairnessCard";
@@ -24,8 +25,7 @@ export default function SupervisorProjectDetailsPage() {
 	const { id } = useParams();
 	const projectId = Number(id);
 
-	const [sidebarExpanded, setSidebarExpanded] = useState(false);
-	const [activeNav, setActiveNav] = useState(1);
+	const [sidebarOpen, setSidebarOpen] = useState(false);
 
 	const [project, setProject] = useState<SupervisorProjectDetailResponse | null>(null);
 	const [contributions, setContributions] = useState<SupervisorContributionsResponse | null>(null);
@@ -82,30 +82,33 @@ export default function SupervisorProjectDetailsPage() {
 	}, [projectId]);
 
 	return (
-		<div className="flex h-screen bg-gray-100">
-			<Sidebar
-				expanded={sidebarExpanded}
-				onToggle={() => setSidebarExpanded((prev) => !prev)}
-				activeIndex={activeNav}
-				onNavClick={setActiveNav}
-			/>
+		<div className="min-h-screen bg-clovio-bg">
+			{/* Mobile Sidebar Toggle */}
+			<button
+				onClick={() => setSidebarOpen(!sidebarOpen)}
+				className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white rounded-xl shadow-lg"
+			>
+				{sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+			</button>
 
-			<div className="flex-1 flex flex-col overflow-hidden">
-				<header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+			<SupervisorSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+
+			<main className="lg:ml-64 min-h-screen bg-slate-50/30 flex flex-col">
+				<header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
 					<div>
-						<p className="text-xs uppercase tracking-wider text-gray-500">Supervisor</p>
-						<h1 className="text-2xl font-extrabold text-[#1A1A1A]">Project Details</h1>
+						<p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Supervisor</p>
+						<h1 className="text-2xl font-extrabold text-slate-800">Project Details</h1>
 					</div>
 
 					<button
 						onClick={() => navigate("/supervisor/projects")}
-						className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-700"
+						className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm"
 					>
 						Back to Projects
 					</button>
 				</header>
 
-				<main className="flex-1 overflow-y-auto p-5 space-y-4">
+				<div className="flex-1 p-6 space-y-6">
 					{loading && <p className="text-sm text-gray-500">Loading project details...</p>}
 					{error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -125,8 +128,8 @@ export default function SupervisorProjectDetailsPage() {
 							</div>
 						</div>
 					)}
-				</main>
-			</div>
+				</div>
+			</main>
 		</div>
 	);
 }

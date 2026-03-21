@@ -473,3 +473,47 @@ export const mockAvailability: AvailabilitySlot[] = [
     { userId: 'u4', dayOfWeek: 4, startHour: 9,  endHour: 12 },
     { userId: 'u4', dayOfWeek: 5, startHour: 9,  endHour: 11 },
 ];
+
+
+export const mockProjectChats: ProjectChat[] = [
+    {
+        id: 'chat-p1',
+        projectId: 'p1',
+        memberIds: ['u1', 'u2', 'u3', 'u4'],
+        createdAt: new Date('2026-01-15T09:00:00'),
+        messages: [
+            {
+                id: 'msg-p1-1',
+                projectId: 'p1',
+                senderId: 'u1',
+                content: 'Welcome everyone. This is our project group chat.',
+                createdAt: new Date('2026-01-15T09:05:00'),
+                type: 'system',
+            },
+            {
+                id: 'msg-p1-2',
+                projectId: 'p1',
+                senderId: 'u2',
+                content: 'Great. I can start on backend API setup today.',
+                createdAt: new Date('2026-01-15T09:12:00'),
+                type: 'text',
+            },
+        ],
+    },
+    {
+        id: 'chat-p2',
+        projectId: 'p2',
+        memberIds: ['u1', 'u2', 'u3'],
+        createdAt: new Date('2026-01-20T10:00:00'),
+        messages: [
+            {
+                id: 'msg-p2-1',
+                projectId: 'p2',
+                senderId: 'u1',
+                content: 'Team chat is ready. Please share daily updates here.',
+                createdAt: new Date('2026-01-20T10:10:00'),
+                type: 'system',
+            },
+        ],
+    },
+];

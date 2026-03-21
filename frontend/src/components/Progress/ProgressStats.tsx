@@ -82,26 +82,21 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
           <h3 className="text-base font-bold text-slate-800">Execution Metrics</h3>
         </div>
       </div>
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-center relative">
+      <div className="flex-1 grid grid-cols-2 gap-y-8 gap-x-6 items-center flex-grow mt-2">
         {stats.map((stat, idx) => (
-          <div key={idx} className="flex flex-col relative group px-2">
-            {/* Divider lines between elements for LG screens */}
-            {idx !== 0 && (
-                <div className="hidden lg:block absolute left-0 top-[10%] bottom-[10%] w-px bg-slate-100" />
-            )}
-            
-            <div className="flex items-center gap-1.5 mb-2">
-              <div className={`w-5 h-5 flex items-center justify-center flex-shrink-0`}>
+          <div key={idx} className="flex flex-col group">
+            <div className="flex items-center gap-2 mb-2 text-slate-500">
+              <div className={`w-6 h-6 flex items-center justify-center flex-shrink-0`}>
                 {stat.icon}
               </div>
-              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">{stat.label}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider">{stat.label}</p>
             </div>
 
             {/* Value */}
             <div className="flex items-baseline gap-1 mt-1">
               <p className={`text-2xl font-extrabold text-slate-800`}>{stat.value}</p>
               {(stat.total || stat.unit) && (
-                <p className="text-xs font-semibold text-slate-400">
+                <p className="text-sm font-semibold text-slate-400">
                   {stat.total ? `/ ${stat.total}` : ''} {stat.unit || ''}
                 </p>
               )}
@@ -109,7 +104,7 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
 
             {/* Subtext */}
             {stat.subtext && (
-              <p className="text-[11px] text-slate-400 mt-2 font-medium truncate">{stat.subtext}</p>
+              <p className="text-xs text-slate-400 mt-1 font-medium truncate">{stat.subtext}</p>
             )}
           </div>
         ))}

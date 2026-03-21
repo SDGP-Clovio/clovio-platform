@@ -1,5 +1,6 @@
 import StatusIndicator from "./StatusIndicator";
 import { Target } from "lucide-react";
+import CircularProgress from "./CircularProgress";
 
 export default function ProgressBanner({
   overallProgress,
@@ -15,12 +16,7 @@ export default function ProgressBanner({
   };
 
   const status = getStatus(overallProgress);
-
-  const radius = 64;
-  const strokeWidth = 14;
-  const normalizedRadius = radius - strokeWidth * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (overallProgress / 100) * circumference;
+  const color = status === "on-track" ? "#7C3AED" : status === "at-risk" ? "#F59E0B" : "#EF4444";
 
   return (
     <div className={`bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex flex-col h-full ${className}`}>
@@ -32,36 +28,14 @@ export default function ProgressBanner({
         <StatusIndicator status={status} />
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center relative">
-        <svg height={radius * 2} width={radius * 2} className="-rotate-90">
-          <circle
-            stroke="#f1f5f9"
-            fill="transparent"
-            strokeWidth={strokeWidth}
-            r={normalizedRadius}
-            cx={radius}
-            cy={radius}
+      <div className="flex-1 flex flex-col items-center justify-center relative pb-2">
+        <div style={{ transform: "scale(1.15)", marginTop: 8, marginBottom: 8 }}>
+          <CircularProgress
+            value={overallProgress}
+            size={130}
+            color={color}
+            label=""
           />
-          <circle
-            stroke="url(#progressGradient)"
-            fill="transparent"
-            strokeWidth={strokeWidth}
-            strokeDasharray={circumference + ' ' + circumference}
-            style={{ strokeDashoffset, strokeLinecap: 'round', transition: 'stroke-dashoffset 1s ease-in-out' }}
-            r={normalizedRadius}
-            cx={radius}
-            cy={radius}
-          />
-          <defs>
-            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#B179DF" />
-              <stop offset="100%" stopColor="#85D5C8" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-extrabold text-slate-800">{overallProgress}%</span>
-          <span className="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mt-0.5">Done</span>
         </div>
       </div>
     </div>

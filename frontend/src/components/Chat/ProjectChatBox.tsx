@@ -22,3 +22,14 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId }) => {
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chat?.messages.length]);
+
+    const handleSend = () => {
+        if (!chat) return;
+        sendProjectMessage(projectId, draft);
+        setDraft('');
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        handleSend();
+    };

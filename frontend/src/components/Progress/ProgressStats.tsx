@@ -10,7 +10,6 @@
 
 import type { ProjectPlan } from "../../types";
 import { calcTaskCompletion, calcMilestoneCompletion, calcDaysRemaining, predictCompletionDate } from "../../utils/metrics";
-import { Activity } from "lucide-react";
 
 interface ProgressStatsProps {
   plan: ProjectPlan;
@@ -75,25 +74,18 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
   ];
 
   return (
-    <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm h-full flex flex-col">
-      <div className="flex items-center mb-6">
-        <div className="flex items-center gap-2">
-          <Activity className="w-5 h-5 text-indigo-600" />
-          <h3 className="text-base font-bold text-slate-800">Execution Metrics</h3>
-        </div>
-      </div>
-      <div className="flex-1 grid grid-cols-2 gap-y-8 gap-x-6 items-center flex-grow mt-2">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="flex flex-col group">
-            <div className="flex items-center gap-2 mb-2 text-slate-500">
-              <div className={`w-6 h-6 flex items-center justify-center flex-shrink-0`}>
+    <div className="h-full grid grid-cols-2 gap-5">
+      {stats.map((stat, idx) => (
+        <div key={idx} className="flex flex-col bg-white rounded-2xl border border-slate-100 p-5 shadow-sm transition-shadow hover:shadow-md flex-grow">
+          <div className="flex items-center gap-2 mb-4 text-slate-500">
+            <div className={`w-8 h-8 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center flex-shrink-0`}>
                 {stat.icon}
               </div>
               <p className="text-xs font-semibold uppercase tracking-wider">{stat.label}</p>
             </div>
 
             {/* Value */}
-            <div className="flex items-baseline gap-1 mt-1">
+            <div className="flex items-baseline gap-1.5 mt-auto">
               <p className={`text-2xl font-extrabold text-slate-800`}>{stat.value}</p>
               {(stat.total || stat.unit) && (
                 <p className="text-sm font-semibold text-slate-400">
@@ -104,11 +96,10 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
 
             {/* Subtext */}
             {stat.subtext && (
-              <p className="text-xs text-slate-400 mt-1 font-medium truncate">{stat.subtext}</p>
+              <p className="text-xs text-slate-400 mt-1.5 font-medium truncate">{stat.subtext}</p>
             )}
           </div>
         ))}
-      </div>
     </div>
   );
 }

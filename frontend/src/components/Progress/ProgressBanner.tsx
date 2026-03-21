@@ -28,11 +28,11 @@ export default function ProgressBanner({
         <StatusIndicator status={status} />
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center relative pb-2">
-        <div style={{ transform: "scale(1.15)", marginTop: 8, marginBottom: 8 }}>
+      <div className="flex-1 flex flex-col items-center justify-center relative pb-2 pt-2">
+        <div style={{ marginTop: 8, marginBottom: 8 }}>
           <CircularProgress
             value={overallProgress}
-            size={130}
+            size={180}
             color={color}
             label=""
           />

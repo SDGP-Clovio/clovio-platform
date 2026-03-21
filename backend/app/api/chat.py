@@ -167,3 +167,64 @@ def send_dm_message(
         content=msg.content,
         created_at=msg.created_at,
     )
+
+
+@router.get("/projects/{project_id}/messages", response_model=list[MessageOut])
+def list_project_messages(
+    project_id: int,
+    db: Session = Depends(get_db),
+    username: str = Depends(get_current_user),
+):
+    current = _current_db_user(db, username)
+    conv = get_conversation_by_project(db, project_id)
+
+    if not is_participant(db, conv.id, current.id):
+        raise HTTPException(status_code=403, detail="Not a participant in this project chat")
+
+    msgs = get_recent_messages(db, conv.id, limit=100)
+    msgs = list(reversed(msgs))
+
+    return [
+        MessageOut(
+            id=m.id,
+            sender_id=m.sender_id,
+            sender_username=(m.sender.username if m.sender else "unknown"),
+            content=m.content,
+            created_at=m.created_at,
+        )
+        for m in msgs
+    ]
+
+
+@router.post("/projects/{project_id}/messages", response_model=MessageOut)
+def send_project_message(
+    project_id: int,
+    payload: SendMessageRequest,
+    db: Session = Depends(get_db),
+    username: str = Depends(get_current_user),
+):
+    current = _current_db_user(db, username)
+    conv = get_conversation_by_project(db, project_id)
+
+    if not is_participant(db, conv.id, current.id):
+        raise HTTPException(status_code=403, detail="Not a participant in this project chat")
+
+    msg = Message(
+        conversation_id=conv.id,
+        sender_id=current.id,
+        content=payload.content.strip(),
+    )
+    if not msg.content:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+
+    return MessageOut(
+        id=msg.id,
+        sender_id=msg.sender_id,
+        sender_username=current.username,
+        content=msg.content,
+        created_at=msg.created_at,
+    )

@@ -61,6 +61,8 @@ export interface Task {
     updatedAt: Date;
     tags?: string[];
     comments?: Comment[];
+    skill_gap?: boolean;
+    assignee?: string;
 }
 
 export interface Comment {
@@ -68,6 +70,16 @@ export interface Comment {
     userId: string;
     content: string;
     createdAt: Date;
+}
+
+// Milestone Types (AI Task Distribution groupings)
+export interface Milestone {
+    id: string;
+    title: string;
+    description: string;
+    tasks: Task[];
+    dueDate: Date;
+    effort?: number;
 }
 
 // Meeting Types

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import type { Milestone, Task } from "../../types/index";
+import { useState, useEffect } from 'react';
+import type { Milestone, Task } from "../../types/types";
 
 interface TaskDistributionModelProps {
     milestones: Milestone[];
@@ -115,7 +115,7 @@ export default function TaskDistributionModal({ milestones, onClose }: TaskDistr
                                                     <div className="flex items-center gap-4 mt-3">
                                                         <span className={`text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${
                                                             t.status === 'done' ? 'bg-green-100 text-green-700' :
-                                                            t.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
+                                                            t.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
                                                             'bg-gray-100 text-gray-600'
                                                         }`}>
                                                             {t.status?.replace('_', ' ') || "TO DO"}

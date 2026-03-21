@@ -5,8 +5,9 @@ import Avatar from '../UI/Avatar';
 import Modal from '../UI/Modal';
 import TaskDetailModal from '../Kanban/TaskDetailModal';
 import { getUserById } from '../../data/mockData';
-import type { Task } from '../../types/types';
+import type { Task, Milestone } from '../../types/types';
 import { useApp } from '../../context/AppContext';
+import TaskDistributionWizard from '../TaskDistribution/TaskDistributionWizard';
 
 interface TasksTabViewProps {
     projectId: string;
@@ -16,6 +17,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
     const [viewMode, setViewMode] = useState<'milestones' | 'kanban'>('milestones');
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [isWizardOpen, setIsWizardOpen] = useState(false);
 
     const { tasks } = useApp();
 
@@ -110,7 +112,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
 
                     {/* Task Distribution Wizard Button */}
                     <button
-                        onClick={() => alert('Opening Task Distribution Wizard... (To be implemented)')}
+                        onClick={() => setIsWizardOpen(true)}
                         className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-purple-200 transition-all hover:-translate-y-0.5"
                     >
                         <Wand2 className="w-4 h-4" />
@@ -234,6 +236,13 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                     />
                 </Modal>
             )}
+
+            {/* Task Distribution Wizard */}
+            <TaskDistributionWizard
+                isOpen={isWizardOpen}
+                onClose={() => setIsWizardOpen(false)}
+                milestones={milestones as Milestone[]}
+            />
         </div>
     );
 };

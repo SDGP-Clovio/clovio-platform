@@ -75,21 +75,19 @@ const ProjectDashboard: React.FC = () => {
 
             {/* Sidebar */}
             <aside
-                className={`fixed left-0 top-0 h-screen w-64 bg-white border-r border-slate-200 z-40 transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+                className={`fixed left-0 top-0 h-screen w-64 bg-[#1a1b2e] text-white z-40 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                     }`}
             >
                 {/* Logo */}
-                <div className="p-6 border-b border-slate-200">
-                    <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-clovio-purple rounded-xl flex items-center justify-center text-white font-bold shadow-lg shadow-purple-200">
-                            C
-                        </div>
-                        <span className="text-xl font-bold tracking-tight">Clovio</span>
+                <div className="flex items-center gap-2.5 px-6 pt-6 pb-5">
+                    <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center font-bold text-white text-sm shadow">
+                        C
                     </div>
+                    <span className="text-lg font-bold tracking-tight text-white">Clovio</span>
                 </div>
 
                 {/* Navigation */}
-                <nav className="p-4 space-y-2">
+                <nav className="flex-1 px-4 space-y-0.5 overflow-y-auto">
                     {navItems.map((item) => {
                         const isActive = activeTab === item.id;
                         const Icon = item.icon;
@@ -101,57 +99,44 @@ const ProjectDashboard: React.FC = () => {
                                     setActiveTab(item.id as 'overview' | 'tasks' | 'meetings' | 'settings');
                                     setSidebarOpen(false);
                                 }}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive
-                                    ? 'bg-clovio-purple text-white shadow-lg shadow-purple-200'
-                                    : 'text-slate-600 hover:bg-slate-50'
+                                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${isActive
+                                    ? 'bg-purple-600/20 text-purple-300 font-semibold'
+                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
                                     }`}
                             >
-                                <Icon className="w-5 h-5" />
-                                <span className="font-medium">{item.label}</span>
+                                <Icon className="w-4 h-4 flex-shrink-0" />
+                                <span className="flex-1 text-left">{item.label}</span>
                             </button>
                         );
                     })}
                 </nav>
 
                 {/* Back to MD + User Profile */}
-                <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200">
+                <div className="px-4 py-4 border-t border-white/5">
                     {/* Back to MD */}
-                    <div className="px-4 pt-3 pb-2">
+                    <div className="pb-3">
                         <button
                             onClick={() => navigate('/dashboard')}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:bg-white/5 hover:text-white transition-all"
                         >
-                            <ArrowLeft className="w-5 h-5" />
-                            <span className="font-medium">Back to Dashboard</span>
+                            <ArrowLeft className="w-4 h-4 flex-shrink-0" />
+                            <span className="flex-1 text-left">Back to Dashboard</span>
                         </button>
                     </div>
 
-                    {/* Divider */}
-                    <div className="mx-4 border-t border-slate-100" />
-
                     {/* User profile */}
-                    <div className="p-4">
-                        {currentUser && (
-                            <div>
-                                <div className="flex items-center gap-3 mb-3">
-                                    <Avatar name={currentUser.name} size="md" online />
-                                    <div className="flex-1 min-w-0">
-                                        <p className="font-semibold text-slate-800 truncate">
-                                            {currentUser.name}
-                                        </p>
-                                        <p className="text-xs text-slate-500 truncate">{currentUser.email}</p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={handleLogout}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
-                                >
-                                    <LogOut className="w-4 h-4" />
-                                    Logout
-                                </button>
+                    {currentUser && (
+                        <div className="flex items-center gap-2.5 pt-2 border-t border-white/5">
+                            <Avatar name={currentUser.name} size="sm" online />
+                            <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-white truncate">{currentUser.name}</p>
+                                <p className="text-[10px] text-slate-400 truncate">{currentUser.email}</p>
                             </div>
-                        )}
-                    </div>
+                            <button onClick={handleLogout} className="p-1 text-slate-500 hover:text-red-400 transition-colors" title="Logout">
+                                <LogOut className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
                 </div>
             </aside>
 
@@ -161,8 +146,9 @@ const ProjectDashboard: React.FC = () => {
                 <header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-800">
-                                {activeTab === 'overview' ? 'Project Dashboard' : activeTab === 'tasks' ? 'Tasks' : activeTab === 'meetings' ? 'Meetings' : 'Project Settings'}
+                            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Project</p>
+                            <h1 className="text-2xl font-extrabold text-slate-800">
+                                {activeTab === 'overview' ? 'Dashboard' : activeTab === 'tasks' ? 'Tasks' : activeTab === 'meetings' ? 'Meetings' : 'Settings'}
                             </h1>
                             <p className="text-slate-500 mt-0.5 text-sm">{project.name}</p>
                         </div>

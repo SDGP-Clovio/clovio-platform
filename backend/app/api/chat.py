@@ -1,0 +1,87 @@
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
+from sqlalchemy.orm import Session
+from collections import defaultdict
+from typing import Dict, Set
+
+from app.core.database import get_db, SessionLocal
+from app.core.auth import get_current_user, verify_token
+from app.models.user import User
+from app.models.chat import Message, DirectMessage, DirectConversation
+from app.services.chat_service import (
+    get_or_create_dm,
+    is_dm_participant,
+    is_participant,
+    get_recent_messages,
+    get_recent_dm_messages,
+    get_conversation_by_project,
+)
+from app.schemas.chat import (
+    StartDMRequest,
+    DirectConversationOut,
+    MessageOut,
+    SendMessageRequest,
+    SendDirectMessageRequest,
+)
+
+router = APIRouter(prefix="/api/chat", tags=["Chat"])
+
+
+class ConnectionManager:
+    def __init__(self):
+        self.group_rooms: Dict[int, Set[WebSocket]] = defaultdict(set)
+        self.dm_rooms: Dict[int, Set[WebSocket]] = defaultdict(set)
+
+    async def connect_group(self, conversation_id: int, websocket: WebSocket):
+        await websocket.accept()
+        self.group_rooms[conversation_id].add(websocket)
+
+    async def disconnect_group(self, conversation_id: int, websocket: WebSocket):
+        self.group_rooms[conversation_id].discard(websocket)
+
+    async def broadcast_group(self, conversation_id: int, payload: dict):
+        dead = []
+        for ws in self.group_rooms[conversation_id]:
+            try:
+                await ws.send_json(payload)
+            except Exception:
+                dead.append(ws)
+        for ws in dead:
+            self.group_rooms[conversation_id].discard(ws)
+
+    async def connect_dm(self, dm_id: int, websocket: WebSocket):
+        await websocket.accept()
+        self.dm_rooms[dm_id].add(websocket)
+
+    async def disconnect_dm(self, dm_id: int, websocket: WebSocket):
+        self.dm_rooms[dm_id].discard(websocket)
+
+    async def broadcast_dm(self, dm_id: int, payload: dict):
+        dead = []
+        for ws in self.dm_rooms[dm_id]:
+            try:
+                await ws.send_json(payload)
+            except Exception:
+                dead.append(ws)
+        for ws in dead:
+            self.dm_rooms[dm_id].discard(ws)
+
+
+manager = ConnectionManager()
+
+
+def _current_db_user(db: Session, username: str) -> User:
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Authenticated user not found")
+    return user
+
+
+def _user_from_token(db: Session, token: str) -> User:
+    payload = verify_token(token)
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+    user = db.query(User).filter(User.username == username).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Authenticated user not found")
+    return user

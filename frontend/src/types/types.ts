@@ -28,6 +28,8 @@ export interface User {
 export interface Project {
     id: string;
     name: string;
+    module: string;
+    tag: string;
     description: string;
     supervisorId: string;
     teamMembers: string[]; // User IDs
@@ -35,7 +37,7 @@ export interface Project {
     deadline?: Date;
     courseName?: string; // Optional course name
     fairnessScore: number; // 0-1, calculated using Gini coefficient
-    status: 'active' | 'completed' | 'archived';
+    status: 'active' | 'completed' | 'at risk' | 'overdue' | 'archived';
 }
 
 // Task Types
@@ -53,6 +55,8 @@ export interface Task {
     createdBy: string; // User ID
     aiAssignmentReason?: string; // Explainable AI feature
     dueDate?: Date;
+    estimatedHours?: number;
+    actualHours?: number;
     createdAt: Date;
     updatedAt: Date;
     tags?: string[];

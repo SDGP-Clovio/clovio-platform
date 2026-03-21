@@ -210,7 +210,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
             <div className="bg-white rounded-xl border border-slate-100 p-6">
                 <div className="flex items-center gap-2 mb-4">
                     <Calendar className="w-5 h-5 text-purple-600" />
-                    <h3 className="text-base font-bold text-slate-800">Scheduled Meetings</h3>
+                    <h3 className="text-sm font-bold text-slate-800">Scheduled Meetings</h3>
                     <span className="ml-auto text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full">
                         {projectMeetings.length}
                     </span>
@@ -291,7 +291,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                         <Users className="w-5 h-5 text-purple-600" />
-                        <h3 className="text-base font-bold text-slate-800">Select Members</h3>
+                        <h3 className="text-sm font-bold text-slate-800">Select Members</h3>
                     </div>
                     <button
                         onClick={toggleAll}
@@ -347,7 +347,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                             <Clock className="w-5 h-5 text-purple-600" />
-                            <h3 className="text-base font-bold text-slate-800">Available Time Slots</h3>
+                            <h3 className="text-sm font-bold text-slate-800">Available Time Slots</h3>
                         </div>
                         <span className="text-xs text-slate-400">
                             {selectedIds.length === 1 ? '1 member' : `${selectedIds.length} members`} selected
@@ -443,7 +443,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-purple-500 to-indigo-600">
-                            <h3 className="text-white font-bold text-lg">Schedule Meeting</h3>
+                            <h3 className="text-white font-bold text-base">Schedule Meeting</h3>
                             <button
                                 onClick={() => { setShowForm(false); setPrefillSlot(null); }}
                                 className="p-1.5 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors"

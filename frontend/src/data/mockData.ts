@@ -11,6 +11,7 @@ import type {
     DashboardStats,
     AvailabilitySlot,
     Skill,
+    ProjectChat,
 } from '../types/types';
 
 // Mock Users

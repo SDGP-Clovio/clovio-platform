@@ -16,7 +16,7 @@ const ProjectDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { id: projectId } = useParams<{ id: string }>();
     const { currentUser, projects, dashboardStats, setActiveProject } = useApp();
-    const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'meetings' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'meetings' | 'chat' | 'settings'>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Find the project by ID

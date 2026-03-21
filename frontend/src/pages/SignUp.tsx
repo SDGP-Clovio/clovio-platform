@@ -7,7 +7,7 @@ type SignUpFormValues = {
 	email: string;
 	password: string;
 	confirmPassword: string;
-	role: 'student' | 'supervisor';
+	role: 'student' | 'supervisor' | '';
 };
 
 type SignUpFormErrors = Partial<Record<keyof SignUpFormValues, string>>;
@@ -49,12 +49,14 @@ const SignUp: React.FC = () => {
 		email: '',
 		password: '',
 		confirmPassword: '',
+		role: '',
 	});
 	const [touchedFields, setTouchedFields] = useState<Record<keyof SignUpFormValues, boolean>>({
 		fullName: false,
 		email: false,
 		password: false,
 		confirmPassword: false,
+		role: false,
 	});
 	const [errors, setErrors] = useState<SignUpFormErrors>({});
 

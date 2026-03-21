@@ -9,7 +9,10 @@ import type {
     DashboardStats,
     Skill,
     DayAvailability,
+    ProjectChat,
+    ChatMessage,
 } from '../types/types';
+
 import {
     mockUsers,
     mockProjects,
@@ -18,6 +21,7 @@ import {
     mockFairnessMetrics,
     mockActivities,
     mockDashboardStats,
+    mockProjectChats,
 } from '../data/mockData';
 
 // Context State Interface

@@ -41,6 +41,8 @@ const validateSignUpForm = (values: SignUpFormValues): SignUpFormErrors => {
 
 	if (!values.password.trim()) {
 		errors.password = 'Password is required.';
+	} else if (passwordRules.some((rule) => !rule.test(values.password))) {
+		errors.password = 'Password does not meet all requirements.';
 	}
 
 	if (!values.confirmPassword.trim()) {
@@ -247,6 +249,22 @@ const SignUp: React.FC = () => {
 							</div>
 							{errors.password && touchedFields.password && (
 								<p className="text-sm text-red-500">{errors.password}</p>
+							)}
+
+							{touchedFields.password && formValues.password && (
+								<ul className="space-y-1 pt-1">
+									{passwordRules.map((rule) => {
+										const passed = rule.test(formValues.password);
+										return (
+											<li key={rule.label} className={`flex items-center gap-2 text-xs ${passed ? 'text-green-500' : 'text-slate-400'}`}>
+												<span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${passed ? 'bg-green-100 text-green-500' : 'bg-slate-100 text-slate-400'}`}>
+													{passed ? '✓' : '×'}
+												</span>
+												{rule.label}
+											</li>
+										);
+									})}
+								</ul>
 							)}
 						</div>
 

@@ -7,6 +7,7 @@ type SignUpFormValues = {
 	email: string;
 	password: string;
 	confirmPassword: string;
+	role: 'student' | 'supervisor';
 };
 
 type SignUpFormErrors = Partial<Record<keyof SignUpFormValues, string>>;

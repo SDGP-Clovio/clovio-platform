@@ -55,3 +55,12 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId }) => {
                     <span>{members.length}</span>
                 </div>
             </div>
+
+            <div className="px-5 py-4 border-b border-slate-100 bg-white flex items-center gap-2 overflow-x-auto">
+                {members.map((member) => (
+                    <div key={member.id} className="flex items-center gap-2 bg-slate-50 border border-slate-100 rounded-full px-2.5 py-1.5">
+                        <Avatar name={member.name} size="sm" />
+                        <span className="text-xs font-medium text-slate-700 whitespace-nowrap">{member.name}</span>
+                    </div>
+                ))}
+            </div>

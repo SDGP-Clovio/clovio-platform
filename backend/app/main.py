@@ -16,6 +16,12 @@ app = FastAPI(
     version="0.1.0",
     description="AI-powered project planning and task breakdown API."
 )
+
+# The Health Check 
+@app.get("/")
+def health_check():
+    return {"status": "Active", "message": "Clovio Backend is running"}
+
 app.include_router(users.router, prefix="/api/users", tags=["Users"])
 
 app.include_router(skills.router, prefix="/api/skills", tags=["Skills"])
@@ -49,8 +55,5 @@ app.include_router(fairness_router)
 # Register progress routes
 app.include_router(progress_router)
 
-# The Health Check 
-@app.get("/")
-def health_check():
-    return {"status": "Active", "message": "Clovio Backend is running"}
+
 

@@ -6,6 +6,8 @@ load_dotenv()
 
 class Settings:
 
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./clovio.db")
+
     # JWT authentication settings
     SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key")
     ALGORITHM: str = "HS256"

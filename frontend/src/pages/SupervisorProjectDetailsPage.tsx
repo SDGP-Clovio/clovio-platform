@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Activity, CheckCircle2, Scale, AlertTriangle } from "lucide-react";
 
 import SupervisorSidebar from "../components/Supervisor/SupervisorSidebar";
 import AlertsPanel from "../components/Supervisor/AlertsPanel";
 import ContributionChartCard from "../components/Supervisor/ContributionChartCard";
-import FairnessCard from "../components/Supervisor/FairnessCard";
 import ProgressChartCard from "../components/Supervisor/ProgressChartCard";
 import {
 	getSupervisorAlerts,
@@ -113,20 +112,69 @@ export default function SupervisorProjectDetailsPage() {
 					{error && <p className="text-sm text-red-600">{error}</p>}
 
 					{project && contributions && fairness && alerts && (
-						<div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-							<div className="xl:col-span-8">
-								<ProgressChartCard project={project} />
+						<>
+							{/* Top KPI Row */}
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+								<article className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-center gap-4">
+									<div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0 text-purple-600">
+										<Activity className="w-6 h-6" />
+									</div>
+									<div>
+										<p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Overall Progress</p>
+										<p className="text-2xl font-bold text-slate-800">{project.completion_percent.toFixed(0)}%</p>
+									</div>
+								</article>
+
+								<article className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-center gap-4">
+									<div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0 text-emerald-600">
+										<Scale className="w-6 h-6" />
+									</div>
+									<div>
+										<p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Fairness Score</p>
+										<div className="flex items-baseline gap-2">
+											<p className="text-2xl font-bold text-slate-800">{fairness.fairness_score.toFixed(1)}</p>
+											<p className={`text-[10px] font-semibold ${fairness.imbalance_flag ? 'text-red-500' : 'text-emerald-500'}`}>
+												{fairness.imbalance_flag ? 'IMBALANCE' : 'BALANCED'}
+											</p>
+										</div>
+									</div>
+								</article>
+
+								<article className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-center gap-4">
+									<div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 text-blue-600">
+										<CheckCircle2 className="w-6 h-6" />
+									</div>
+									<div>
+										<p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Task Status</p>
+										<p className="text-2xl font-bold text-slate-800">{project.task_completion_done} <span className="text-sm text-slate-400 font-medium">/ {project.task_completion_total}</span></p>
+									</div>
+								</article>
+
+								<article className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-center gap-4">
+									<div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${alerts.alerts.length > 0 ? 'bg-rose-50 text-rose-600' : 'bg-slate-50 text-slate-400'}`}>
+										<AlertTriangle className="w-6 h-6" />
+									</div>
+									<div>
+										<p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Active Alerts</p>
+										<p className="text-2xl font-bold text-slate-800">{alerts.alerts.length}</p>
+									</div>
+								</article>
 							</div>
 
-							<div className="xl:col-span-4 space-y-4">
-								<FairnessCard score={fairness.fairness_score} imbalance={fairness.imbalance_flag} />
-								<AlertsPanel alerts={alerts.alerts} />
-							</div>
+							{/* Main Grid */}
+							<div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+								{/* Left Main - Contribution insights prominent */}
+								<div className="xl:col-span-8 flex flex-col gap-6">
+									<ContributionChartCard contributions={contributions.contributions} />
+								</div>
 
-							<div className="xl:col-span-12">
-								<ContributionChartCard contributions={contributions.contributions} />
+								{/* Right Bar - Secondary visual info */}
+								<div className="xl:col-span-4 flex flex-col gap-6">
+									<ProgressChartCard project={project} />
+									<AlertsPanel alerts={alerts.alerts} />
+								</div>
 							</div>
-						</div>
+						</>
 					)}
 				</div>
 			</main>

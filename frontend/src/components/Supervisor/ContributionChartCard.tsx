@@ -61,25 +61,27 @@ export default function ContributionChartCard({ contributions }: ContributionCha
 	}, [labels, data]);
 
 	return (
-		<section className="rounded-2xl bg-white border border-gray-100 p-4 shadow-sm">
-			<p className="text-xs uppercase tracking-wider text-gray-500">Contribution Analysis</p>
-			<h3 className="text-lg font-bold text-[#1A1A1A] mt-1">Per-student activity</h3>
+		<section className="rounded-2xl bg-white border border-gray-100 p-5 shadow-sm flex flex-col h-full">
+			<div>
+				<h3 className="text-base font-bold text-slate-800">Team Contribution Breakdown</h3>
+				<p className="text-xs text-slate-500 mt-1">Per-student activity and velocity</p>
+			</div>
 
-			<div className="mt-4 rounded-xl border border-gray-100 p-3">
+			<div className="mt-6 rounded-xl border border-gray-50 bg-slate-50/50 p-4">
 				<div className="w-full h-[240px]">
 					<canvas ref={canvasRef} aria-label="Contribution distribution chart" />
 				</div>
 			</div>
 
-			<div className="mt-4 space-y-3">
+			<div className="mt-6 space-y-4">
 				{contributions.map((member) => (
-					<article key={member.user_id} className="rounded-xl border border-gray-100 p-3">
+					<article key={member.user_id} className="rounded-xl border border-slate-100 p-4 transition-colors hover:bg-slate-50/50">
 						<div className="flex items-center justify-between gap-2">
-							<p className="font-semibold text-[#1A1A1A]">{member.name}</p>
-							<p className="text-sm text-gray-600">{member.contribution_percent.toFixed(1)}%</p>
+							<p className="text-sm font-semibold text-slate-800">{member.name}</p>
+							<p className="text-sm font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md">{member.contribution_percent.toFixed(1)}%</p>
 						</div>
 
-						<div className="mt-2 h-2 rounded-full bg-gray-100 overflow-hidden">
+						<div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
 							<div
 								className="h-full rounded-full bg-gradient-to-r from-[#B179DF] to-[#85D5C8]"
 								style={{ width: `${member.contribution_percent}%` }}

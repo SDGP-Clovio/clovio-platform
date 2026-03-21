@@ -34,12 +34,14 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
         name=project.name,
         description=project.description,
         status=project.status,
-        created_by=project.created_by  # Updated to match the DB column!
+        created_by=project.created_by,
+        deadline=project.deadline  # <--- ADD THIS LINE
     )
     db.add(new_project)
     db.commit()
     db.refresh(new_project)
     return new_project
+    
 
 @router.get("/", response_model=List[ProjectResponse])
 def get_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

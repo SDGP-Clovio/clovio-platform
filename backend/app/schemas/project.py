@@ -107,3 +107,11 @@ class ProjectResponse(ProjectBase):
 
     class Config:
         from_attributes = True
+
+# 1. Base properties every Project needs
+class ProjectBase(BaseModel):
+    name: str
+    description: str  
+    status: str = "planned"  
+    created_by: int  
+    deadline: Optional[datetime] = None  

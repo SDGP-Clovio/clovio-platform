@@ -6,9 +6,7 @@ import AlertsPanel from "../components/Supervisor/AlertsPanel";
 import ContributionChartCard from "../components/Supervisor/ContributionChartCard";
 import FairnessCard from "../components/Supervisor/FairnessCard";
 import ProgressChartCard from "../components/Supervisor/ProgressChartCard";
-import ReportActions from "../components/Supervisor/ReportActions";
 import {
-	downloadSupervisorReport,
 	getSupervisorAlerts,
 	getSupervisorContributions,
 	getSupervisorFairness,
@@ -119,7 +117,6 @@ export default function SupervisorProjectDetailsPage() {
 
 							<div className="xl:col-span-5 space-y-4">
 								<FairnessCard score={fairness.fairness_score} imbalance={fairness.imbalance_flag} />
-								<ReportActions onDownload={() => downloadSupervisorReport(projectId)} />
 							</div>
 
 							<div className="xl:col-span-7">

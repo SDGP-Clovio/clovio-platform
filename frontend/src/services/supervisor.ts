@@ -136,25 +136,3 @@ export async function getSupervisorAlerts(projectId: number): Promise<Supervisor
 		};
 	}
 }
-
-export async function downloadSupervisorReport(projectId: number): Promise<void> {
-	const response = await fetch(`${SUPERVISOR_BASE}/project/${projectId}/report`);
-	if (!response.ok) {
-		throw new Error("Failed to download report");
-	}
-
-	const disposition = response.headers.get("content-disposition") ?? "";
-	const nameMatch = disposition.match(/filename="?([^";]+)"?/i);
-	const fileName = nameMatch?.[1] ?? `project_${projectId}_summary.pdf`;
-
-	const blob = await response.blob();
-	const objectUrl = URL.createObjectURL(blob);
-	const anchor = document.createElement("a");
-	anchor.href = objectUrl;
-	anchor.download = fileName;
-	anchor.style.display = "none";
-	document.body.appendChild(anchor);
-	anchor.click();
-	document.body.removeChild(anchor);
-	URL.revokeObjectURL(objectUrl);
-}

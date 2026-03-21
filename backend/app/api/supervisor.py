@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import Response
 
 from app.schemas.supervisor import (
     SupervisorAlertsResponse,
@@ -12,7 +11,6 @@ from app.schemas.supervisor import (
     SupervisorProjectDetailResponse,
     SupervisorProjectsResponse,
 )
-from app.services.report_service import SupervisorReportService
 from app.services.supervisor_provider import get_supervisor_data_provider
 from app.services.supervisor_service import SupervisorDataProvider, SupervisorService
 
@@ -36,10 +34,6 @@ def get_supervisor_service(
     provider: SupervisorDataProvider = Depends(get_supervisor_data_provider),
 ) -> SupervisorService:
     return SupervisorService(provider=provider)
-
-
-def get_report_service() -> SupervisorReportService:
-    return SupervisorReportService()
 
 
 def _extract_user_id(user_payload: Mapping[str, Any]) -> int:
@@ -99,29 +93,4 @@ def get_supervisor_project_alerts(
 ) -> SupervisorAlertsResponse:
     supervisor_id = _extract_user_id(current_user)
     return service.get_alerts(supervisor_id=supervisor_id, project_id=project_id)
-
-
-@router.get("/project/{project_id}/report")
-def generate_supervisor_project_report(
-    project_id: int,
-    current_user: Mapping[str, Any] = Depends(get_supervisor_user),
-    service: SupervisorService = Depends(get_supervisor_service),
-    report_service: SupervisorReportService = Depends(get_report_service),
-) -> Response:
-    supervisor_id = _extract_user_id(current_user)
-    detail = service.get_project_detail(supervisor_id=supervisor_id, project_id=project_id)
-    contributions = service.get_contributions(supervisor_id=supervisor_id, project_id=project_id)
-    fairness = service.get_fairness(supervisor_id=supervisor_id, project_id=project_id)
-
-    pdf_bytes = report_service.build_project_report_pdf(
-        project=detail,
-        contributions=contributions,
-        fairness=fairness,
-    )
-
-    return Response(
-        content=pdf_bytes,
-        media_type="application/pdf",
-        headers={"Content-Disposition": f'attachment; filename="project_{project_id}_summary.pdf"'},
-    )
 

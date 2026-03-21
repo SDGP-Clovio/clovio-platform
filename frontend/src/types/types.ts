@@ -165,3 +165,14 @@ export interface InterventionAction {
     timestamp: Date;
     details: string;
 }
+
+
+// chatbox types
+export interface ChatMessage {
+    id: string;
+    projectId: string;
+    senderId: string;
+    content: string;
+    createdAt: Date;
+    type: 'text' | 'system';
+}

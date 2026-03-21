@@ -14,7 +14,7 @@ import FairnessScore from '../components/Progress/FairnessScore';
 import AIInsights from '../components/Progress/AIInsights';
 import TeamPerformance from '../components/Progress/TeamPerformance';
 import RiskAssessment from '../components/Progress/RiskAssessment';
-import { MOCK_PLAN } from '../types/mockdata';
+import { MOCK_PLAN } from '../types/mockData';
 import { calcOverallProgress } from '../utils/metrics';
 
 const ProjectDashboard: React.FC = () => {

@@ -9,6 +9,8 @@ import MeetingScheduler from '../components/Meetings/MeetingScheduler';
 import NotificationDropdown from '../components/Notifications/NotificationDropdown';
 import TeamAlertsDropdown from '../components/Kanban/TeamAlertsDropdown';
 import ProjectSettings from '../components/Projects/ProjectSettings';
+import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings, MessageSquare } from 'lucide-react';
+import ProjectChatBox from '../components/Chat/ProjectChatBox';
 
 const ProjectDashboard: React.FC = () => {
     const navigate = useNavigate();

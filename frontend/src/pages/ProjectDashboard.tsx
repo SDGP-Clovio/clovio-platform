@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings, MessageSquare } from 'lucide-react';
+import FairnessScoreWidget from '../components/Dashboard/FairnessScoreWidget';
+import KanbanBoard from '../components/Kanban/KanbanBoard';
 import TasksTabView from '../components/Tasks/TasksTabView';
 import Avatar from '../components/UI/Avatar';
 import MeetingScheduler from '../components/Meetings/MeetingScheduler';
 import NotificationDropdown from '../components/Notifications/NotificationDropdown';
 import TeamAlertsDropdown from '../components/Kanban/TeamAlertsDropdown';
 import ProjectSettings from '../components/Projects/ProjectSettings';
+import ProjectChatBox from '../components/Chat/ProjectChatBox';
 import ProgressBanner from '../components/Progress/ProgressBanner';
 import ProgressStats from '../components/Progress/ProgressStats';
 import FairnessScore from '../components/Progress/FairnessScore';
@@ -21,7 +24,7 @@ const ProjectDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { id: projectId } = useParams<{ id: string }>();
     const { currentUser, projects, setActiveProject } = useApp();
-    const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'settings'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'chat' | 'settings'>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Find the project by ID
@@ -60,6 +63,7 @@ const ProjectDashboard: React.FC = () => {
         { id: 'overview',  label: 'Dashboard',    icon: LayoutDashboard },
         { id: 'tasks',     label: 'Tasks',         icon: ListTodo },
         { id: 'meetings',  label: 'Meetings',      icon: Calendar },
+        { id: 'chat', label: 'Chat', icon: MessageSquare },
         { id: 'settings',  label: 'Settings',      icon: Settings },
     ];
 
@@ -148,7 +152,8 @@ const ProjectDashboard: React.FC = () => {
                         <div>
                             <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Project</p>
                             <h1 className="text-2xl font-extrabold text-slate-800">
-                                {activeTab === 'overview' ? 'Dashboard' : activeTab === 'tasks' ? 'Tasks' : activeTab === 'meetings' ? 'Meetings' : 'Settings'}
+                                    {activeTab === 'overview' ? 'Dashboard' : activeTab === 'tasks' ? 'Tasks' : activeTab === 'meetings' ? 'Meetings' : activeTab === 'chat'
+                                        ? 'Group Chat' : 'Settings'}
                             </h1>
                             <p className="text-slate-500 mt-0.5 text-sm">{project.name}</p>
                         </div>
@@ -202,6 +207,9 @@ const ProjectDashboard: React.FC = () => {
                             projectId={project.id}
                             projectMemberIds={project.teamMembers}
                         />
+                    ) : activeTab === 'chat' ? (
+                        // Chat Tab
+                        <ProjectChatBox projectId={project.id} />
                     ) : (
                         // Settings Tab
                         <ProjectSettings project={project} />

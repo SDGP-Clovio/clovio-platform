@@ -1,4 +1,5 @@
 import StatusIndicator from "./StatusIndicator";
+import { Target } from "lucide-react";
 
 export default function ProgressBanner({
   overallProgress,
@@ -22,9 +23,12 @@ export default function ProgressBanner({
   const strokeDashoffset = circumference - (overallProgress / 100) * circumference;
 
   return (
-    <div className={`bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col h-full ${className}`}>
+    <div className={`bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex flex-col h-full ${className}`}>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-base font-bold text-slate-800">Project Progress</h3>
+        <div className="flex items-center gap-2">
+          <Target className="w-5 h-5 text-purple-600" />
+          <h3 className="text-base font-bold text-slate-800">Project Progress</h3>
+        </div>
         <StatusIndicator status={status} />
       </div>
 

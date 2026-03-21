@@ -81,6 +81,11 @@ interface AppContextState {
     // Dashboard Stats
     dashboardStats: DashboardStats;
     updateDashboardStats: () => void;
+
+    // Project Chats
+    projectChats: ProjectChat[];
+    getProjectChat: (projectId: string) => ProjectChat | undefined;
+    sendProjectMessage: (projectId: string, content: string) => void;
 }
 
 // Create Context

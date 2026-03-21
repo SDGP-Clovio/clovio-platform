@@ -5,9 +5,10 @@ import Avatar from '../UI/Avatar';
 
 interface ProjectChatBoxProps {
     projectId: string;
+    standalone?: boolean;
 }
 
-const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId }) => {
+const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone = true }) => {
     const { getProjectChat, sendProjectMessage, users, currentUser } = useApp();
     const chat = getProjectChat(projectId);
 
@@ -44,7 +45,7 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId }) => {
     }
 
     return (
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden h-[70vh] flex flex-col">
+        <div className={`flex flex-col h-full bg-white ${standalone ? 'rounded-xl border border-slate-100 shadow-sm overflow-hidden' : ''}`}>
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
                 <div>
                     <h3 className="text-base font-bold text-slate-800">Project Group Chat</h3>

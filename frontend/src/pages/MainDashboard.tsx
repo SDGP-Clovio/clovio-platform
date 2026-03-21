@@ -11,6 +11,7 @@ import SettingsPanel from '../components/Settings/SettingsPanel';
 import ScheduleView from '../components/Schedule/ScheduleView';
 import { getUserById } from '../data/mockData';
 import type { Project } from '../types/types';
+import GlobalChatView from '../components/Chat/GlobalChatView';
 
 /* ─── Circular progress ring ────────────────────────────────────────────── */
 const ProgressRing: React.FC<{ progress: number; status: string }> = ({ progress, status }) => {
@@ -255,7 +256,7 @@ const MainDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { currentUser, projects, activities } = useApp();
     const [sidebarOpen, setSidebarOpen]   = useState(false);
-    const [activeTab, setActiveTab]       = useState<'dashboard' | 'notifications' | 'settings' | 'schedule'>('dashboard');
+    const [activeTab, setActiveTab]       = useState<'dashboard' | 'notifications' | 'settings' | 'schedule' | 'chat'>('dashboard');
     const [searchQuery, setSearchQuery]   = useState('');
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'completed'>('all');
 
@@ -266,11 +267,10 @@ const MainDashboard: React.FC = () => {
 
     const handleLogout = () => navigate('/');
 
-    // ── Exactly the original nav items ──────────────────────────────────
     const navItems = [
         { id: 'dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
         { id: 'notifications', label: 'Notifications', icon: Bell },
-        { id: 'messages',      label: 'Messages',      icon: MessageSquare },
+        { id: 'chat',          label: 'Chat',          icon: MessageSquare },
         { id: 'schedule',      label: 'Schedule',      icon: Calendar },
         { id: 'settings',      label: 'Settings',      icon: Settings },
     ];
@@ -317,6 +317,7 @@ const MainDashboard: React.FC = () => {
                                     else if (item.id === 'dashboard') setActiveTab('dashboard');
                                     else if (item.id === 'settings')  setActiveTab('settings');
                                     else if (item.id === 'schedule')  setActiveTab('schedule');
+                                    else if (item.id === 'chat')      setActiveTab('chat');
                                     setSidebarOpen(false);
                                 }}
                                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
@@ -371,12 +372,14 @@ const MainDashboard: React.FC = () => {
                                 {activeTab === 'notifications' ? 'Notifications'
                                     : activeTab === 'settings' ? 'Settings'
                                     : activeTab === 'schedule' ? 'Schedule'
+                                    : activeTab === 'chat'     ? 'Global Chat'
                                     : `Hi, ${currentUser?.name} 👋`}
                             </h1>
                             <p className="text-sm text-slate-500 mt-0.5">
                                 {activeTab === 'notifications' ? 'All activity across your projects'
                                     : activeTab === 'settings'  ? 'Manage your profile, skills and preferences'
                                     : activeTab === 'schedule'  ? 'Your meetings across all projects'
+                                    : activeTab === 'chat'      ? 'Team discussions and project channels'
                                     : "Let's manage your projects today!"}
                             </p>
                         </div>
@@ -453,6 +456,8 @@ const MainDashboard: React.FC = () => {
                         <SettingsPanel />
                     ) : activeTab === 'schedule' ? (
                         <ScheduleView markMode={scheduleMarkMode} showModal={scheduleShowModal} setShowModal={setScheduleShowModal} />
+                    ) : activeTab === 'chat' ? (
+                        <GlobalChatView />
                     ) : (
                         <>
                             {/* ── Projects + right panel ── */}

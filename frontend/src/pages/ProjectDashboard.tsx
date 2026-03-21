@@ -164,11 +164,15 @@ const ProjectDashboard: React.FC = () => {
                 <div className="p-6">
                     {activeTab === 'overview' ? (
                         <div className="space-y-5">
-                            {/* Progress Banner */}
-                            <ProgressBanner overallProgress={calcOverallProgress(MOCK_PLAN.milestones)} />
-
-                            {/* Progress Stats */}
-                            <ProgressStats plan={MOCK_PLAN} dueDate="2026-05-15" />
+                            {/* Top Row: Circular Progress & Unified Stats */}
+                            <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+                                <div className="xl:col-span-4">
+                                    <ProgressBanner overallProgress={calcOverallProgress(MOCK_PLAN.milestones)} />
+                                </div>
+                                <div className="xl:col-span-8">
+                                    <ProgressStats plan={MOCK_PLAN} dueDate="2026-05-15" />
+                                </div>
+                            </div>
 
                             {/* 3-Column Grid */}
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">

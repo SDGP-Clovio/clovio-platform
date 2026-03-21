@@ -82,36 +82,43 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {stats.map((stat, idx) => (
-        <div
-          key={idx}
-          className="bg-white rounded-2xl p-5 border border-slate-100 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 cursor-default"
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className={`w-10 h-10 ${stat.iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}>
-              {stat.icon}
+    <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm h-full flex flex-col">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-base font-bold text-slate-800">Execution Metrics</h3>
+      </div>
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 gap-y-8 relative">
+        {stats.map((stat, idx) => (
+          <div key={idx} className="flex flex-col relative group">
+            {/* Divider lines between elements for LG screens */}
+            {idx !== 0 && (
+                <div className="hidden lg:block absolute -left-3 top-[10%] bottom-[10%] w-px bg-slate-100" />
+            )}
+            
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-10 h-10 ${stat.iconBg} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                {stat.icon}
+              </div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</p>
             </div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</p>
-          </div>
 
-          {/* Value */}
-          <div className="flex items-baseline gap-1.5">
-            <p className={`text-2xl font-extrabold text-slate-800`}>{stat.value}</p>
-            {stat.total && (
-              <p className="text-sm font-semibold text-slate-400">/ {stat.total}</p>
-            )}
-            {stat.unit && (
-              <p className="text-xs font-semibold text-slate-400">{stat.unit}</p>
+            {/* Value */}
+            <div className="flex items-baseline gap-1.5 lg:pl-10">
+              <p className={`text-2xl font-extrabold text-slate-800`}>{stat.value}</p>
+              {stat.total && (
+                <p className="text-sm font-semibold text-slate-400">/ {stat.total}</p>
+              )}
+              {stat.unit && (
+                <p className="text-xs font-semibold text-slate-400 ml-1">{stat.unit}</p>
+              )}
+            </div>
+
+            {/* Subtext */}
+            {stat.subtext && (
+              <p className="text-xs text-slate-400 mt-2 font-medium truncate lg:pl-10">{stat.subtext}</p>
             )}
           </div>
-
-          {/* Subtext */}
-          {stat.subtext && (
-            <p className="text-xs text-slate-400 mt-1.5 font-medium truncate">{stat.subtext}</p>
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

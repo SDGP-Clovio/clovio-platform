@@ -111,20 +111,17 @@ export default function SupervisorProjectDetailsPage() {
 
 					{project && contributions && fairness && alerts && (
 						<div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
-							<div className="xl:col-span-7">
+							<div className="xl:col-span-8">
 								<ProgressChartCard project={project} />
 							</div>
 
-							<div className="xl:col-span-5 space-y-4">
+							<div className="xl:col-span-4 space-y-4">
 								<FairnessCard score={fairness.fairness_score} imbalance={fairness.imbalance_flag} />
-							</div>
-
-							<div className="xl:col-span-7">
-								<ContributionChartCard contributions={contributions.contributions} />
-							</div>
-
-							<div className="xl:col-span-5">
 								<AlertsPanel alerts={alerts.alerts} />
+							</div>
+
+							<div className="xl:col-span-12">
+								<ContributionChartCard contributions={contributions.contributions} />
 							</div>
 						</div>
 					)}

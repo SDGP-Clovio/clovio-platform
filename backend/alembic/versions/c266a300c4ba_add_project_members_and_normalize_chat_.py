@@ -24,6 +24,11 @@ def _table_exists(table_name: str) -> bool:
     inspector = inspect(bind)
     return table_name in inspector.get_table_names()
 
+def _table_has_rows(table_name: str) -> bool:
+    bind = op.get_bind()
+    result = bind.execute(sa.text(f"SELECT 1 FROM {table_name} LIMIT 1"))
+    return result.first() is not None
+
 
 def upgrade() -> None:
     if not _table_exists("project_members"):
@@ -35,6 +40,19 @@ def upgrade() -> None:
             sa.Column("joined_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
             sa.UniqueConstraint("project_id", "user_id", name="uq_project_member"),
         )
+
+    existing_chat_tables = [
+        t for t in ["messages", "direct_messages", "direct_conversations", "conversation_participants", "conversations"]
+        if _table_exists(t)
+    ]
+
+    # Abort instead of wiping existing chat history
+    for t in existing_chat_tables:
+        if _table_has_rows(t):
+            raise RuntimeError(
+                f"Refusing destructive chat rebuild: table '{t}' contains data. "
+                "Back up and run a manual data-migration path before schema normalization."
+            )
 
     # Rebuild chat tables to match ORM (Integer IDs + separate direct_messages table)
     for t in ["direct_messages", "messages", "direct_conversations", "conversation_participants", "conversations"]:

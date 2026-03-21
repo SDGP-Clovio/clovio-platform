@@ -158,7 +158,15 @@ const ProjectDashboard: React.FC = () => {
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-2xl font-bold text-slate-800">
-                                {activeTab === 'overview' ? 'Project Dashboard' : activeTab === 'kanban' ? 'Kanban Board' : activeTab === 'meetings' ? 'Meetings' : 'Project Settings'}
+                                {activeTab === 'overview'
+                                    ? 'Project Dashboard'
+                                    : activeTab === 'kanban'
+                                        ? 'Kanban Board'
+                                        : activeTab === 'meetings'
+                                            ? 'Meetings'
+                                            : activeTab === 'chat'
+                                                ? 'Group Chat'
+                                                : 'Project Settings'}
                             </h1>
                             <p className="text-slate-500 mt-0.5 text-sm">{project.name}</p>
                         </div>

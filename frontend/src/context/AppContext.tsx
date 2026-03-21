@@ -322,6 +322,34 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setMeetings((prev) => prev.filter((m) => m.projectId !== id));
     };
 
+    // Chat Actions
+    const getProjectChat = (projectId: string): ProjectChat | undefined => {
+        return projectChats.find((chat) => chat.projectId === projectId);
+    };
+
+    const sendProjectMessage = (projectId: string, content: string) => {
+        if (!currentUser) return;
+        const trimmed = content.trim();
+        if (!trimmed) return;
+
+        const newMessage: ChatMessage = {
+            id: `msg-${Date.now()}`,
+            projectId,
+            senderId: currentUser.id,
+            content: trimmed,
+            createdAt: new Date(),
+            type: 'text',
+        };
+
+        setProjectChats((prevChats) =>
+            prevChats.map((chat) =>
+                chat.projectId === projectId
+                    ? { ...chat, messages: [...chat.messages, newMessage] }
+                    : chat
+            )
+        );
+    };
+
     // Meeting Actions
     const addMeeting = (meeting: Meeting) => {
         setMeetings((prevMeetings) => [...prevMeetings, meeting]);

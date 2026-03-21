@@ -2,6 +2,9 @@ from fastapi import FastAPI, HTTPException
 from app.services.ai_service import generate_task_breakdown
 from app.schemas.project import ProjectPlan, ProjectRequest
 from app.api.supervisor import router as supervisor_router
+from app.schemas.project import ProjectPlan, ProjectRequest
+from app.api.auth_routes import router as auth_router
+from app.core.auth import get_current_user
 
 # Initialize the App 
 app = FastAPI(
@@ -11,11 +14,14 @@ app = FastAPI(
 )
 
 app.include_router(supervisor_router)
+# Register authentication routes
+app.include_router(auth_router)
 
 # 2. The Health Check (Just to see if lights are on)
 @app.get("/")
 def health_check():
     return {"status": "Active", "message": "Clovio Backend is running"}
+
 
 # 3. The Main Door (Project Generation)
 @app.post("/api/v1/generate-plan", response_model=ProjectPlan)

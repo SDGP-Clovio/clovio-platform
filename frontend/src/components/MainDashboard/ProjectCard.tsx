@@ -57,7 +57,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
 
   return (
-    <div className="bg-white rounded-2xl px-6 py-5 border border-black-100 shadow-sm flex items-center gap-6 cursor-pointer hover:shadow-[0_6px_24px_rgba(177,121,223,0.15)] hover:-translate-y-px transition-all duration-200">
+    <div className="bg-white rounded-xl px-6 py-5 border border-gray-200 shadow-lg flex items-center gap-6 cursor-pointer hover:shadow-[0_6px_24px_rgba(177,121,223,0.15)] hover:-translate-y-px transition-all duration-200" style={{ borderColor: '#E5E7EB', boxShadow: '0 2px 8px rgba(177,121,223,0.07)' }}>
       {/* Circular progress ring */}
       <div className="relative flex-shrink-0">
         <CircularProgress value={project.progress} />

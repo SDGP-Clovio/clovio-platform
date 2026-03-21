@@ -13,3 +13,12 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId }) => {
 
     const [draft, setDraft] = useState('');
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+    const members = useMemo(() => {
+        if (!chat) return [];
+        return users.filter((u) => chat.memberIds.includes(u.id));
+    }, [chat, users]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [chat?.messages.length]);

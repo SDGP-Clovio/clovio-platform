@@ -1,11 +1,10 @@
 from pydantic import BaseModel
-from uuid import UUID
 from datetime import datetime
 
 
 class MessageOut(BaseModel):
-    id: UUID
-    sender_id: UUID
+    id: int
+    sender_id: int
     sender_username: str
     content: str
     created_at: datetime
@@ -15,8 +14,8 @@ class MessageOut(BaseModel):
 
 
 class ConversationOut(BaseModel):
-    id: UUID
-    project_id: UUID
+    id: int
+    project_id: int
     created_at: datetime
 
     class Config:
@@ -24,8 +23,8 @@ class ConversationOut(BaseModel):
 
 
 class DirectConversationOut(BaseModel):
-    id: UUID
-    with_user_id: UUID
+    id: int
+    with_user_id: int
     with_username: str
     with_email: str
 
@@ -34,4 +33,12 @@ class DirectConversationOut(BaseModel):
 
 
 class StartDMRequest(BaseModel):
-    email: str  # user starts a DM by typing the other person's email
+    email: str
+
+
+class SendMessageRequest(BaseModel):
+    content: str
+
+
+class SendDirectMessageRequest(BaseModel):
+    content: str

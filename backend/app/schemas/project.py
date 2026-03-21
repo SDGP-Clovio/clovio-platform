@@ -98,7 +98,7 @@ class ProjectBase(BaseModel):
 
 # 2. Properties required when the frontend creates a new Project
 class ProjectCreate(ProjectBase):
-    pass
+    member_ids: List[int] = Field(default_factory=list)
 
 # 3. Properties returned when sending a Project back to the frontend
 class ProjectResponse(ProjectBase):

@@ -13,7 +13,7 @@ from app.core.database import Base
 from app.core.config import settings
 
 # 3. Import ALL your models so Alembic can read them
-from app.models import user, skill, user_skill, project, milestone, task
+from app.models import user, skill, user_skill, project, milestone, task, chat
 
 # This is the Alembic Config object
 config = context.config

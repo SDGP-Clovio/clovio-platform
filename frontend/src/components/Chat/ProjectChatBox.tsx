@@ -80,3 +80,26 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId }) => {
                             </div>
                         );
                     }
+
+                    return (
+                        <div key={message.id} className={`flex items-end gap-2 ${isMine ? 'justify-end' : 'justify-start'}`}>
+                            {!isMine && <Avatar name={sender?.name ?? 'User'} size="sm" />}
+                            <div className={`max-w-[70%] rounded-2xl px-3.5 py-2.5 ${isMine
+                                    ? 'bg-clovio-purple text-white rounded-br-md'
+                                    : 'bg-white text-slate-800 border border-slate-200 rounded-bl-md'
+                                }`}>
+                                {!isMine && (
+                                    <p className="text-[11px] font-semibold text-slate-500 mb-0.5">
+                                        {sender?.name ?? 'Unknown'}
+                                    </p>
+                                )}
+                                <p className="text-sm leading-relaxed break-words">{message.content}</p>
+                                <p className={`text-[10px] mt-1 ${isMine ? 'text-purple-100' : 'text-slate-400'}`}>
+                                    {new Date(message.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                </p>
+                            </div>
+                        </div>
+                    );
+                })}
+                <div ref={messagesEndRef} />
+            </div>

@@ -1,5 +1,6 @@
 import type { NavItem } from "../../types/index";
-import { NAV_ITEMS, NAV_BOTTOM } from "../../types/mockdata";
+import { NAV_ITEMS, NAV_BOTTOM } from "../../types/mockData";
+
 
 interface SidebarProps {
   expanded: boolean;

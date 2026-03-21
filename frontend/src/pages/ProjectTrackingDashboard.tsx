@@ -3,7 +3,7 @@ import TopBar from "../components/Progress/TopBarProject";
 import Sidebar from "../components/common/NavBar";
 import { useState } from "react";
 
-import { PROJECTS, MOCK_PLAN } from "../types/mockdata";
+import { PROJECTS, MOCK_PLAN } from "../types/mockData";
 import ProgressBanner from "../components/Progress/ProgressBanner";
 import ProgressStats from "../components/Progress/ProgressStats";
 import FairnessScore from "../components/Progress/FairnessScore";

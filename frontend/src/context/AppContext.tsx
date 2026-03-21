@@ -318,8 +318,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
     const deleteProject = (id: string) => {
         setProjects((prev) => prev.filter((p) => p.id !== id));
-        setTasks((prev)    => prev.filter((t) => t.projectId !== id));
+        setTasks((prev) => prev.filter((t) => t.projectId !== id));
         setMeetings((prev) => prev.filter((m) => m.projectId !== id));
+        setProjectChats((prev) => prev.filter((c) => c.projectId !== id));
     };
 
     // Chat Actions

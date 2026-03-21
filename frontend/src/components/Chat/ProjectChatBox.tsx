@@ -33,3 +33,25 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId }) => {
         e.preventDefault();
         handleSend();
     };
+
+    if (!chat) {
+        return (
+            <div className="bg-white rounded-xl border border-slate-100 p-8 text-center">
+                <p className="text-slate-600 font-medium">No chat room found for this project.</p>
+                <p className="text-slate-400 text-sm mt-1">A chat room is created automatically when a project is created.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden h-[70vh] flex flex-col">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+                <div>
+                    <h3 className="text-base font-bold text-slate-800">Project Group Chat</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">Simple team messaging</p>
+                </div>
+                <div className="flex items-center gap-2 text-slate-500 text-sm">
+                    <Users className="w-4 h-4" />
+                    <span>{members.length}</span>
+                </div>
+            </div>

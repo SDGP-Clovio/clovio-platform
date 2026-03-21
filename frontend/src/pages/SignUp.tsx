@@ -14,6 +14,14 @@ type SignUpFormErrors = Partial<Record<keyof SignUpFormValues, string>>;
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const passwordRules = [
+	{ label: 'At least 8 characters', test: (p: string) => p.length >= 8 },
+	{ label: 'One uppercase letter (A–Z)', test: (p: string) => /[A-Z]/.test(p) },
+	{ label: 'One lowercase letter (a–z)', test: (p: string) => /[a-z]/.test(p) },
+	{ label: 'One number (0–9)', test: (p: string) => /[0-9]/.test(p) },
+	{ label: 'One special character (!@#…)', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
+];
+
 const validateSignUpForm = (values: SignUpFormValues): SignUpFormErrors => {
 	const errors: SignUpFormErrors = {};
 
@@ -88,6 +96,7 @@ const SignUp: React.FC = () => {
 			email: true,
 			password: true,
 			confirmPassword: true,
+			role: true,
 		});
 		setErrors(validationErrors);
 
@@ -95,7 +104,12 @@ const SignUp: React.FC = () => {
 			return;
 		}
 
-		navigate('/dashboard');
+		// Navigate based on role
+		if (formValues.role === 'student') {
+			navigate('/dashboard');
+		} else {
+			navigate('/supervisordashboard');
+		}
 	};
 
 	return (
@@ -175,6 +189,31 @@ const SignUp: React.FC = () => {
 							/>
 							{errors.email && touchedFields.email && (
 								<p className="text-sm text-red-500">{errors.email}</p>
+							)}
+						</div>
+
+						<div className="space-y-2">
+							<label className="block text-sm font-semibold text-slate-700">
+								Role <span className="text-red-500">*</span>
+							</label>
+							<div className="flex gap-3">
+								{(['student', 'supervisor'] as const).map((option) => (
+									<button
+										key={option}
+										type="button"
+										onClick={() => handleChange('role', option)}
+										onBlur={() => handleBlur('role')}
+										className={`flex-1 rounded-2xl border py-3 text-sm font-semibold capitalize transition-all ${formValues.role === option
+												? 'border-[#7c3aed] bg-[#7c3aed] text-white shadow-lg shadow-purple-300/30'
+												: 'border-slate-100 bg-slate-50 text-slate-500 hover:border-[#7c3aed]/40'
+											}`}
+									>
+										{option.charAt(0).toUpperCase() + option.slice(1)}
+									</button>
+								))}
+							</div>
+							{errors.role && touchedFields.role && (
+								<p className="text-sm text-red-500">{errors.role}</p>
 							)}
 						</div>
 

@@ -143,6 +143,32 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         // Add project to state
         setProjects((prev) => [...prev, newProject]);
 
+        const chatMembers = Array.from(
+            new Set(
+                [currentUser?.id, ...projectData.teamMembers].filter((id): id is string => Boolean(id))
+            )
+        );
+
+        const chatCreatedAt = new Date();
+        const initialMessage: ChatMessage = {
+            id: `msg-${projectId}-welcome`,
+            projectId,
+            senderId: currentUser?.id ?? chatMembers[0] ?? 'system',
+            content: `Group chat created for "${projectData.name}".`,
+            createdAt: chatCreatedAt,
+            type: 'system',
+        };
+
+        const newProjectChat: ProjectChat = {
+            id: `chat-${projectId}`,
+            projectId,
+            memberIds: chatMembers,
+            createdAt: chatCreatedAt,
+            messages: [initialMessage],
+        };
+
+        setProjectChats((prev) => [...prev, newProjectChat]);
+
         // Create tasks if any
         if (projectData.tasks && projectData.tasks.length > 0) {
             const newTasks: Task[] = projectData.tasks.map((taskData, index) => ({

@@ -4,10 +4,10 @@ import ProjectChatBox from './ProjectChatBox';
 import { MessageSquareOff, Hash, Users } from 'lucide-react';
 
 export default function GlobalChatView() {
-    const { projects, getProjectChat } = useApp();
+    const { projects } = useApp();
     
     // Filter projects that actually have initialize chats
-    const activeProjects = projects.filter(p => getProjectChat(p.id));
+    const activeProjects = projects;
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(activeProjects.length > 0 ? activeProjects[0].id : null);
 
     return (

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Eye, EyeOff, Sparkles, UserRound } from 'lucide-react';
 
 type SignUpFormValues = {
 	fullName: string;
@@ -134,9 +134,11 @@ const SignUp: React.FC = () => {
 			<div className="relative flex w-full max-w-5xl overflow-hidden rounded-[40px] bg-white shadow-2xl min-h-[650px] flex-col md:flex-row-reverse">
 
 				
-				<div className="absolute left-0 top-0 h-full w-1/2 bg-[#4F46E5]">
+				<div className="absolute left-0 top-0 h-full w-1/2 bg-gradient-to-b from-emerald-500 via-blue-600 to-indigo-600">
 					
 					<div className="absolute inset-y-0 -right-20 w-40 rounded-l-[100px] bg-white" />
+					<div className="pointer-events-none absolute -top-12 left-12 h-36 w-36 rounded-full bg-white/20 blur-2xl" />
+					<div className="pointer-events-none absolute bottom-8 left-24 h-28 w-28 rounded-full bg-indigo-200/20 blur-2xl" />
 				</div>
 
 				
@@ -326,12 +328,51 @@ const SignUp: React.FC = () => {
 
 				
 				<div className="relative z-10 hidden w-1/2 md:flex items-center justify-center p-12">
-					<div className="w-full h-72 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 transform -rotate-3 shadow-2xl flex items-center justify-center p-6 text-center">
-						<div className="space-y-2">
-							<p className="text-lg font-bold text-white">AI Task Distribution</p>
-							<p className="text-xs italic text-white/60">
-								Fairly assigning tasks based on skills and learning goals.
+					<div className="relative h-[24rem] w-full max-w-[23rem]">
+						<div className="absolute right-2 top-3 z-20 w-40 rounded-2xl border border-white/25 bg-white/15 p-4 backdrop-blur-md shadow-xl rotate-[7deg]">
+							<p className="text-[11px] uppercase tracking-[0.12em] text-white/80">Fast Setup</p>
+							<p className="mt-1 flex items-center gap-2 text-sm font-semibold text-white">
+								<Sparkles size={14} className="text-emerald-100" />
+								Under 3 minutes
 							</p>
+						</div>
+
+						<div className="absolute left-1 top-5 z-20 w-44 rounded-2xl border border-white/25 bg-slate-900/20 p-4 backdrop-blur-md shadow-xl -rotate-[8deg]">
+							<p className="text-xs font-semibold text-white/85">Best for teams</p>
+							<p className="mt-1 flex items-center gap-2 text-sm text-white">
+								<UserRound size={14} className="text-indigo-100" />
+								2-10 members
+							</p>
+						</div>
+
+						<div className="absolute left-0 top-[8.5rem] z-30 w-44 rounded-2xl border border-white/25 bg-white/12 p-4 backdrop-blur-md shadow-xl rotate-[3deg]">
+							<p className="text-[11px] uppercase tracking-[0.12em] text-white/80">Student Mode</p>
+							<p className="mt-1 text-sm font-semibold text-white">Track contribution fairly</p>
+							<p className="mt-1 text-xs text-emerald-100">Know exactly where to focus</p>
+						</div>
+
+						<div className="absolute right-0 top-40 z-20 w-44 rounded-2xl border border-white/25 bg-slate-900/20 p-4 backdrop-blur-md shadow-xl -rotate-[4deg]">
+							<p className="text-[11px] uppercase tracking-[0.12em] text-white/80">Supervisor Mode</p>
+							<p className="mt-1 text-sm font-semibold text-white">Monitor project health</p>
+							<p className="mt-1 text-xs text-indigo-100">Visibility without micromanaging</p>
+						</div>
+
+						<div className="absolute bottom-2 left-1/2 z-30 w-52 -translate-x-1/2 rounded-2xl border border-white/30 bg-slate-950/25 p-4 backdrop-blur-md shadow-2xl rotate-[1deg]">
+							<p className="text-[11px] uppercase tracking-[0.14em] text-emerald-100">What You Unlock</p>
+							<div className="mt-3 space-y-2 text-xs text-white">
+								<div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2">
+									<CheckCircle2 size={13} className="text-emerald-200" />
+									Skill-aware task assignment
+								</div>
+								<div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2">
+									<CheckCircle2 size={13} className="text-indigo-200" />
+									Fairness tracking
+								</div>
+								<div className="flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2">
+									<CheckCircle2 size={13} className="text-emerald-200" />
+									Milestone visibility
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>

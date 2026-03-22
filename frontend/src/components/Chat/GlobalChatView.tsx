@@ -6,7 +6,7 @@ import { MessageSquareOff, Hash, Users } from 'lucide-react';
 export default function GlobalChatView() {
     const { projects } = useApp();
     
-    // Filter projects that actually have initialize chats
+    // Show all projects; backend creates chat automatically per project
     const activeProjects = projects;
     const [selectedProjectId, setSelectedProjectId] = useState<string | null>(activeProjects.length > 0 ? activeProjects[0].id : null);
 
@@ -39,7 +39,7 @@ export default function GlobalChatView() {
                                     <div className="flex items-center gap-1.5 opacity-80">
                                         <Users className={`w-3 h-3 ${isSelected ? 'text-purple-200' : 'text-slate-400'}`} />
                                         <p className={`text-[11px] font-medium truncate ${isSelected ? 'text-purple-100' : 'text-slate-500'}`}>
-                                            {project.teamMembers.length + 1} members
+                                            {project.teamMembers.length} members
                                         </p>
                                     </div>
                                 </div>

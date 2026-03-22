@@ -10,7 +10,7 @@ import {
 } from "../../services/chatApi";
 
 interface ProjectChatBoxProps {
-    projectId: string;
+    projectId: number; 
     standalone?: boolean;
 }
 
@@ -45,14 +45,12 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const wsRef = useRef<WebSocket | null>(null);
 
-    const numericProjectId = Number(projectId);
-
     useEffect(() => {
-        if (!Number.isFinite(numericProjectId)) return;
+        if (!projectId) return;
 
         let mounted = true;
 
-        getProjectMessages(numericProjectId)
+        getProjectMessages(projectId)
             .then((rows) => {
                 if (!mounted) return;
                 setMessages(rows.map(mapApiMessage));
@@ -62,7 +60,7 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
                 setMessages([]);
             });
 
-        const ws = openProjectChatSocket(numericProjectId, (incoming) => {
+        const ws = openProjectChatSocket(projectId, (incoming) => {
             setMessages((prev) => [...prev, mapWsMessage(incoming)]);
         });
 
@@ -73,7 +71,7 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
             wsRef.current?.close();
             wsRef.current = null;
         };
-    }, [numericProjectId]);
+    }, [projectId]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -81,18 +79,16 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
 
     const handleSend = async () => {
         const trimmed = draft.trim();
-        if (!trimmed || !Number.isFinite(numericProjectId)) return;
+        if (!trimmed || !projectId) return;
 
-        // If socket is connected, send through WS for real-time broadcast.
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({ content: trimmed }));
             setDraft("");
             return;
         }
 
-        // Fallback to REST.
         try {
-            const created = await sendProjectMessage(numericProjectId, trimmed);
+            const created = await sendProjectMessage(projectId, trimmed);
             setMessages((prev) => [...prev, mapApiMessage(created)]);
             setDraft("");
         } catch {
@@ -118,8 +114,8 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
                     return (
                         <div key={message.id} className={`flex items-end gap-2 ${isMine ? "justify-end" : "justify-start"}`}>
                             <div className={`max-w-[70%] rounded-2xl px-3.5 py-2.5 ${isMine
-                                    ? "bg-clovio-purple text-white rounded-br-md"
-                                    : "bg-white text-slate-800 border border-slate-200 rounded-bl-md"
+                                ? "bg-clovio-purple text-white rounded-br-md"
+                                : "bg-white text-slate-800 border border-slate-200 rounded-bl-md"
                                 }`}>
                                 {!isMine && (
                                     <p className="text-[11px] font-semibold text-slate-500 mb-0.5">
@@ -150,8 +146,8 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
                         type="submit"
                         disabled={draft.trim().length === 0}
                         className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${draft.trim().length > 0
-                                ? "bg-clovio-purple text-white hover:brightness-110 shadow-md"
-                                : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                            ? "bg-clovio-purple text-white hover:brightness-110 shadow-md"
+                            : "bg-slate-100 text-slate-400 cursor-not-allowed"
                             }`}
                     >
                         <Send className="w-4 h-4" />

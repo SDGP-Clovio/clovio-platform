@@ -5,10 +5,11 @@ import { MessageSquareOff, Hash, Users } from 'lucide-react';
 
 export default function GlobalChatView() {
     const { projects } = useApp();
-    
-    // Show all projects; backend creates chat automatically per project
+
     const activeProjects = projects;
-    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(activeProjects.length > 0 ? activeProjects[0].id : null);
+    const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+        activeProjects.length > 0 ? Number(activeProjects[0].id) : null
+    );
 
     return (
         <div className="flex h-[calc(100vh-140px)] bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-[500px]">
@@ -20,11 +21,11 @@ export default function GlobalChatView() {
                 </div>
                 <div className="overflow-y-auto flex-1 p-2 space-y-1">
                     {activeProjects.map(project => {
-                        const isSelected = selectedProjectId === project.id;
+                        const isSelected = selectedProjectId === Number(project.id); 
                         return (
                             <button
                                 key={project.id}
-                                onClick={() => setSelectedProjectId(project.id)}
+                                onClick={() => setSelectedProjectId(Number(project.id))}
                                 className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-3 ${isSelected ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200/50 text-slate-700'}`}
                             >
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-white/20' : 'bg-slate-200'}`}>
@@ -57,7 +58,7 @@ export default function GlobalChatView() {
             {/* Main Chat Area */}
             <div className="flex-1 bg-white relative">
                 {selectedProjectId ? (
-                    <ProjectChatBox projectId={selectedProjectId} standalone={false} />
+                    <ProjectChatBox projectId={selectedProjectId} standalone={false} /> 
                 ) : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-50/50">
                         <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">

@@ -44,38 +44,44 @@ export default function TaskDistributionWizard({ isOpen, onClose, projectId }: T
         setStep('results');
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         // Convert AI-generated tasks to AppContext format and add them
         let generatedId = Date.now();
+        const createTaskPromises: Array<Promise<void>> = [];
+
         milestones.forEach(milestone => {
             if (milestone.tasks) {
                 milestone.tasks.forEach((task: any) => {
                     const parsedAssignee = Number(task.assignee ?? task.assigned_to);
                     const assigneeId = Number.isFinite(parsedAssignee) ? parsedAssignee : undefined;
 
-                    addTask({
-                        id: typeof task.id === 'number' ? task.id : generatedId++,
-                        projectId,
-                        milestoneId: milestone.id,
-                        milestoneTitle: milestone.title,
-                        milestoneDescription: milestone.description,
-                        milestoneDueDate: milestone.dueDate,
-                        title: task.title || task.name,
-                        description: task.description || '',
-                        status: task.status || 'todo',
-                        priority: task.priority || 'medium',
-                        assignedTo: assigneeId != null ? [assigneeId] : [],
-                        createdBy: 0,
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        aiAssignmentReason: task.aiAssignmentReason || task.assignment_reason,
-                        skill_gap: task.skill_gap || task.is_skill_gap || false,
-                        estimatedHours: task.complexity || 5,
-                        assignee: assigneeId,
-                    });
+                    createTaskPromises.push(
+                        addTask({
+                            id: typeof task.id === 'number' ? task.id : generatedId++,
+                            projectId,
+                            milestoneId: milestone.id,
+                            milestoneTitle: milestone.title,
+                            milestoneDescription: milestone.description,
+                            milestoneDueDate: milestone.dueDate,
+                            title: task.title || task.name,
+                            description: task.description || '',
+                            status: task.status || 'todo',
+                            priority: task.priority || 'medium',
+                            assignedTo: assigneeId != null ? [assigneeId] : [],
+                            createdBy: 0,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                            aiAssignmentReason: task.aiAssignmentReason || task.assignment_reason,
+                            skill_gap: task.skill_gap || task.is_skill_gap || false,
+                            estimatedHours: task.complexity || 5,
+                            assignee: assigneeId,
+                        })
+                    );
                 });
             }
         });
+
+        await Promise.all(createTaskPromises);
 
         // Close and reset
         onClose();

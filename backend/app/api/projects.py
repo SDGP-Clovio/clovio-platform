@@ -13,7 +13,8 @@ from app.schemas.project import (
     ProjectRequest,
     MilestonePlanResponse,
     ProjectCreate,
-    ProjectResponse
+    ProjectResponse,
+    ProjectUpdate,
 )
 
 # Import AI Service
@@ -57,6 +58,24 @@ def _serialize_project(db: Session, project: Project) -> dict[str, Any]:
         "member_ids": member_ids,
         "supervisor_id": supervisor_ids[0] if supervisor_ids else None,
     }
+
+
+def _sync_conversation_member_add(db: Session, project_id: int, user_id: int) -> None:
+    try:
+        add_participant(db, project_id=project_id, user_id=user_id)
+    except HTTPException as exc:
+        # Legacy projects may exist without a project conversation.
+        if exc.status_code != 404:
+            raise
+
+
+def _sync_conversation_member_remove(db: Session, project_id: int, user_id: int) -> None:
+    try:
+        remove_participant(db, project_id=project_id, user_id=user_id)
+    except HTTPException as exc:
+        # Legacy projects may exist without a project conversation.
+        if exc.status_code != 404:
+            raise
 
 
 @router.post("/", response_model=ProjectResponse, status_code=201)
@@ -125,6 +144,115 @@ def get_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db))
     return [_serialize_project(db, project) for project in projects]
 
 
+@router.put("/{project_id}", response_model=ProjectResponse)
+def update_project(project_id: int, project_update: ProjectUpdate, db: Session = Depends(get_db)):
+    """Update core project fields and project membership."""
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    updates = project_update.model_dump(exclude_unset=True)
+    if not updates:
+        return _serialize_project(db, project)
+
+    current_member_rows = (
+        db.query(ProjectMember.user_id)
+        .filter(ProjectMember.project_id == project_id)
+        .all()
+    )
+    current_member_ids = {int(user_id) for (user_id,) in current_member_rows}
+
+    current_supervisor_rows = (
+        db.query(ProjectMember.user_id)
+        .join(User, User.id == ProjectMember.user_id)
+        .filter(
+            ProjectMember.project_id == project_id,
+            User.role == UserRole.SUPERVISOR,
+        )
+        .all()
+    )
+    current_supervisor_ids = {int(user_id) for (user_id,) in current_supervisor_rows}
+
+    if "member_ids" in updates:
+        target_member_ids = {int(user_id) for user_id in (updates.get("member_ids") or [])}
+    else:
+        target_member_ids = set(current_member_ids)
+
+    if "supervisor_id" in updates:
+        supervisor_id = updates.get("supervisor_id")
+        if supervisor_id is not None:
+            supervisor = db.query(User).filter(User.id == supervisor_id).first()
+            if supervisor is None:
+                raise HTTPException(status_code=404, detail="Supervisor user not found")
+            if supervisor.role != UserRole.SUPERVISOR:
+                raise HTTPException(status_code=400, detail="Selected supervisor user must have supervisor role")
+            target_member_ids.add(int(supervisor_id))
+        else:
+            for current_supervisor_id in current_supervisor_ids:
+                target_member_ids.discard(current_supervisor_id)
+    else:
+        target_member_ids.update(current_supervisor_ids)
+
+    if project.created_by is not None:
+        target_member_ids.add(int(project.created_by))
+
+    if target_member_ids:
+        users = db.query(User).filter(User.id.in_(list(target_member_ids))).all()
+        found_ids = {int(user.id) for user in users}
+        missing_ids = target_member_ids - found_ids
+        if missing_ids:
+            raise HTTPException(status_code=400, detail=f"Invalid member IDs: {sorted(list(missing_ids))}")
+
+    for field in ("name", "description", "status", "deadline"):
+        if field in updates:
+            setattr(project, field, updates[field])
+
+    to_add = target_member_ids - current_member_ids
+    to_remove = current_member_ids - target_member_ids
+
+    try:
+        for user_id in to_add:
+            db.add(ProjectMember(project_id=project_id, user_id=user_id))
+            _sync_conversation_member_add(db, project_id=project_id, user_id=user_id)
+
+        for user_id in to_remove:
+            membership = (
+                db.query(ProjectMember)
+                .filter(
+                    ProjectMember.project_id == project_id,
+                    ProjectMember.user_id == user_id,
+                )
+                .first()
+            )
+            if membership is not None:
+                db.delete(membership)
+            _sync_conversation_member_remove(db, project_id=project_id, user_id=user_id)
+
+        db.commit()
+        db.refresh(project)
+        return _serialize_project(db, project)
+    except Exception:
+        db.rollback()
+        raise
+
+
+@router.delete("/{project_id}", status_code=204)
+def delete_project(project_id: int, db: Session = Depends(get_db)):
+    """Delete a project and all related records."""
+    project = db.query(Project).filter(Project.id == project_id).first()
+    if project is None:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    try:
+        db.delete(project)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+
+    return None
+
+
 @router.post("/{project_id}/members/{user_id}", status_code=204)
 def add_project_member(project_id: int, user_id: int, db: Session = Depends(get_db)):
     """Add a user to an existing project and its associated conversation."""
@@ -147,7 +275,7 @@ def add_project_member(project_id: int, user_id: int, db: Session = Depends(get_
     if not existing:
         db.add(ProjectMember(project_id=project_id, user_id=user_id))
         # Also add the user to the project's chat conversation
-        add_participant(db, project_id=project_id, user_id=user_id)
+        _sync_conversation_member_add(db, project_id=project_id, user_id=user_id)
         db.commit()
 
     return None
@@ -170,7 +298,7 @@ def remove_project_member_endpoint(project_id: int, user_id: int, db: Session = 
     if row:
         db.delete(row)
         # Also remove the user from the project's chat conversation
-        remove_participant(db, project_id=project_id, user_id=user_id)
+        _sync_conversation_member_remove(db, project_id=project_id, user_id=user_id)
         db.commit()
 
     return None

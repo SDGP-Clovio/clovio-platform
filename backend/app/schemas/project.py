@@ -102,6 +102,15 @@ class ProjectCreate(ProjectBase):
     member_ids: List[int] = Field(default_factory=list)
     supervisor_id: Optional[int] = None
 
+
+class ProjectUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    status: Optional[Literal["planned", "active", "completed"]] = None
+    deadline: Optional[datetime] = None
+    member_ids: Optional[List[int]] = None
+    supervisor_id: Optional[int] = None
+
 # 3. Properties returned when sending a Project back to the frontend
 class ProjectResponse(ProjectBase):
     id: int

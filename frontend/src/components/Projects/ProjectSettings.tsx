@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Trash2, ChevronRight, Sparkles, Save,
     AlertTriangle, CheckCircle2,
@@ -29,6 +30,7 @@ const inputCls = 'w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 const ProjectSettings: React.FC<Props> = ({ project }) => {
+    const navigate = useNavigate();
     const { users, updateProject, deleteProject } = useApp();
 
     const [name,        setName]        = useState(project.name);
@@ -39,18 +41,47 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
     const [members,     setMembers]     = useState<number[]>(project.teamMembers);
     const [saved,       setSaved]       = useState(false);
     const [showDelete,  setShowDelete]  = useState(false);
+    const [isSaving,    setIsSaving]    = useState(false);
+    const [saveError,   setSaveError]   = useState('');
+    const [isDeleting,  setIsDeleting]  = useState(false);
 
     const allStudents = users.filter((u) => u.role !== 'supervisor');
     const allSupervisors = users.filter((u) => u.role === 'supervisor');
 
-    const save = () => {
-        updateProject(project.id, {
+    const save = async () => {
+        setSaveError('');
+        setIsSaving(true);
+
+        const success = await updateProject(project.id, {
             name, description, courseName,
             deadline: deadline ? new Date(deadline) : undefined,
             supervisorId,
+            teamMembers: members,
         });
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2200);
+
+        setIsSaving(false);
+
+        if (success) {
+            setSaved(true);
+            setTimeout(() => setSaved(false), 2200);
+            return;
+        }
+
+        setSaveError('Failed to save project changes. Please try again.');
+    };
+
+    const handleDeleteProject = async () => {
+        setSaveError('');
+        setIsDeleting(true);
+        const success = await deleteProject(project.id);
+        setIsDeleting(false);
+
+        if (!success) {
+            setSaveError('Failed to delete project. Please refresh and try again.');
+            return;
+        }
+
+        navigate('/dashboard');
     };
 
     return (
@@ -69,13 +100,18 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                         </div>
                         <button
                             onClick={save}
+                            disabled={isSaving}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                                saved
+                                isSaving
+                                    ? 'bg-slate-200 text-slate-600 cursor-not-allowed'
+                                    : saved
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:brightness-110 shadow-md'
                             }`}
                         >
-                            {saved
+                            {isSaving
+                                ? <><Save className="w-3.5 h-3.5" /> Saving...</>
+                                : saved
                                 ? <><CheckCircle2 className="w-3.5 h-3.5" /> Saved!</>
                                 : <><Save className="w-3.5 h-3.5" /> Save</>}
                         </button>
@@ -152,6 +188,9 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                         {allSupervisors.length === 0 && (
                             <p className="text-xs text-amber-600">No supervisor account exists yet. Create one to assign supervision.</p>
                         )}
+                        {saveError && (
+                            <p className="text-xs text-red-600">{saveError}</p>
+                        )}
                     </div>
                 </div>
 
@@ -183,13 +222,15 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                                 </div>
                                 <div className="flex gap-2 pt-1">
                                     <button
-                                        onClick={() => deleteProject(project.id)}
+                                        onClick={handleDeleteProject}
+                                        disabled={isDeleting}
                                         className="px-4 py-2 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors"
                                     >
-                                        Yes, Delete Permanently
+                                        {isDeleting ? 'Deleting...' : 'Yes, Delete Permanently'}
                                     </button>
                                     <button
                                         onClick={() => setShowDelete(false)}
+                                        disabled={isDeleting}
                                         className="px-4 py-2 bg-white text-slate-600 border border-slate-200 text-xs font-semibold rounded-lg hover:bg-slate-50 transition-colors"
                                     >
                                         Cancel
@@ -219,7 +260,6 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                             selectedIds={members}
                             onChange={(ids) => {
                                 setMembers(ids);
-                                updateProject(project.id, { teamMembers: ids });
                             }}
                         />
                     </div>

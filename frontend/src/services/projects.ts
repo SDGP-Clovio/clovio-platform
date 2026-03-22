@@ -23,12 +23,28 @@ export interface CreateProjectApiRequest {
     deadline?: string;
 }
 
+export interface UpdateProjectApiRequest {
+    name?: string;
+    description?: string;
+    status?: "planned" | "active" | "completed";
+    deadline?: string | null;
+    member_ids?: number[];
+    supervisor_id?: number | null;
+}
+
 function mapProjectStatus(status: BackendProjectRecord["status"]): Project["status"] {
     if (status === "completed") {
         return "completed";
     }
 
     // The frontend currently treats planned and active projects as active work.
+    return "active";
+}
+
+function toBackendProjectStatus(status: Project["status"]): "planned" | "active" | "completed" {
+    if (status === "completed" || status === "archived") {
+        return "completed";
+    }
     return "active";
 }
 
@@ -50,11 +66,24 @@ function toAppProject(record: BackendProjectRecord): Project {
 }
 
 export async function fetchProjects(): Promise<Project[]> {
-    const response = await apiClient.get<BackendProjectRecord[]>("/api/projects");
+    const response = await apiClient.get<BackendProjectRecord[]>("/api/projects/");
     return response.data.map(toAppProject);
 }
 
 export async function createProjectRecord(payload: CreateProjectApiRequest): Promise<BackendProjectRecord> {
-    const response = await apiClient.post<BackendProjectRecord>("/api/projects", payload);
+    const response = await apiClient.post<BackendProjectRecord>("/api/projects/", payload);
     return response.data;
+}
+
+export async function updateProjectRecord(projectId: number, payload: UpdateProjectApiRequest): Promise<Project> {
+    const response = await apiClient.put<BackendProjectRecord>(`/api/projects/${projectId}`, payload);
+    return toAppProject(response.data);
+}
+
+export async function deleteProjectRecord(projectId: number): Promise<void> {
+    await apiClient.delete(`/api/projects/${projectId}`);
+}
+
+export function mapProjectStatusForApi(status: Project["status"]): "planned" | "active" | "completed" {
+    return toBackendProjectStatus(status);
 }

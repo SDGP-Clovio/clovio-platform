@@ -18,8 +18,21 @@ import {
     mockDashboardStats,
 } from '../data/mockData';
 import { fetchCurrentUserAsAppUser, fetchUsers } from '../services/users';
-import { fetchProjects } from '../services/projects';
-import { fetchTasks } from '../services/tasks';
+import {
+    deleteProjectRecord,
+    fetchProjects,
+    mapProjectStatusForApi,
+    updateProjectRecord,
+} from '../services/projects';
+import {
+    createTaskRecord,
+    deleteTaskRecord,
+    fetchTasks,
+    mapTaskStatusForApi,
+    type CreateTaskApiRequest,
+    type UpdateTaskApiRequest,
+    updateTaskRecord,
+} from '../services/tasks';
 import { createMeetingRecord, fetchMeetings } from '../services/meetings';
 import {
     createProjectChatPlaceholder,
@@ -63,16 +76,16 @@ interface AppContextState {
             estimatedHours: number;
         }>;
     }) => Project;
-    updateProject: (id: number, patch: Partial<Project>) => void;
-    deleteProject: (id: number) => void;
+    updateProject: (id: number, patch: Partial<Project>) => Promise<boolean>;
+    deleteProject: (id: number) => Promise<boolean>;
 
     // Tasks
     tasks: Task[];
-    updateTaskStatus: (taskId: number, status: Task['status']) => void;
-    updateTask: (taskId: number, patch: Partial<Task>) => void;
+    updateTaskStatus: (taskId: number, status: Task['status']) => Promise<void>;
+    updateTask: (taskId: number, patch: Partial<Task>) => Promise<void>;
     addTaskComment: (taskId: number, content: string) => void;
-    addTask: (task: Task) => void;
-    deleteTask: (taskId: number) => void;
+    addTask: (task: Task) => Promise<void>;
+    deleteTask: (taskId: number) => Promise<void>;
 
     // Meetings
     meetings: Meeting[];
@@ -116,6 +129,76 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [activities, setActivities] = useState<Activity[]>(mockActivities);
     const [dashboardStats, setDashboardStats] = useState<DashboardStats>(mockDashboardStats);
     const [projectChats, setProjectChats] = useState<ProjectChat[]>([]);
+
+    const priorityToComplexity = (priority?: Task['priority'], fallback = 5): number => {
+        if (priority === 'high') {
+            return 8;
+        }
+        if (priority === 'medium') {
+            return 5;
+        }
+        if (priority === 'low') {
+            return 2;
+        }
+        return Math.max(1, Math.round(fallback));
+    };
+
+    const buildTaskUpdatePayload = (patch: Partial<Task>): UpdateTaskApiRequest => {
+        const payload: UpdateTaskApiRequest = {};
+
+        if (patch.title !== undefined) {
+            payload.name = patch.title;
+        }
+        if (patch.description !== undefined) {
+            payload.description = patch.description;
+        }
+        if (patch.status !== undefined) {
+            payload.status = mapTaskStatusForApi(patch.status);
+        }
+        if (patch.priority !== undefined) {
+            payload.complexity = priorityToComplexity(patch.priority);
+        }
+        if (patch.estimatedHours !== undefined) {
+            payload.complexity = Math.max(1, Math.round(patch.estimatedHours));
+        }
+        if (patch.assignedTo !== undefined) {
+            payload.assigned_to = patch.assignedTo[0] ?? null;
+        }
+        if (patch.assignee !== undefined) {
+            payload.assigned_to = patch.assignee ?? null;
+        }
+        if (patch.aiAssignmentReason !== undefined) {
+            payload.assignment_reason = patch.aiAssignmentReason ?? null;
+        }
+        if (patch.tags !== undefined) {
+            payload.required_skills = patch.tags;
+        }
+        if (patch.skill_gap !== undefined) {
+            payload.is_skill_gap = patch.skill_gap;
+        }
+
+        return payload;
+    };
+
+    const buildTaskCreatePayload = (task: Task): CreateTaskApiRequest => ({
+        name: task.title,
+        description: task.description,
+        status: mapTaskStatusForApi(task.status),
+        complexity: Math.max(
+            1,
+            Math.round(task.estimatedHours ?? priorityToComplexity(task.priority))
+        ),
+        required_skills: task.tags ?? [],
+        assigned_to: task.assignedTo[0] ?? task.assignee ?? null,
+        assignment_reason: task.aiAssignmentReason ?? null,
+        is_skill_gap: task.skill_gap ?? false,
+        milestone_id: task.milestoneId,
+        project_id: task.projectId,
+        milestone_title: task.milestoneTitle,
+        milestone_effort_points: task.estimatedHours
+            ? Math.max(1, Math.round(task.estimatedHours))
+            : undefined,
+    });
 
     useEffect(() => {
         let isMounted = true;
@@ -359,7 +442,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
 
     // Task Actions
-    const updateTaskStatus = (taskId: number, status: Task['status']) => {
+    const updateTaskStatus = async (taskId: number, status: Task['status']) => {
+        const previousTask = tasks.find((task) => task.id === taskId);
+        if (!previousTask) {
+            return;
+        }
+
         setTasks((prevTasks) =>
             prevTasks.map((task) =>
                 task.id === taskId
@@ -367,6 +455,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                     : task
             )
         );
+
+        try {
+            await updateTaskRecord(taskId, { status: mapTaskStatusForApi(status) });
+        } catch (error) {
+            console.error('Failed to persist task status update', error);
+            setTasks((prevTasks) =>
+                prevTasks.map((task) => (task.id === taskId ? previousTask : task))
+            );
+        }
 
         // Add activity
         const task = tasks.find((t) => t.id === taskId);
@@ -386,7 +483,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         updateDashboardStats();
     };
 
-    const updateTask = (taskId: number, patch: Partial<Task>) => {
+    const updateTask = async (taskId: number, patch: Partial<Task>) => {
+        const previousTask = tasks.find((task) => task.id === taskId);
+        if (!previousTask) {
+            return;
+        }
+
         setTasks((prevTasks) =>
             prevTasks.map((task) =>
                 task.id === taskId
@@ -394,6 +496,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                     : task
             )
         );
+
+        const payload = buildTaskUpdatePayload(patch);
+        if (Object.keys(payload).length > 0) {
+            try {
+                await updateTaskRecord(taskId, payload);
+            } catch (error) {
+                console.error('Failed to persist task update', error);
+                setTasks((prevTasks) =>
+                    prevTasks.map((task) => (task.id === taskId ? previousTask : task))
+                );
+            }
+        }
+
         updateDashboardStats();
     };
 
@@ -431,8 +546,36 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
     };
 
-    const addTask = (task: Task) => {
+    const addTask = async (task: Task) => {
         setTasks((prevTasks) => [...prevTasks, task]);
+
+        let persistedTaskId = task.id;
+        try {
+            const persistedTask = await createTaskRecord(buildTaskCreatePayload(task));
+            persistedTaskId = persistedTask.id;
+
+            setTasks((prevTasks) =>
+                prevTasks.map((existingTask) =>
+                    existingTask.id === task.id
+                        ? {
+                            ...existingTask,
+                            ...persistedTask,
+                            milestoneId: existingTask.milestoneId ?? persistedTask.milestoneId,
+                            milestoneTitle: existingTask.milestoneTitle,
+                            milestoneDescription: existingTask.milestoneDescription,
+                            milestoneDueDate: existingTask.milestoneDueDate,
+                            dueDate: existingTask.dueDate,
+                            comments: existingTask.comments,
+                        }
+                        : existingTask
+                )
+            );
+        } catch (error) {
+            console.error('Failed to persist new task', error);
+            setTasks((prevTasks) => prevTasks.filter((existingTask) => existingTask.id !== task.id));
+            updateDashboardStats();
+            return;
+        }
 
         // Add activity
         if (currentUser) {
@@ -441,7 +584,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 type: 'task_created',
                 userId: currentUser.id,
                 projectId: task.projectId,
-                taskId: task.id,
+                taskId: persistedTaskId,
                 timestamp: new Date(),
                 description: `${currentUser.name} created task "${task.title}"`,
             };
@@ -451,21 +594,150 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         updateDashboardStats();
     };
 
-    const deleteTask = (taskId: number) => {
+    const deleteTask = async (taskId: number) => {
+        const existingTaskIndex = tasks.findIndex((task) => task.id === taskId);
+        if (existingTaskIndex === -1) {
+            return;
+        }
+
+        const taskToRestore = tasks[existingTaskIndex];
         setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+
+        try {
+            await deleteTaskRecord(taskId);
+        } catch (error) {
+            console.error('Failed to persist task deletion', error);
+            setTasks((prevTasks) => {
+                const restored = [...prevTasks];
+                restored.splice(existingTaskIndex, 0, taskToRestore);
+                return restored;
+            });
+        }
+
         updateDashboardStats();
     };
 
     // Project Actions
-    const updateProject = (id: number, patch: Partial<Project>) => {
-        setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+    const updateProject = async (id: number, patch: Partial<Project>): Promise<boolean> => {
+        const previousProject = projects.find((project) => project.id === id);
+        if (!previousProject) {
+            return false;
+        }
+
+        const optimisticProject: Project = { ...previousProject, ...patch };
+
+        setProjects((prev) => prev.map((project) => (project.id === id ? optimisticProject : project)));
+        setActiveProject((prev) => {
+            if (!prev || prev.id !== id) {
+                return prev;
+            }
+            return { ...prev, ...patch };
+        });
+
+        const payload: {
+            name?: string;
+            description?: string;
+            status?: 'planned' | 'active' | 'completed';
+            deadline?: string | null;
+            member_ids?: number[];
+            supervisor_id?: number | null;
+        } = {};
+
+        if (patch.name !== undefined) {
+            payload.name = patch.name;
+        }
+        if (patch.description !== undefined) {
+            payload.description = patch.description;
+        }
+        if (patch.status !== undefined) {
+            payload.status = mapProjectStatusForApi(patch.status);
+        }
+        if (patch.deadline !== undefined) {
+            payload.deadline = patch.deadline ? new Date(patch.deadline).toISOString() : null;
+        }
+        if (patch.teamMembers !== undefined) {
+            payload.member_ids = patch.teamMembers;
+        }
+        if (patch.supervisorId !== undefined) {
+            payload.supervisor_id = patch.supervisorId;
+        }
+
+        if (Object.keys(payload).length === 0) {
+            return true;
+        }
+
+        try {
+            const persistedProject = await updateProjectRecord(id, payload);
+            const mergedPersistedProject: Project = {
+                ...persistedProject,
+                module: optimisticProject.module,
+                courseName: optimisticProject.courseName,
+            };
+
+            const chatMemberIds = Array.from(
+                new Set(
+                    [
+                        ...mergedPersistedProject.teamMembers,
+                        ...(mergedPersistedProject.supervisorId != null
+                            ? [mergedPersistedProject.supervisorId]
+                            : []),
+                    ].filter((memberId): memberId is number => Number.isFinite(memberId))
+                )
+            );
+
+            setProjects((prev) =>
+                prev.map((project) => (project.id === id ? mergedPersistedProject : project))
+            );
+            setActiveProject((prev) => {
+                if (!prev || prev.id !== id) {
+                    return prev;
+                }
+                return mergedPersistedProject;
+            });
+            setProjectChats((prevChats) =>
+                prevChats.map((chat) =>
+                    chat.projectId === id
+                        ? { ...chat, memberIds: chatMemberIds }
+                        : chat
+                )
+            );
+
+            return true;
+        } catch (error) {
+            console.error('Failed to persist project update', error);
+            setProjects((prev) =>
+                prev.map((project) => (project.id === id ? previousProject : project))
+            );
+            setActiveProject((prev) => {
+                if (!prev || prev.id !== id) {
+                    return prev;
+                }
+                return previousProject;
+            });
+            return false;
+        }
     };
 
-    const deleteProject = (id: number) => {
+    const deleteProject = async (id: number): Promise<boolean> => {
+        const exists = projects.some((project) => project.id === id);
+        if (!exists) {
+            return false;
+        }
+
+        try {
+            await deleteProjectRecord(id);
+        } catch (error) {
+            console.error('Failed to persist project deletion', error);
+            return false;
+        }
+
         setProjects((prev) => prev.filter((p) => p.id !== id));
         setTasks((prev) => prev.filter((t) => t.projectId !== id));
         setMeetings((prev) => prev.filter((m) => m.projectId !== id));
         setProjectChats((prev) => prev.filter((c) => c.projectId !== id));
+        setActiveProject((prev) => (prev?.id === id ? null : prev));
+
+        return true;
     };
 
     // Chat Actions

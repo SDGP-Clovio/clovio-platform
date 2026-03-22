@@ -7,6 +7,8 @@ interface BackendTaskRecord {
     description: string | null;
     status: "todo" | "doing" | "done" | string;
     milestone_id: number;
+    milestone_title?: string | null;
+    milestone_order?: number | null;
     complexity: number;
     required_skills: string[] | null;
     assigned_to: number | null;
@@ -15,9 +17,47 @@ interface BackendTaskRecord {
     project_id: number;
 }
 
+type BackendTaskStatus = "todo" | "doing" | "done";
+
+export interface CreateTaskApiRequest {
+    name: string;
+    description?: string | null;
+    status?: BackendTaskStatus;
+    complexity: number;
+    required_skills?: string[] | null;
+    assigned_to?: number | null;
+    assignment_reason?: string | null;
+    is_skill_gap?: boolean;
+    milestone_id?: number;
+    project_id?: number;
+    milestone_title?: string;
+    milestone_effort_points?: number;
+}
+
+export interface UpdateTaskApiRequest {
+    name?: string;
+    description?: string | null;
+    status?: BackendTaskStatus;
+    complexity?: number;
+    required_skills?: string[] | null;
+    assigned_to?: number | null;
+    assignment_reason?: string | null;
+    is_skill_gap?: boolean;
+}
+
 function mapStatus(status: BackendTaskRecord["status"]): Task["status"] {
     if (status === "doing" || status === "in_progress") {
         return "in-progress";
+    }
+    if (status === "done") {
+        return "done";
+    }
+    return "todo";
+}
+
+export function mapTaskStatusForApi(status: Task["status"]): BackendTaskStatus {
+    if (status === "in-progress") {
+        return "doing";
     }
     if (status === "done") {
         return "done";
@@ -40,6 +80,8 @@ function toAppTask(record: BackendTaskRecord): Task {
     return {
         id: record.id,
         projectId: record.project_id,
+        milestoneId: record.milestone_id,
+        milestoneTitle: record.milestone_title ?? `Milestone ${record.milestone_id}`,
         title: record.name,
         description: record.description ?? "",
         status: mapStatus(record.status),
@@ -58,6 +100,20 @@ function toAppTask(record: BackendTaskRecord): Task {
 }
 
 export async function fetchTasks(): Promise<Task[]> {
-    const response = await apiClient.get<BackendTaskRecord[]>("/api/tasks");
+    const response = await apiClient.get<BackendTaskRecord[]>("/api/tasks/");
     return response.data.map(toAppTask);
+}
+
+export async function createTaskRecord(payload: CreateTaskApiRequest): Promise<Task> {
+    const response = await apiClient.post<BackendTaskRecord>("/api/tasks/", payload);
+    return toAppTask(response.data);
+}
+
+export async function updateTaskRecord(taskId: number, payload: UpdateTaskApiRequest): Promise<Task> {
+    const response = await apiClient.put<BackendTaskRecord>(`/api/tasks/${taskId}`, payload);
+    return toAppTask(response.data);
+}
+
+export async function deleteTaskRecord(taskId: number): Promise<void> {
+    await apiClient.delete(`/api/tasks/${taskId}`);
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
@@ -147,17 +147,24 @@ const ProjectRowCard: React.FC<{ project: Project }> = ({ project }) => {
 };
 
 /* ─── Mini Calendar ─────────────────────────────────────────────────────── */
-const MiniCalendar: React.FC = () => {
+const MiniCalendar: React.FC<{ onOpenSchedule: () => void }> = ({ onOpenSchedule }) => {
+    const { meetings } = useApp();
     const todayReal = new Date();
     const [viewDate, setViewDate] = useState(new Date(todayReal.getFullYear(), todayReal.getMonth(), 1));
+    const [selectedDate, setSelectedDate] = useState<Date | null>(
+        new Date(todayReal.getFullYear(), todayReal.getMonth(), todayReal.getDate())
+    );
 
-    const year  = viewDate.getFullYear();
+    const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
     const monthLabel = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-    const firstDay    = new Date(year, month, 1).getDay();
+    const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+    const cells: (number | null)[] = [
+        ...Array(firstDay).fill(null),
+        ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    ];
 
     const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
@@ -167,17 +174,63 @@ const MiniCalendar: React.FC = () => {
         month === todayReal.getMonth() &&
         year === todayReal.getFullYear();
 
-    const meetingDays = new Set([2, 4, 7]);
+    const monthMeetings = useMemo(() => {
+        const byDay = new Map<number, typeof meetings>();
+
+        meetings.forEach((meeting) => {
+            const start = new Date(meeting.startTime);
+            if (start.getFullYear() !== year || start.getMonth() !== month) {
+                return;
+            }
+
+            const day = start.getDate();
+            const existing = byDay.get(day) ?? [];
+            byDay.set(day, [...existing, meeting]);
+        });
+
+        byDay.forEach((dayMeetings, day) => {
+            byDay.set(
+                day,
+                [...dayMeetings].sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+            );
+        });
+
+        return byDay;
+    }, [meetings, month, year]);
+
+    const selectedDayInView =
+        selectedDate &&
+        selectedDate.getFullYear() === year &&
+        selectedDate.getMonth() === month
+            ? selectedDate.getDate()
+            : null;
+
+    const selectedDayMeetings = selectedDayInView !== null
+        ? monthMeetings.get(selectedDayInView) ?? []
+        : [];
+
+    const formatMeetingTime = (value: Date) =>
+        new Date(value).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
     return (
         <div>
             <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-bold text-slate-700">{monthLabel}</span>
                 <div className="flex gap-1">
-                    <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1 hover:bg-slate-100 rounded transition-colors">
+                    <button
+                        onClick={() => setViewDate(new Date(year, month - 1, 1))}
+                        className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        aria-label="View previous month"
+                        title="View previous month"
+                    >
                         <ChevronLeft className="w-4 h-4 text-slate-400" />
                     </button>
-                    <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="p-1 hover:bg-slate-100 rounded transition-colors">
+                    <button
+                        onClick={() => setViewDate(new Date(year, month + 1, 1))}
+                        className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        aria-label="View next month"
+                        title="View next month"
+                    >
                         <ChevronRight className="w-4 h-4 text-slate-400" />
                     </button>
                 </div>
@@ -193,22 +246,75 @@ const MiniCalendar: React.FC = () => {
                 {cells.map((d, i) => (
                     <div key={i} className="flex items-center justify-center aspect-square">
                         {d !== null && (
-                            <button className={`w-7 h-7 rounded-full text-[11px] font-medium flex items-center justify-center transition-all relative
-                                ${isToday(d)
-                                    ? 'bg-purple-600 text-white font-bold shadow'
-                                    : meetingDays.has(d) && month === todayReal.getMonth()
-                                        ? 'bg-purple-100 text-purple-700 font-semibold'
-                                        : 'text-slate-600 hover:bg-slate-100'
-                                }`}
+                            <button
+                                type="button"
+                                onClick={() => setSelectedDate(new Date(year, month, d))}
+                                className={`w-7 h-7 rounded-full text-[11px] font-medium flex items-center justify-center transition-all relative
+                                    ${selectedDayInView === d
+                                        ? 'bg-purple-600 text-white font-bold shadow'
+                                        : isToday(d)
+                                            ? 'bg-purple-100 text-purple-700 font-bold'
+                                            : monthMeetings.has(d)
+                                                ? 'bg-purple-50 text-purple-700 font-semibold hover:bg-purple-100'
+                                                : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                title={
+                                    (monthMeetings.get(d) ?? []).length > 0
+                                        ? `${(monthMeetings.get(d) ?? []).length} meeting${(monthMeetings.get(d) ?? []).length === 1 ? '' : 's'}`
+                                        : undefined
+                                }
                             >
                                 {d}
-                                {meetingDays.has(d) && !isToday(d) && month === todayReal.getMonth() && (
+                                {monthMeetings.has(d) && selectedDayInView !== d && (
                                     <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-purple-400" />
                                 )}
                             </button>
                         )}
                     </div>
                 ))}
+            </div>
+
+            <div className="mt-4 border-t border-slate-100 pt-3">
+                <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-slate-500">
+                        {selectedDayInView !== null
+                            ? new Date(year, month, selectedDayInView).toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                            })
+                            : 'Select a day'}
+                    </p>
+                    {selectedDayMeetings.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={onOpenSchedule}
+                            className="text-[11px] font-semibold text-purple-600 hover:text-purple-700"
+                        >
+                            Open schedule
+                        </button>
+                    )}
+                </div>
+
+                {selectedDayInView === null ? (
+                    <p className="text-[11px] text-slate-400">Choose a date to view meetings.</p>
+                ) : selectedDayMeetings.length === 0 ? (
+                    <p className="text-[11px] text-slate-400">No meetings planned.</p>
+                ) : (
+                    <div className="space-y-1.5">
+                        {selectedDayMeetings.slice(0, 3).map((meeting) => (
+                            <div key={meeting.id} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5">
+                                <span className="text-[11px] font-semibold text-slate-700 truncate">{meeting.title}</span>
+                                <span className="text-[10px] text-slate-500 whitespace-nowrap">
+                                    {formatMeetingTime(meeting.startTime)}
+                                </span>
+                            </div>
+                        ))}
+                        {selectedDayMeetings.length > 3 && (
+                            <p className="text-[10px] text-slate-400">+{selectedDayMeetings.length - 3} more</p>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -217,7 +323,14 @@ const MiniCalendar: React.FC = () => {
 /* ─── Upcoming meetings widget ──────────────────────────────────────────── */
 const UpcomingMeetingsWidget: React.FC = () => {
     const { meetings } = useApp();
-    const upcoming = meetings.slice(0, 3);
+    const upcoming = useMemo(
+        () =>
+            [...meetings]
+                .filter((meeting) => meeting.startTime >= new Date())
+                .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+                .slice(0, 3),
+        [meetings]
+    );
     const dotColor = (i: number) => ['bg-purple-500', 'bg-green-500', 'bg-blue-500'][i % 3];
 
     return (
@@ -494,7 +607,7 @@ const MainDashboard: React.FC = () => {
                                 {/* Right panel */}
                                 <div className="w-72 flex-shrink-0 space-y-5 hidden xl:block">
                                     <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-                                        <MiniCalendar />
+                                        <MiniCalendar onOpenSchedule={() => setActiveTab('schedule')} />
                                     </div>
                                     <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
                                         <UpcomingMeetingsWidget />

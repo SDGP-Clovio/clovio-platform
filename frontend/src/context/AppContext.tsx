@@ -10,19 +10,22 @@ import type {
     Skill,
     DayAvailability,
     ProjectChat,
-    ChatMessage,
 } from '../types/types';
 
 import {
-    mockMeetings,
     mockFairnessMetrics,
     mockActivities,
     mockDashboardStats,
-    mockProjectChats,
 } from '../data/mockData';
 import { fetchCurrentUserAsAppUser, fetchUsers } from '../services/users';
 import { fetchProjects } from '../services/projects';
 import { fetchTasks } from '../services/tasks';
+import { createMeetingRecord, fetchMeetings } from '../services/meetings';
+import {
+    createProjectChatPlaceholder,
+    fetchProjectChats,
+    sendProjectMessageRecord,
+} from '../services/chat';
 
 // Context State Interface
 interface AppContextState {
@@ -73,7 +76,7 @@ interface AppContextState {
 
     // Meetings
     meetings: Meeting[];
-    addMeeting: (meeting: Meeting) => void;
+    addMeeting: (meeting: Meeting) => Promise<void>;
 
     // Fairness Metrics
     fairnessMetrics: FairnessMetrics;
@@ -89,7 +92,7 @@ interface AppContextState {
     // Project Chats
     projectChats: ProjectChat[];
     getProjectChat: (projectId: number) => ProjectChat | undefined;
-    sendProjectMessage: (projectId: number, content: string) => void;
+    sendProjectMessage: (projectId: number, content: string) => Promise<void>;
 }
 
 // Create Context
@@ -108,16 +111,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [projects, setProjects] = useState<Project[]>([]);
     const [activeProject, setActiveProject] = useState<Project | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
-    const [meetings, setMeetings] = useState<Meeting[]>(mockMeetings);
+    const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [fairnessMetrics] = useState<FairnessMetrics>(mockFairnessMetrics);
     const [activities, setActivities] = useState<Activity[]>(mockActivities);
     const [dashboardStats, setDashboardStats] = useState<DashboardStats>(mockDashboardStats);
-    const [projectChats, setProjectChats] = useState<ProjectChat[]>(mockProjectChats);
+    const [projectChats, setProjectChats] = useState<ProjectChat[]>([]);
 
     useEffect(() => {
         let isMounted = true;
 
         const bootstrapFromApi = async () => {
+            const hasToken = Boolean(localStorage.getItem('access_token'));
+
             try {
                 const [apiUsers, apiProjects, apiTasks] = await Promise.all([
                     fetchUsers(),
@@ -133,8 +138,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 setProjects(apiProjects);
                 setTasks(apiTasks);
                 setActiveProject((previous) => previous ?? apiProjects[0] ?? null);
-
-                const hasToken = Boolean(localStorage.getItem('access_token'));
                 if (hasToken) {
                     try {
                         const me = await fetchCurrentUserAsAppUser();
@@ -150,6 +153,31 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                     const firstStudent = apiUsers.find((user) => user.role === 'student') ?? apiUsers[0] ?? null;
                     setCurrentUser(firstStudent);
                 }
+
+                const placeholderChats = apiProjects.map(createProjectChatPlaceholder);
+                setProjectChats(placeholderChats);
+
+                if (hasToken) {
+                    try {
+                        const [apiMeetings, apiProjectChats] = await Promise.all([
+                            fetchMeetings(),
+                            fetchProjectChats(apiProjects),
+                        ]);
+
+                        if (isMounted) {
+                            setMeetings(apiMeetings);
+                            setProjectChats(apiProjectChats);
+                        }
+                    } catch (error) {
+                        console.error('Failed to bootstrap meetings/chats from API', error);
+                        if (isMounted) {
+                            setMeetings([]);
+                            setProjectChats(placeholderChats);
+                        }
+                    }
+                } else {
+                    setMeetings([]);
+                }
             } catch (error) {
                 console.error('Failed to bootstrap users/projects/tasks from API', error);
                 if (!isMounted) {
@@ -159,6 +187,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 setUsers([]);
                 setProjects([]);
                 setTasks([]);
+                setMeetings([]);
+                setProjectChats([]);
                 setActiveProject(null);
                 setCurrentUser(null);
             }
@@ -217,31 +247,26 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
         const chatMembers = Array.from(
             new Set(
-                [currentUser?.id, ...projectData.teamMembers].filter(
-                    (id): id is number => typeof id === 'number' && Number.isFinite(id)
-                )
+                [
+                    ...projectData.teamMembers,
+                    ...(projectData.supervisorId != null ? [projectData.supervisorId] : []),
+                ].filter((id): id is number => typeof id === 'number' && Number.isFinite(id))
             )
         );
 
-        const chatCreatedAt = new Date();
-        const initialMessage: ChatMessage = {
-            id: Date.now(),
-            projectId,
-            senderId: currentUser?.id ?? chatMembers[0] ?? 0,
-            content: `Group chat created for "${projectData.name}".`,
-            createdAt: chatCreatedAt,
-            type: 'system',
-        };
-
         const newProjectChat: ProjectChat = {
-            id: Date.now() + 1,
+            id: projectId,
             projectId,
             memberIds: chatMembers,
-            createdAt: chatCreatedAt,
-            messages: [initialMessage],
+            createdAt: new Date(),
+            messages: [],
         };
 
-        setProjectChats((prev) => [...prev, newProjectChat]);
+        setProjectChats((prev) =>
+            prev.some((chat) => chat.projectId === projectId)
+                ? prev
+                : [...prev, newProjectChat]
+        );
 
         // Create tasks if any
         if (projectData.tasks && projectData.tasks.length > 0) {
@@ -448,45 +473,73 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return projectChats.find((chat) => chat.projectId === projectId);
     };
 
-    const sendProjectMessage = (projectId: number, content: string) => {
+    const sendProjectMessage = async (projectId: number, content: string) => {
         if (!currentUser) return;
         const trimmed = content.trim();
         if (!trimmed) return;
 
-        const newMessage: ChatMessage = {
-            id: Date.now(),
-            projectId,
-            senderId: currentUser.id,
-            content: trimmed,
-            createdAt: new Date(),
-            type: 'text',
-        };
+        try {
+            const createdMessage = await sendProjectMessageRecord(projectId, trimmed);
 
-        setProjectChats((prevChats) =>
-            prevChats.map((chat) =>
-                chat.projectId === projectId
-                    ? { ...chat, messages: [...chat.messages, newMessage] }
-                    : chat
-            )
-        );
+            setProjectChats((prevChats) => {
+                const existing = prevChats.find((chat) => chat.projectId === projectId);
+                if (!existing) {
+                    const project = projects.find((candidate) => candidate.id === projectId);
+                    const fallbackChat: ProjectChat = project
+                        ? createProjectChatPlaceholder(project)
+                        : {
+                            id: projectId,
+                            projectId,
+                            memberIds: [],
+                            createdAt: new Date(),
+                            messages: [],
+                        };
+
+                    return [...prevChats, { ...fallbackChat, messages: [createdMessage] }];
+                }
+
+                return prevChats.map((chat) =>
+                    chat.projectId === projectId
+                        ? { ...chat, messages: [...chat.messages, createdMessage] }
+                        : chat
+                );
+            });
+        } catch (error) {
+            console.error('Failed to send project message', error);
+        }
     };
 
     // Meeting Actions
-    const addMeeting = (meeting: Meeting) => {
-        setMeetings((prevMeetings) => [...prevMeetings, meeting]);
+    const addMeeting = async (meeting: Meeting) => {
+        try {
+            const createdMeeting = await createMeetingRecord({
+                project_id: meeting.projectId,
+                title: meeting.title,
+                description: meeting.description,
+                start_time: meeting.startTime.toISOString(),
+                end_time: meeting.endTime.toISOString(),
+                attendees: meeting.attendees,
+                location: meeting.location,
+                status: meeting.status,
+            });
 
-        // Add activity
-        if (currentUser) {
-            const activity: Activity = {
-                id: Date.now(),
-                type: 'meeting_scheduled',
-                userId: currentUser.id,
-                projectId: meeting.projectId,
-                meetingId: meeting.id,
-                timestamp: new Date(),
-                description: `${currentUser.name} scheduled meeting "${meeting.title}"`,
-            };
-            addActivity(activity);
+            setMeetings((prevMeetings) => [...prevMeetings, createdMeeting]);
+
+            // Add activity
+            if (currentUser) {
+                const activity: Activity = {
+                    id: Date.now(),
+                    type: 'meeting_scheduled',
+                    userId: currentUser.id,
+                    projectId: createdMeeting.projectId,
+                    meetingId: createdMeeting.id,
+                    timestamp: new Date(),
+                    description: `${currentUser.name} scheduled meeting "${createdMeeting.title}"`,
+                };
+                addActivity(activity);
+            }
+        } catch (error) {
+            console.error('Failed to create meeting', error);
         }
     };
 

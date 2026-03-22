@@ -24,3 +24,4 @@ class Project(Base):
     milestones = relationship("Milestone", back_populates="project", cascade="all, delete-orphan")
     members = relationship("ProjectMember", back_populates="project", cascade="all, delete-orphan")
     conversation = relationship("Conversation", back_populates="project", uselist=False, cascade="all, delete")
+    meetings = relationship("Meeting", back_populates="project", cascade="all, delete-orphan")

@@ -13,6 +13,7 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
     const chat = getProjectChat(projectId);
 
     const [draft, setDraft] = useState('');
+    const [isSending, setIsSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
     const members = useMemo(() => {
@@ -24,15 +25,23 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chat?.messages.length]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!chat) return;
-        sendProjectMessage(projectId, draft);
-        setDraft('');
+        const trimmed = draft.trim();
+        if (!trimmed || isSending) return;
+
+        setIsSending(true);
+        try {
+            await sendProjectMessage(projectId, trimmed);
+            setDraft('');
+        } finally {
+            setIsSending(false);
+        }
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        handleSend();
+        await handleSend();
     };
 
     if (!chat) {
@@ -116,7 +125,7 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
                     />
                     <button
                         type="submit"
-                        disabled={draft.trim().length === 0}
+                        disabled={draft.trim().length === 0 || isSending}
                         className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${draft.trim().length > 0
                                 ? 'bg-clovio-purple text-white hover:brightness-110 shadow-md'
                                 : 'bg-slate-100 text-slate-400 cursor-not-allowed'

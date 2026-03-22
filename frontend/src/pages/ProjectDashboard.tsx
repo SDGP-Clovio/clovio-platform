@@ -364,12 +364,15 @@ const ProjectDashboard: React.FC = () => {
                 <div className="p-6">
                     {activeTab === 'overview' ? (
                         <div className="space-y-5">
-                            {/* Top Row: Circular Progress & Unified Stats */}
+                            {/* Top Row: Circular Progress, Fairness, and Stats */}
                             <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
                                 <div className="xl:col-span-4">
                                     <ProgressBanner overallProgress={progressData?.overall_progress || 0} />
                                 </div>
-                                <div className="xl:col-span-8">
+                                <div className="xl:col-span-3">
+                                    <FairnessScore score={fairnessScore || 0} />
+                                </div>
+                                <div className="xl:col-span-5">
                                     <ProgressStats
                                         plan={overviewPlan}
                                         dueDate={overviewDueDate}
@@ -379,9 +382,8 @@ const ProjectDashboard: React.FC = () => {
 
                             {/* 3-Column Grid */}
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-                                {/* Left — Fairness Score + AI Insights */}
-                                <div className="lg:col-span-3 flex flex-col gap-5">
-                                    <FairnessScore score={fairnessScore || 0} />
+                                {/* Left — AI Insights */}
+                                <div className="lg:col-span-3">
                                     <AIInsights overallProgress={progressData?.overall_progress || 0} />
                                 </div>
 

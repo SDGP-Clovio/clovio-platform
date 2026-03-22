@@ -48,7 +48,7 @@ function toDateStr(d: Date) {
 }
 
 const PROJECT_COLORS = [
-    'bg-purple-500', 'bg-blue-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500',
+    'bg-indigo-500', 'bg-blue-500', 'bg-emerald-500', 'bg-rose-500', 'bg-amber-500',
 ];
 
 /* ── New Meeting Modal ───────────────────────────────────────────────────── */
@@ -97,7 +97,7 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-purple-500 to-indigo-600">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-500 to-emerald-500">
                     <h3 className="text-white font-bold text-lg">Schedule a Meeting</h3>
                     <button onClick={onClose} className="p-1.5 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors">
                         <X className="w-4 h-4" />
@@ -111,7 +111,7 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <div>
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Title</label>
                         <input autoFocus type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Sprint Planning"
-                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-300" />
+                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
                     </div>
                     <div>
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Project</label>
@@ -122,14 +122,14 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                 setProjectId(Number.isFinite(parsedProjectId) ? parsedProjectId : 0);
                                 setAttendees(currentUser?.id != null ? [currentUser.id] : []);
                             }}
-                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-300">
+                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300">
                             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                     </div>
                     <div>
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Date</label>
                         <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-300" />
+                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         {[['Start Time', startH, setStartH, startM, setStartM], ['End Time', endH, setEndH, endM, setEndM]].map(([label, h, setH, m, setM]) => (
@@ -137,11 +137,11 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">{String(label)}</label>
                                 <div className="flex gap-1">
                                     <select value={String(h)} onChange={(e) => (setH as (v: string) => void)(e.target.value)}
-                                        className="flex-1 px-2 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-300">
+                                        className="flex-1 px-2 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300">
                                         {ALL_HOURS.map((hh) => <option key={hh} value={hh.toString().padStart(2,'0')}>{fmt12(hh)}</option>)}
                                     </select>
                                     <select value={String(m)} onChange={(e) => (setM as (v: string) => void)(e.target.value)}
-                                        className="w-16 px-2 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-300">
+                                        className="w-16 px-2 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-300">
                                         {['00','15','30','45'].map((mm) => <option key={mm} value={mm}>{mm}</option>)}
                                     </select>
                                 </div>
@@ -151,7 +151,7 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <div>
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Location (optional)</label>
                         <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Zoom, Library Room 3A"
-                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-300" />
+                            className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />
                     </div>
                     <div>
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Attendees</label>
@@ -162,7 +162,7 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                                 const checked = attendees.includes(uid);
                                 return (
                                     <button key={uid} onClick={() => toggleAttendee(uid)}
-                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${checked ? 'bg-purple-100 border-purple-300 text-purple-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'}`}>
+                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-sm font-medium transition-all ${checked ? 'bg-indigo-100 border-indigo-300 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'}`}>
                                         <Avatar name={u.name} size="sm" />
                                         {u.name.split(' ')[0]}
                                         {checked && <Check className="w-3 h-3" />}
@@ -175,7 +175,7 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 <div className="flex gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/60">
                     <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors">Cancel</button>
                     <button onClick={handleSubmit} disabled={!title || !date}
-                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl text-sm font-semibold hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-emerald-500 text-white rounded-xl text-sm font-semibold hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                         Schedule Meeting
                     </button>
                 </div>
@@ -265,7 +265,7 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ markMode, showModal, setSho
             <div className="flex items-center gap-4 text-xs text-slate-500">
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-100 border border-emerald-300 inline-block" /> Free (default)</span>
                 <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-emerald-400 inline-block" /> Free (this week)</span>
-                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-purple-500 inline-block" /> Meeting</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-sm bg-indigo-500 inline-block" /> Meeting</span>
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start">
@@ -293,8 +293,8 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ markMode, showModal, setSho
                             const hasOverride = weeklyOverrides[toDateStr(day)] !== undefined;
                             return (
                                 <div key={i} className="py-2.5 text-center">
-                                    <p className={`text-xs font-semibold uppercase tracking-wide ${isToday ? 'text-purple-600' : 'text-slate-400'}`}>{DAYS[day.getDay()]}</p>
-                                    <div className={`mx-auto mt-1 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${isToday ? 'bg-purple-600 text-white' : 'text-slate-700'}`}>
+                                    <p className={`text-xs font-semibold uppercase tracking-wide ${isToday ? 'text-indigo-600' : 'text-slate-400'}`}>{DAYS[day.getDay()]}</p>
+                                    <div className={`mx-auto mt-1 w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${isToday ? 'bg-indigo-600 text-white' : 'text-slate-700'}`}>
                                         {day.getDate()}
                                     </div>
                                     {hasOverride && <span className="text-[9px] text-emerald-500 font-semibold mt-0.5 block">marked</span>}
@@ -331,7 +331,7 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ markMode, showModal, setSho
                                         : isFree
                                         ? 'bg-emerald-100'
                                         : isToday
-                                        ? 'bg-purple-50/30'
+                                        ? 'bg-indigo-50/30'
                                         : '';
 
                                     return (
@@ -342,7 +342,7 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ markMode, showModal, setSho
                                             onMouseEnter={() => handleCellMouseEnter(dateStr, hour)}
                                         >
                                             {coveringMeetings.map((m) => {
-                                                const color = projectColorMap[m.projectId] ?? 'bg-purple-500';
+                                                const color = projectColorMap[m.projectId] ?? 'bg-indigo-500';
                                                 const isStart = m.startTime.getHours() === hour;
                                                 return isStart ? (
                                                     <button
@@ -387,7 +387,7 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ markMode, showModal, setSho
                                     <p className="text-xs text-slate-400">No upcoming meetings</p>
                                 </div>
                             ) : upcoming.map((m) => {
-                                const color = projectColorMap[m.projectId] ?? 'bg-purple-500';
+                                const color = projectColorMap[m.projectId] ?? 'bg-indigo-500';
                                 const proj  = projects.find((p) => p.id === m.projectId);
                                 return (
                                     <button key={m.id} onClick={() => setSelected(m)} className="w-full text-left px-4 py-3 hover:bg-slate-50 transition-colors">
@@ -397,7 +397,7 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ markMode, showModal, setSho
                                                 <p className="text-xs font-semibold text-slate-800 truncate">{m.title}</p>
                                                 <p className="text-[10px] text-slate-400 mt-0.5">{fmtDate(m.startTime)}</p>
                                                 <p className="text-[10px] text-slate-400">{fmtTime(m.startTime)} – {fmtTime(m.endTime)}</p>
-                                                {proj && <p className="text-[10px] text-purple-500 font-medium mt-0.5 truncate">{proj.name}</p>}
+                                                {proj && <p className="text-[10px] text-indigo-500 font-medium mt-0.5 truncate">{proj.name}</p>}
                                             </div>
                                         </div>
                                     </button>
@@ -412,7 +412,7 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ markMode, showModal, setSho
             {selected && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelected(null)}>
                     <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                        <div className={`px-6 py-5 ${projectColorMap[selected.projectId] ?? 'bg-purple-500'}`}>
+                        <div className={`px-6 py-5 ${projectColorMap[selected.projectId] ?? 'bg-indigo-500'}`}>
                             <div className="flex items-start justify-between">
                                 <h3 className="text-white font-bold text-lg pr-4">{selected.title}</h3>
                                 <button onClick={() => setSelected(null)} className="p-1 rounded-lg bg-white/20 text-white hover:bg-white/30 flex-shrink-0"><X className="w-4 h-4" /></button>

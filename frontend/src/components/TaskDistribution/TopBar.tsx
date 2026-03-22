@@ -15,7 +15,7 @@ export default function TopBar({ user,searchQuery,setSearchQuery }: TopBarProps)
       {/* Header */}
       <div>
         <div className="text-[11px] text-[#555] uppercase tracking-widest mb-1">Dashboard</div>
-        <h1 className="m-0 text-[22px] font-extrabold text-[#1A1A1A] tracking-tight">
+        <h1 className="m-0 text-[22px] font-extrabold text-[#0F172A] tracking-tight">
           Hey, {user.name}!
         </h1>
 
@@ -40,7 +40,7 @@ export default function TopBar({ user,searchQuery,setSearchQuery }: TopBarProps)
         </div>
         <button
           className="pr-6 pb-3 border-none rounded-[10px] px-4 py-2.5 font-bold text-sm cursor-pointer text-white"
-          style={{ background: "linear-gradient(135deg,#B179DF,#85D5C8)" }}
+          style={{ background: "linear-gradient(135deg,#4F46E5,#10B981)" }}
         >
           + New Project
         </button>

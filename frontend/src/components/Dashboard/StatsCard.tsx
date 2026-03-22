@@ -17,7 +17,7 @@ const StatsCard: React.FC<StatsCardProps> = ({
     value,
     icon,
     trend,
-    color = 'bg-purple-500',
+    color = 'bg-indigo-500',
 }) => {
     return (
         <Card className="p-6" hover>

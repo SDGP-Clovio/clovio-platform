@@ -23,7 +23,7 @@ export default function TaskEnginePage() {
     };
 
     return (
-        <div className="flex bg-[#F8F9FA] h-screen overflow-hidden font-sans">
+        <div className="flex bg-[#F8FAFC] h-screen overflow-hidden font-sans">
             {/* Sidebar */}
             <Sidebar
                 expanded={sidebarExpanded}
@@ -43,14 +43,14 @@ export default function TaskEnginePage() {
                 <main className="flex-1 overflow-y-auto p-8 border-t border-gray-100">
                     <div className="max-w-4xl bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 border border-gray-50 relative overflow-hidden">
                         {/* Decorative background element */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#B179DF]/10 to-[#85D5C8]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#4F46E5]/10 to-[#10B981]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none" />
                         
                         <div className="relative">
                             <div className="flex items-center gap-3 mb-2">
-                                <span className="text-[#B179DF] text-xl">✨</span>
-                                <h2 className="text-sm font-bold text-[#B179DF] uppercase tracking-wider m-0">AI Engine</h2>
+                                <span className="text-[#4F46E5] text-xl">✨</span>
+                                <h2 className="text-sm font-bold text-[#4F46E5] uppercase tracking-wider m-0">AI Engine</h2>
                             </div>
-                            <h1 className="text-3xl font-extrabold text-[#1A1A1A] tracking-tight mb-2">Task Distribution</h1>
+                            <h1 className="text-3xl font-extrabold text-[#0F172A] tracking-tight mb-2">Task Distribution</h1>
                             <p className="text-gray-500 mb-8 max-w-xl text-sm leading-relaxed">
                                 Enter your project details below and let our AI effortlessly break it down into manageable milestones and assign tasks fairly among your team members.
                             </p>

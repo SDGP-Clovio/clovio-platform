@@ -18,7 +18,7 @@ export default function Sidebar({
     <nav
       className={`
         ${expanded ? "w-56" : "w-[68px]"}
-        bg-[#1A1A1A] flex flex-col py-5 flex-shrink-0 relative z-10
+        bg-[#0F172A] flex flex-col py-5 flex-shrink-0 relative z-10
         shadow-[4px_0_24px_rgba(0,0,0,0.12)]
         transition-all duration-300 ease-in-out overflow-hidden
       `}
@@ -28,7 +28,7 @@ export default function Sidebar({
         className="flex items-center gap-3 px-4 pb-6 cursor-pointer"
         onClick={onToggle}
       >
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#B179DF] to-[#85D5C8] flex items-center justify-center text-white font-extrabold text-sm flex-shrink-0 tracking-tight">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#10B981] flex items-center justify-center text-white font-extrabold text-sm flex-shrink-0 tracking-tight">
           M
         </div>
         {expanded && (
@@ -60,7 +60,7 @@ export default function Sidebar({
                 transition-all duration-200
                 border-l-[3px]
                 ${isActive
-                  ? "bg-gradient-to-r from-[#B179DF]/20 to-[#85D5C8]/10 text-[#B179DF] border-l-[#B179DF] font-bold"
+                  ? "bg-gradient-to-r from-[#4F46E5]/20 to-[#10B981]/10 text-[#4F46E5] border-l-[#4F46E5] font-bold"
                   : "text-gray-500 border-l-transparent hover:bg-white/5 hover:text-gray-300"
                 }
               `}
@@ -71,7 +71,7 @@ export default function Sidebar({
                 <>
                   <span className="flex-1 text-left">{item.label}</span>
                   {item.badge && (
-                    <span className="bg-[#B179DF] text-white rounded-full text-[10px] font-bold px-2 py-0.5">
+                    <span className="bg-[#4F46E5] text-white rounded-full text-[10px] font-bold px-2 py-0.5">
                       {item.badge}
                     </span>
                   )}
@@ -79,7 +79,7 @@ export default function Sidebar({
               )}
 
               {!expanded && item.badge && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#B179DF] rounded-full" />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#4F46E5] rounded-full" />
               )}
             </button>
           );
@@ -101,7 +101,7 @@ export default function Sidebar({
 
         {/* User avatar */}
         <div className="flex items-center gap-2.5 px-2.5 pt-3">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#B179DF] to-[#85D5C8] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#4F46E5] to-[#10B981] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">
             K
           </div>
           {expanded && (

@@ -69,8 +69,8 @@ export default function SupervisorDashboard() {
 					</div>
 					<button
 						onClick={() => navigate("/supervisor/projects")}
-						className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all shadow-md shadow-purple-200 hover:-translate-y-0.5"
-						style={{ background: "linear-gradient(135deg,#B179DF,#85D5C8)" }}
+						className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all shadow-md shadow-indigo-200 hover:-translate-y-0.5"
+						style={{ background: "linear-gradient(135deg,#4F46E5,#10B981)" }}
 					>
 						View All Projects
 					</button>

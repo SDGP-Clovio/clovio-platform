@@ -20,14 +20,14 @@ export default function FairnessScore({ score = 75 }: FairnessScoreProps) {
 
   const getScoreColor = (s: number): string => {
     if (s >= 80) return "#10B981";
-    if (s >= 60) return "#7C3AED";
+    if (s >= 60) return "#4F46E5";
     if (s >= 40) return "#F59E0B";
     return "#EF4444";
   };
 
   const getScoreBadge = (s: number): { bg: string; text: string } => {
     if (s >= 80) return { bg: "bg-emerald-50", text: "text-emerald-700" };
-    if (s >= 60) return { bg: "bg-purple-50", text: "text-purple-700" };
+    if (s >= 60) return { bg: "bg-indigo-50", text: "text-indigo-700" };
     if (s >= 40) return { bg: "bg-amber-50", text: "text-amber-700" };
     return { bg: "bg-red-50", text: "text-red-700" };
   };

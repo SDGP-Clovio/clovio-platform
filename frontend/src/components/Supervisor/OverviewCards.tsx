@@ -8,8 +8,8 @@ const CARD_STYLE = "rounded-2xl bg-white border border-gray-100 p-4 shadow-sm";
 
 export default function OverviewCards({ overview }: OverviewCardsProps) {
 	const cards = [
-		{ label: "Total Projects", value: overview.total_projects, accent: "text-[#B179DF]" },
-		{ label: "Active Teams", value: overview.active_teams, accent: "text-[#2C9E8C]" },
+		{ label: "Total Projects", value: overview.total_projects, accent: "text-[#4F46E5]" },
+		{ label: "Active Teams", value: overview.active_teams, accent: "text-[#10B981]" },
 		{ label: "At-Risk Teams", value: overview.at_risk_teams, accent: "text-[#DC2626]" },
 		{
 			label: "Average Completion",

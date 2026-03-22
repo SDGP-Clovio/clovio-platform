@@ -65,7 +65,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onClick }) => {
                     {task.tags.slice(0, 2).map((tag) => (
                         <span
                             key={tag}
-                            className="text-xs px-2 py-0.5 bg-purple-50 text-purple-600 rounded-full"
+                            className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full"
                         >
                             {tag}
                         </span>

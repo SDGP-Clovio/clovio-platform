@@ -129,20 +129,20 @@ const SignUp: React.FC = () => {
 	};
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-[#f3f4f9] p-4 font-sans">
+		<div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-4 font-sans">
 			
 			<div className="relative flex w-full max-w-5xl overflow-hidden rounded-[40px] bg-white shadow-2xl min-h-[650px] flex-col md:flex-row-reverse">
 
 				
-				<div className="absolute left-0 top-0 h-full w-1/2 bg-[#7c3aed]">
+				<div className="absolute left-0 top-0 h-full w-1/2 bg-[#4F46E5]">
 					
 					<div className="absolute inset-y-0 -right-20 w-40 rounded-l-[100px] bg-white" />
 				</div>
 
 				
 				<div className="z-10 flex w-full flex-col justify-center p-12 md:w-1/2 lg:p-20">
-					<div className="mb-12 flex items-center gap-2 text-[#7c3aed]">
-						<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-current shadow-lg shadow-purple-200">
+					<div className="mb-12 flex items-center gap-2 text-[#4F46E5]">
+						<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-current shadow-lg shadow-indigo-200">
 							<span className="text-xl font-bold text-white">C</span>
 						</div>
 						<span className="text-xs font-bold uppercase tracking-widest text-slate-500">
@@ -155,7 +155,7 @@ const SignUp: React.FC = () => {
 						Already have an account?{' '}
 						<Link
 							to="/login"
-							className="font-semibold text-[#7c3aed] transition-colors hover:text-[#6d28d9]"
+							className="font-semibold text-[#4F46E5] transition-colors hover:text-[#4338CA]"
 						>
 							Log in
 						</Link>
@@ -178,7 +178,7 @@ const SignUp: React.FC = () => {
 								onChange={(e) => handleChange('fullName', e.target.value)}
 								onBlur={() => handleBlur('fullName')}
 								aria-invalid={Boolean(errors.fullName)}
-								className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
+								className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
 							/>
 							{errors.fullName && touchedFields.fullName && (
 								<p className="text-sm text-red-500">{errors.fullName}</p>
@@ -201,7 +201,7 @@ const SignUp: React.FC = () => {
 								onChange={(e) => handleChange('email', e.target.value)}
 								onBlur={() => handleBlur('email')}
 								aria-invalid={Boolean(errors.email)}
-								className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
+								className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
 							/>
 							{errors.email && touchedFields.email && (
 								<p className="text-sm text-red-500">{errors.email}</p>
@@ -220,8 +220,8 @@ const SignUp: React.FC = () => {
 										onClick={() => handleChange('role', option)}
 										onBlur={() => handleBlur('role')}
 										className={`flex-1 rounded-2xl border py-3 text-sm font-semibold capitalize transition-all ${formValues.role === option
-												? 'border-[#7c3aed] bg-[#7c3aed] text-white shadow-lg shadow-purple-300/30'
-												: 'border-slate-100 bg-slate-50 text-slate-500 hover:border-[#7c3aed]/40'
+												? 'border-[#4F46E5] bg-[#4F46E5] text-white shadow-lg shadow-indigo-300/30'
+												: 'border-slate-100 bg-slate-50 text-slate-500 hover:border-[#4F46E5]/40'
 											}`}
 									>
 										{option.charAt(0).toUpperCase() + option.slice(1)}
@@ -250,7 +250,7 @@ const SignUp: React.FC = () => {
 									onChange={(e) => handleChange('password', e.target.value)}
 									onBlur={() => handleBlur('password')}
 									aria-invalid={Boolean(errors.password)}
-									className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
+									className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
 								/>
 								<button
 									type="button"
@@ -299,7 +299,7 @@ const SignUp: React.FC = () => {
 									onChange={(e) => handleChange('confirmPassword', e.target.value)}
 									onBlur={() => handleBlur('confirmPassword')}
 									aria-invalid={Boolean(errors.confirmPassword)}
-									className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
+									className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
 								/>
 								<button
 									type="button"
@@ -317,7 +317,7 @@ const SignUp: React.FC = () => {
 
 						<button
 							type="submit"
-							className="mt-4 w-full rounded-2xl bg-[#7c3aed] py-4 text-base font-bold text-white shadow-xl shadow-purple-400/30 transition-all hover:brightness-110"
+							className="mt-4 w-full rounded-2xl bg-[#4F46E5] py-4 text-base font-bold text-white shadow-xl shadow-indigo-400/30 transition-all hover:brightness-110"
 						>
 							Sign up
 						</button>

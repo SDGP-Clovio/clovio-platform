@@ -84,7 +84,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose }) => {
                         <select
                             value={task.status}
                             onChange={(e) => handleStatusChange(e.target.value as Task['status'])}
-                            className="text-sm font-medium border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all cursor-pointer"
+                            className="text-sm font-medium border border-slate-200 rounded-lg px-3 py-1.5 bg-slate-50 text-slate-700 hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
                         >
                             <option value="todo">To Do</option>
                             <option value="in-progress">In Progress</option>
@@ -125,7 +125,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose }) => {
                 {/* Due Date */}
                 <div>
                     <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Due Date</h4>
-                    <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-sm focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500 transition-all">
+                    <div className="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2 py-1 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition-all">
                         <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                         <input
                             type="date"
@@ -142,7 +142,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose }) => {
                         <span>Assignees</span>
                         <button 
                             onClick={() => setIsAssigning(!isAssigning)}
-                            className="text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 rounded-full p-0.5 transition-colors"
+                            className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 rounded-full p-0.5 transition-colors"
                         >
                             <Plus className="w-3 h-3" />
                         </button>
@@ -174,7 +174,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose }) => {
                                         key={user.id}
                                         onClick={() => toggleAssignee(user.id)}
                                         className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm transition-colors text-left
-                                            ${isAssigned ? 'bg-purple-50 text-purple-700 font-medium' : 'hover:bg-slate-50 text-slate-600'}
+                                            ${isAssigned ? 'bg-indigo-50 text-indigo-700 font-medium' : 'hover:bg-slate-50 text-slate-600'}
                                         `}
                                     >
                                         <Avatar name={user.name} size="sm" />
@@ -217,12 +217,12 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose }) => {
 
                 {/* AI Assignment Reasoning */}
                 {task.aiAssignmentReason && (
-                    <div className="bg-purple-50 border border-purple-100 rounded-xl p-4">
+                    <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4">
                         <div className="flex items-start gap-3">
-                            <AlertCircle className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                            <AlertCircle className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
                             <div>
-                                <h4 className="font-semibold text-purple-900 mb-1 text-sm">AI Assignment Reasoning</h4>
-                                <p className="text-sm text-purple-700 leading-relaxed">{task.aiAssignmentReason}</p>
+                                <h4 className="font-semibold text-indigo-900 mb-1 text-sm">AI Assignment Reasoning</h4>
+                                <p className="text-sm text-indigo-700 leading-relaxed">{task.aiAssignmentReason}</p>
                             </div>
                         </div>
                     </div>
@@ -238,13 +238,13 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose }) => {
                             value={newComment}
                             onChange={(e) => setNewComment(e.target.value)}
                             placeholder="Add a comment..."
-                            className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all resize-y min-h-[80px]"
+                            className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-y min-h-[80px]"
                         />
                         <div className="flex justify-end mt-2">
                             <button
                                 onClick={submitComment}
                                 disabled={!newComment.trim()}
-                                className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-300 text-white text-sm font-medium rounded-lg transition-colors"
+                                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white text-sm font-medium rounded-lg transition-colors"
                             >
                                 Comment
                             </button>

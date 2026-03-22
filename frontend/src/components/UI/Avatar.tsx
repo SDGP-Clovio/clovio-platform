@@ -47,7 +47,7 @@ const Avatar: React.FC<AvatarProps> = ({
                 />
             ) : (
                 <div
-                    className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center text-white font-bold ring-2 ring-white`}
+                    className={`${sizeClasses[size]} rounded-full bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center text-white font-bold ring-2 ring-white`}
                 >
                     {getInitials(name)}
                 </div>

@@ -21,9 +21,9 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ currentStep, step
                             <div className="flex flex-col items-center flex-1">
                                 <div
                                     className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all ${isCompleted
-                                        ? 'bg-purple-600 text-white'
+                                        ? 'bg-indigo-600 text-white'
                                         : isCurrent
-                                            ? 'bg-purple-600 text-white ring-4 ring-purple-100'
+                                            ? 'bg-indigo-600 text-white ring-4 ring-indigo-100'
                                             : 'bg-slate-100 text-slate-400'
                                         }`}
                                 >
@@ -41,7 +41,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ currentStep, step
                                 </div>
                                 <div className="mt-2 text-center">
                                     <p
-                                        className={`text-sm font-medium ${isCurrent ? 'text-purple-600' : isCompleted ? 'text-slate-700' : 'text-slate-400'
+                                        className={`text-sm font-medium ${isCurrent ? 'text-indigo-600' : isCompleted ? 'text-slate-700' : 'text-slate-400'
                                             }`}
                                     >
                                         {step.label}
@@ -54,7 +54,7 @@ const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({ currentStep, step
                             {index < steps.length - 1 && (
                                 <div className="flex-1 px-2 -mt-16">
                                     <div
-                                        className={`h-0.5 transition-all ${stepNumber < currentStep ? 'bg-purple-600' : 'bg-slate-200'
+                                        className={`h-0.5 transition-all ${stepNumber < currentStep ? 'bg-indigo-600' : 'bg-slate-200'
                                             }`}
                                     />
                                 </div>

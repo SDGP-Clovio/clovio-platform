@@ -66,7 +66,7 @@ export default function MiniCalendar({
     <div className="w-full overflow-auto">
       {/* Header */}
       <div className="flex justify-between items-center mb-3.5">
-        <h3 className="m-0 text-[15px] font-bold text-[#1A1A1A]">
+        <h3 className="m-0 text-[15px] font-bold text-[#0F172A]">
           {monthName} {currentYear}
         </h3>
         <div className="flex gap-1">
@@ -121,10 +121,10 @@ export default function MiniCalendar({
               className={`
                 relative aspect-square flex items-center justify-center rounded-lg text-xs
                 ${isToday
-                  ? "bg-gradient-to-br from-[#B179DF] to-[#85D5C8] text-white font-extrabold"
+                  ? "bg-gradient-to-br from-[#4F46E5] to-[#10B981] text-white font-extrabold"
                   : meetingsToday
                     ? "font-semibold cursor-pointer hover:opacity-80"
-                    : "text-[#1A1A1A] hover:bg-gray-50"
+                    : "text-[#0F172A] hover:bg-gray-50"
                 }
               `}
               style={

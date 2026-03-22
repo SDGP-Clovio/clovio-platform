@@ -14,7 +14,7 @@ export default function UpcomingMeetings({
 
   return (
     <div>
-      <h3 className="m-0 mb-3 text-[15px] font-bold text-[#1A1A1A]">
+      <h3 className="m-0 mb-3 text-[15px] font-bold text-[#0F172A]">
         Upcoming Meetings
       </h3>
       <div className="flex flex-col gap-2.5">
@@ -44,7 +44,7 @@ export default function UpcomingMeetings({
 
             {/* Info */}
             <div className="flex-1">
-              <p className="text-xs font-semibold text-[#1A1A1A] m-0">
+              <p className="text-xs font-semibold text-[#0F172A] m-0">
                 {meeting.label}
               </p>
               <p className="text-[11px] text-gray-400 m-0">{meeting.time}</p>

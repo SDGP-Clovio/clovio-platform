@@ -274,12 +274,12 @@ const ProjectDashboard: React.FC = () => {
 
             {/* Sidebar */}
             <aside
-                className={`fixed left-0 top-0 h-screen w-64 bg-[#1a1b2e] text-white z-40 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+                className={`fixed left-0 top-0 h-screen w-64 bg-[#0F172A] text-white z-40 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
                     }`}
             >
                 {/* Logo */}
                 <div className="flex items-center gap-2.5 px-6 pt-6 pb-5">
-                    <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center font-bold text-white text-sm shadow">
+                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-emerald-500 rounded-lg flex items-center justify-center font-bold text-white text-sm shadow">
                         C
                     </div>
                     <span className="text-lg font-bold tracking-tight text-white">Clovio</span>
@@ -299,7 +299,7 @@ const ProjectDashboard: React.FC = () => {
                                     setSidebarOpen(false);
                                 }}
                                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${isActive
-                                    ? 'bg-purple-600/20 text-purple-300 font-semibold'
+                                    ? 'bg-gradient-to-r from-indigo-600/20 to-emerald-500/20 text-emerald-200 font-semibold'
                                     : 'text-slate-400 hover:bg-white/5 hover:text-white'
                                     }`}
                             >

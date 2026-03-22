@@ -15,7 +15,7 @@ interface CircularProgressProps {
 export default function CircularProgress({
   value,
   size = 100,
-  color = "#2563eb",
+  color = "#4F46E5",
   backgroundColor = "#e5e7eb",
   label,
 }: CircularProgressProps) {

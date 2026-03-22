@@ -104,13 +104,13 @@ const Login: React.FC = () => {
 	};
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-[#f3f4f9] p-4">
+		<div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-4">
 			{/* 1. Parent Container: Must have overflow-hidden and relative position */}
 			<div className="relative flex w-full max-w-5xl overflow-hidden rounded-[40px] bg-white shadow-2xl min-h-[600px]">
 
 				{/* 2. THE PURPLE BACKGROUND LAYER */}
 				{/* We use an absolute div that spans the right half but extends behind the curve */}
-				<div className="absolute right-0 top-0 h-full w-1/2 bg-[#7c3aed]">
+				<div className="absolute right-0 top-0 h-full w-1/2 bg-[#4F46E5]">
 					{/* 3. THE CURVE: This white div creates the "cut-out" look */}
 					<div className="absolute inset-y-0 -left-20 w-40 rounded-r-[100px] bg-white" />
 				</div>
@@ -118,7 +118,7 @@ const Login: React.FC = () => {
 				{/* 4. CONTENT LAYERS (Must be z-10 to sit above the background) */}
 				<div className="z-10 flex w-full flex-col justify-center p-12 md:w-1/2 lg:p-20">
 					<div className="mb-12 flex items-center gap-2">
-						<div className="h-10 w-10 rounded-xl bg-[#7c3aed] flex items-center justify-center shadow-lg shadow-purple-200">
+						<div className="h-10 w-10 rounded-xl bg-[#4F46E5] flex items-center justify-center shadow-lg shadow-indigo-200">
 							<span className="text-white font-bold">C</span>
 						</div>
 						<span className="text-xs font-bold tracking-widest text-slate-500 uppercase">System logo</span>
@@ -129,7 +129,7 @@ const Login: React.FC = () => {
 						Don&apos;t have an account?{' '}
 						<Link
 							to="/signup"
-							className="font-semibold text-[#7c3aed] transition-colors hover:text-[#6d28d9]"
+							className="font-semibold text-[#4F46E5] transition-colors hover:text-[#4338CA]"
 						>
 							Create an account
 						</Link>
@@ -159,7 +159,7 @@ const Login: React.FC = () => {
 								onChange={(e) => handleChange('email', e.target.value)}
 								onBlur={() => handleBlur('email')}
 								aria-invalid={Boolean(errors.email)}
-								className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
+								className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
 							/>
 							{errors.email && touchedFields.email && (
 								<p className="text-sm text-red-500">{errors.email}</p>
@@ -183,7 +183,7 @@ const Login: React.FC = () => {
 									onChange={(e) => handleChange('password', e.target.value)}
 									onBlur={() => handleBlur('password')}
 									aria-invalid={Boolean(errors.password)}
-									className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
+									className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
 								/>
 								<button
 									type="button"
@@ -201,7 +201,7 @@ const Login: React.FC = () => {
 							<div className="flex justify-end">
 								<button
 									type="button"
-									className="text-sm font-medium text-[#7c3aed] transition-colors hover:text-[#6d28d9]"
+									className="text-sm font-medium text-[#4F46E5] transition-colors hover:text-[#4338CA]"
 								>
 									Forgot password?
 								</button>
@@ -210,7 +210,7 @@ const Login: React.FC = () => {
 
 						<button
 							type="submit"
-							className="mt-4 w-full rounded-2xl bg-[#7c3aed] py-4 text-base font-bold text-white shadow-xl shadow-purple-400/30 transition-all hover:brightness-110"
+							className="mt-4 w-full rounded-2xl bg-[#4F46E5] py-4 text-base font-bold text-white shadow-xl shadow-indigo-400/30 transition-all hover:brightness-110"
 						>
 							Log in
 						</button>

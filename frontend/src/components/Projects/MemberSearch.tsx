@@ -52,7 +52,7 @@ const MemberSearch: React.FC<Props> = ({ allUsers, selectedIds, onChange }) => {
                         placeholder="Search by name or email…"
                         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
                         onFocus={() => setOpen(true)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all"
                     />
                 </div>
 
@@ -64,14 +64,14 @@ const MemberSearch: React.FC<Props> = ({ allUsers, selectedIds, onChange }) => {
                                 key={u.id}
                                 type="button"
                                 onClick={() => { add(u.id); setOpen(false); }}
-                                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-purple-50 transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-indigo-50 transition-colors text-left"
                             >
                                 <Avatar name={u.name} size="sm" />
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-slate-800 truncate">{u.name}</p>
                                     <p className="text-xs text-slate-400 truncate">{u.email}</p>
                                 </div>
-                                <UserPlus className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                                <UserPlus className="w-4 h-4 text-indigo-500 flex-shrink-0" />
                             </button>
                         ))}
                     </div>
@@ -91,17 +91,17 @@ const MemberSearch: React.FC<Props> = ({ allUsers, selectedIds, onChange }) => {
                     {selectedUsers.map((u) => (
                         <div
                             key={u.id}
-                            className="flex items-center gap-2 pl-2 pr-1 py-1 bg-purple-50 border border-purple-200 rounded-lg"
+                            className="flex items-center gap-2 pl-2 pr-1 py-1 bg-indigo-50 border border-indigo-200 rounded-lg"
                         >
                             <Avatar name={u.name} size="sm" />
                             <div className="leading-tight">
-                                <p className="text-xs font-semibold text-purple-800">{u.name}</p>
-                                <p className="text-[10px] text-purple-500">{u.email}</p>
+                                <p className="text-xs font-semibold text-indigo-800">{u.name}</p>
+                                <p className="text-[10px] text-indigo-500">{u.email}</p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => remove(u.id)}
-                                className="ml-1 p-0.5 rounded-md hover:bg-purple-200 text-purple-500 hover:text-purple-700 transition-colors"
+                                className="ml-1 p-0.5 rounded-md hover:bg-indigo-200 text-indigo-500 hover:text-indigo-700 transition-colors"
                             >
                                 <X className="w-3.5 h-3.5" />
                             </button>

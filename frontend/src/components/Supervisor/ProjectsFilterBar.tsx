@@ -12,7 +12,7 @@ export default function ProjectsFilterBar({ filters, onFiltersChange }: Projects
 				value={filters.query}
 				onChange={(event) => onFiltersChange({ ...filters, query: event.target.value })}
 				placeholder="Search by project name"
-				className="w-full lg:w-72 px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-[#B179DF]"
+				className="w-full lg:w-72 px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none focus:border-[#4F46E5]"
 			/>
 
 			<div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full lg:w-auto">

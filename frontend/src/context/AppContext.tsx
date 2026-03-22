@@ -51,10 +51,10 @@ interface AppContextState {
     currentUser: User | null;
     setCurrentUser: (user: User | null) => void;
     updateCurrentUserName: (name: string) => Promise<boolean>;
-    addSkill: (skill: Skill) => void;
-    removeSkill: (skillName: string) => void;
-    updateSkillLevel: (skillName: string, level: Skill['level']) => void;
-    updateDefaultAvailability: (slots: DayAvailability[]) => void;
+    addSkill: (skill: Skill) => Promise<boolean>;
+    removeSkill: (skillName: string) => Promise<boolean>;
+    updateSkillLevel: (skillName: string, level: Skill['level']) => Promise<boolean>;
+    updateDefaultAvailability: (slots: DayAvailability[]) => Promise<boolean>;
     // weeklyOverrides: date-string -> free hours array
     weeklyOverrides: Record<string, number[]>;
     toggleHourAvailability: (dateStr: string, hour: number) => void;
@@ -525,46 +525,46 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
     };
 
-    const addSkill = (skill: Skill) => {
-        if (!currentUser) return;
+    const addSkill = async (skill: Skill): Promise<boolean> => {
+        if (!currentUser) return false;
         // avoid duplicates
-        if ((currentUser.skills || []).some((s) => s.name === skill.name)) return;
+        if ((currentUser.skills || []).some((s) => s.name === skill.name)) return false;
 
         const previousUser = currentUser;
         const nextSkills = [...(currentUser.skills || []), skill];
         setCurrentUser({ ...currentUser, skills: nextSkills });
 
-        void (async () => {
-            try {
-                const persisted = await updateCurrentUserSettings({ skills: nextSkills });
-                setCurrentUser(persisted);
-            } catch (error) {
-                console.error('Failed to persist user skills', error);
-                setCurrentUser(previousUser);
-            }
-        })();
+        try {
+            const persisted = await updateCurrentUserSettings({ skills: nextSkills });
+            setCurrentUser(persisted);
+            return true;
+        } catch (error) {
+            console.error('Failed to persist user skills', error);
+            setCurrentUser(previousUser);
+            return false;
+        }
     };
 
-    const removeSkill = (skillName: string) => {
-        if (!currentUser) return;
+    const removeSkill = async (skillName: string): Promise<boolean> => {
+        if (!currentUser) return false;
 
         const previousUser = currentUser;
         const nextSkills = (currentUser.skills || []).filter((s) => s.name !== skillName);
         setCurrentUser({ ...currentUser, skills: nextSkills });
 
-        void (async () => {
-            try {
-                const persisted = await updateCurrentUserSettings({ skills: nextSkills });
-                setCurrentUser(persisted);
-            } catch (error) {
-                console.error('Failed to persist user skills', error);
-                setCurrentUser(previousUser);
-            }
-        })();
+        try {
+            const persisted = await updateCurrentUserSettings({ skills: nextSkills });
+            setCurrentUser(persisted);
+            return true;
+        } catch (error) {
+            console.error('Failed to persist user skills', error);
+            setCurrentUser(previousUser);
+            return false;
+        }
     };
 
-    const updateSkillLevel = (skillName: string, level: Skill['level']) => {
-        if (!currentUser) return;
+    const updateSkillLevel = async (skillName: string, level: Skill['level']): Promise<boolean> => {
+        if (!currentUser) return false;
 
         const previousUser = currentUser;
         const nextSkills = (currentUser.skills || []).map((s) =>
@@ -572,32 +572,32 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         );
         setCurrentUser({ ...currentUser, skills: nextSkills });
 
-        void (async () => {
-            try {
-                const persisted = await updateCurrentUserSettings({ skills: nextSkills });
-                setCurrentUser(persisted);
-            } catch (error) {
-                console.error('Failed to persist user skills', error);
-                setCurrentUser(previousUser);
-            }
-        })();
+        try {
+            const persisted = await updateCurrentUserSettings({ skills: nextSkills });
+            setCurrentUser(persisted);
+            return true;
+        } catch (error) {
+            console.error('Failed to persist user skills', error);
+            setCurrentUser(previousUser);
+            return false;
+        }
     };
 
-    const updateDefaultAvailability = (slots: DayAvailability[]) => {
-        if (!currentUser) return;
+    const updateDefaultAvailability = async (slots: DayAvailability[]): Promise<boolean> => {
+        if (!currentUser) return false;
 
         const previousUser = currentUser;
         setCurrentUser({ ...currentUser, defaultAvailability: slots });
 
-        void (async () => {
-            try {
-                const persisted = await updateCurrentUserSettings({ defaultAvailability: slots });
-                setCurrentUser(persisted);
-            } catch (error) {
-                console.error('Failed to persist default availability', error);
-                setCurrentUser(previousUser);
-            }
-        })();
+        try {
+            const persisted = await updateCurrentUserSettings({ defaultAvailability: slots });
+            setCurrentUser(persisted);
+            return true;
+        } catch (error) {
+            console.error('Failed to persist default availability', error);
+            setCurrentUser(previousUser);
+            return false;
+        }
     };
 
     // Weekly overrides: date-string -> set of free hours

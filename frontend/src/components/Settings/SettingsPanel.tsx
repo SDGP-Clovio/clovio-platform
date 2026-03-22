@@ -1,7 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import Avatar from '../UI/Avatar';
-import { User, Briefcase, Plus, X, Lightbulb, Clock, Pencil, Check } from 'lucide-react';
+import { User, Briefcase, Plus, X, Lightbulb, Clock, Pencil, Check, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { Skill, SkillLevel, DayAvailability } from '../../types/types';
 
 const SUGGESTED_SKILLS = [
@@ -48,6 +48,8 @@ const DEFAULT_SLOTS: DayAvailability[] = DAY_NAMES.map((_, i) => ({
     enabled: i >= 1 && i <= 5,
 }));
 
+type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
 /* ══════════════════════════════════════════════════════════════════════════ */
 const SettingsPanel: React.FC = () => {
     const {
@@ -65,6 +67,47 @@ const SettingsPanel: React.FC = () => {
     const [skillInput, setSkillInput] = useState('');
     const [newLevel, setNewLevel] = useState<SkillLevel>('beginner');
     const [showInput, setShowInput] = useState(false);
+    const [saveState, setSaveState] = useState<SaveState>('idle');
+    const [saveMessage, setSaveMessage] = useState('');
+    const saveResetTimerRef = useRef<number | null>(null);
+
+    const setSaving = (message: string) => {
+        if (saveResetTimerRef.current) {
+            window.clearTimeout(saveResetTimerRef.current);
+            saveResetTimerRef.current = null;
+        }
+        setSaveState('saving');
+        setSaveMessage(message);
+    };
+
+    const setSavedState = (message: string) => {
+        if (saveResetTimerRef.current) {
+            window.clearTimeout(saveResetTimerRef.current);
+        }
+        setSaveState('saved');
+        setSaveMessage(message);
+        saveResetTimerRef.current = window.setTimeout(() => {
+            setSaveState('idle');
+            setSaveMessage('');
+        }, 2400);
+    };
+
+    const setErrorState = (message: string) => {
+        if (saveResetTimerRef.current) {
+            window.clearTimeout(saveResetTimerRef.current);
+            saveResetTimerRef.current = null;
+        }
+        setSaveState('error');
+        setSaveMessage(message);
+    };
+
+    useEffect(() => {
+        return () => {
+            if (saveResetTimerRef.current) {
+                window.clearTimeout(saveResetTimerRef.current);
+            }
+        };
+    }, []);
 
     // Availability — local grid state: dayIndex -> Set of free hours
     const [grid, setGrid] = useState<Record<number, Set<number>>>(() => {
@@ -76,25 +119,32 @@ const SettingsPanel: React.FC = () => {
     const [dragging, setDragging]   = useState(false);
     const [dragVal,  setDragVal]    = useState(true); // true=adding, false=removing
 
-    const saveGrid = (updated: Record<number, Set<number>>) => {
+    const saveGrid = async (updated: Record<number, Set<number>>) => {
         setGrid(updated);
         const slots: DayAvailability[] = DAY_NAMES.map((_, i) => ({
             dayOfWeek: i,
             hours: [...(updated[i] ?? new Set())].sort((a, b) => a - b),
             enabled: (updated[i]?.size ?? 0) > 0,
         }));
-        updateDefaultAvailability(slots);
+
+        setSaving('Saving weekly availability...');
+        const persisted = await updateDefaultAvailability(slots);
+        if (persisted) {
+            setSavedState('Weekly availability saved');
+        } else {
+            setErrorState('Failed to save weekly availability. Please retry.');
+        }
     };
 
     const toggleCell = (day: number, hour: number, forceVal?: boolean) => {
         const next = { ...grid, [day]: new Set(grid[day] ?? []) };
         const adding = forceVal ?? !next[day].has(hour);
         if (adding) next[day].add(hour); else next[day].delete(hour);
-        saveGrid(next);
+        void saveGrid(next);
     };
 
     const clearDay = (day: number) => {
-        saveGrid({ ...grid, [day]: new Set() });
+        void saveGrid({ ...grid, [day]: new Set() });
     };
 
     const markedHours = useMemo(
@@ -114,22 +164,56 @@ const SettingsPanel: React.FC = () => {
         const nextName = editForm.name.trim();
         if (!nextName) return;
 
+        setSaving('Saving profile...');
         const saved = await updateCurrentUserName(nextName);
         if (saved) {
             setIsEditingProfile(false);
+            setSavedState('Profile saved');
+        } else {
+            setErrorState('Failed to save profile. Please retry.');
         }
     };
 
-    const handleAdd = () => {
+    const handleAdd = async () => {
         if (!skillInput.trim()) return;
-        addSkill({ name: skillInput.trim(), level: newLevel });
+
+        setSaving('Saving skills...');
+        const saved = await addSkill({ name: skillInput.trim(), level: newLevel });
+        if (!saved) {
+            setErrorState('Failed to save skill. Please retry.');
+            return;
+        }
+
         setSkillInput('');
         setNewLevel('beginner');
         setShowInput(false);
+        setSavedState('Skills updated');
     };
 
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        <div className="space-y-4">
+            {saveState !== 'idle' && (
+                <div
+                    className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium ${
+                        saveState === 'saving'
+                            ? 'border-blue-200 bg-blue-50 text-blue-700'
+                            : saveState === 'saved'
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                : 'border-red-200 bg-red-50 text-red-700'
+                    }`}
+                >
+                    {saveState === 'saving' ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : saveState === 'saved' ? (
+                        <CheckCircle2 className="w-4 h-4" />
+                    ) : (
+                        <AlertCircle className="w-4 h-4" />
+                    )}
+                    <span>{saveMessage}</span>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
 
             {/* ── Left: Profile ──────────────────────────────────────────── */}
             <div className="xl:col-span-1 space-y-6">
@@ -223,7 +307,7 @@ const SettingsPanel: React.FC = () => {
                                 type="text"
                                 value={skillInput}
                                 onChange={(e) => setSkillInput(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setShowInput(false); }}
+                                onKeyDown={(e) => { if (e.key === 'Enter') void handleAdd(); if (e.key === 'Escape') setShowInput(false); }}
                                 placeholder="Skill name..."
                                 className="flex-1 min-w-32 px-3 py-2 text-sm border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-200"
                             />
@@ -237,7 +321,7 @@ const SettingsPanel: React.FC = () => {
                                     <option key={l.value} value={l.value}>{l.label}</option>
                                 ))}
                             </select>
-                            <button onClick={handleAdd} className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors">Add</button>
+                            <button onClick={() => void handleAdd()} className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors">Add</button>
                             <button onClick={() => { setShowInput(false); setSkillInput(''); }} className="px-4 py-2 bg-slate-200 text-slate-600 text-sm rounded-lg hover:bg-slate-300 transition-colors">Cancel</button>
                         </div>
                     )}
@@ -260,7 +344,15 @@ const SettingsPanel: React.FC = () => {
                                     {/* Level selector (visible on hover) */}
                                     <select
                                         value={skill.level}
-                                        onChange={(e) => updateSkillLevel(skill.name, e.target.value as SkillLevel)}
+                                        onChange={async (e) => {
+                                            setSaving('Saving skills...');
+                                            const saved = await updateSkillLevel(skill.name, e.target.value as SkillLevel);
+                                            if (saved) {
+                                                setSavedState('Skills updated');
+                                            } else {
+                                                setErrorState('Failed to save skill level. Please retry.');
+                                            }
+                                        }}
                                         className={`text-xs font-semibold px-2.5 py-1 rounded-full border cursor-pointer focus:outline-none transition-colors ${meta.color}`}
                                     >
                                         {LEVELS.map((l) => (
@@ -270,7 +362,15 @@ const SettingsPanel: React.FC = () => {
 
                                     {/* Remove */}
                                     <button
-                                        onClick={() => removeSkill(skill.name)}
+                                        onClick={async () => {
+                                            setSaving('Saving skills...');
+                                            const saved = await removeSkill(skill.name);
+                                            if (saved) {
+                                                setSavedState('Skills updated');
+                                            } else {
+                                                setErrorState('Failed to remove skill. Please retry.');
+                                            }
+                                        }}
                                         className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-red-50 hover:text-red-500 text-slate-300"
                                     >
                                         <X className="w-3.5 h-3.5" />
@@ -288,7 +388,15 @@ const SettingsPanel: React.FC = () => {
                                 {suggested.slice(0, 9).map((s) => (
                                     <button
                                         key={s}
-                                        onClick={() => addSkill({ name: s, level: 'beginner' })}
+                                        onClick={async () => {
+                                            setSaving('Saving skills...');
+                                            const saved = await addSkill({ name: s, level: 'beginner' });
+                                            if (saved) {
+                                                setSavedState('Skills updated');
+                                            } else {
+                                                setErrorState('Failed to save skill. Please retry.');
+                                            }
+                                        }}
                                         className="flex items-center gap-1 px-3 py-1.5 bg-slate-50 text-slate-500 rounded-full text-xs font-medium border border-slate-200 hover:bg-purple-50 hover:text-purple-600 hover:border-purple-300 transition-all"
                                     >
                                         <Plus className="w-3 h-3" />{s}
@@ -317,7 +425,7 @@ const SettingsPanel: React.FC = () => {
                             <span className="text-xs text-slate-500">Busy</span>
                         </div>
                         <button
-                            onClick={() => saveGrid(Object.fromEntries(DAY_NAMES.map((_, i) => [i, new Set<number>()])))}
+                            onClick={() => void saveGrid(Object.fromEntries(DAY_NAMES.map((_, i) => [i, new Set<number>()])))}
                             className="ml-auto text-xs text-slate-400 hover:text-red-500 underline transition-colors"
                         >Clear all</button>
                     </div>
@@ -382,6 +490,7 @@ const SettingsPanel: React.FC = () => {
                 </Section>
             </div>
         </div>
+    </div>
     );
 };
 

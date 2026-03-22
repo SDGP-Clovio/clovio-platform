@@ -89,7 +89,7 @@ export const getCurrentUser = async (): Promise<User> => {
 
 // AI endpoints (existing)
 export const generateMilestones = async (projectDescription: string, teamMembers: string[]) => {
-    const response = await apiClient.post("/projects/breakdown", {
+    const response = await apiClient.post("/breakdown", {
         description: projectDescription,
         team_members: teamMembers.map(name => ({
             name,

@@ -68,7 +68,13 @@ export default function TaskEnginePage() {
                 </main>
             </div>
 
-            {showModal && <TaskDistributionModal milestones={milestones} onClose={() => setShowModal(false)} />}
+            {showModal && (
+                <TaskDistributionModal
+                    milestones={milestones}
+                    onClose={() => setShowModal(false)}
+                    onConfirm={() => setShowModal(false)}
+                />
+            )}
         </div>
     );
 }

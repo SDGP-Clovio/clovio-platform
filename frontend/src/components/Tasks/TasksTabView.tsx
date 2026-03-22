@@ -5,7 +5,7 @@ import Avatar from '../UI/Avatar';
 import Modal from '../UI/Modal';
 import TaskDetailModal from '../Kanban/TaskDetailModal';
 import { getUserById } from '../../data/mockData';
-import type { Task, Milestone } from '../../types/types';
+import type { Task } from '../../types/types';
 import { useApp } from '../../context/AppContext';
 import TaskDistributionWizard from '../TaskDistribution/TaskDistributionWizard';
 

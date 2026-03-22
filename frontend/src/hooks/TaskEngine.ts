@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Milestone, Task } from "../types/index";
+import type { Milestone, Task } from "../types/types";
 import { generateMilestones, generateTasks } from "../api/apiCalls";
 
 
@@ -24,8 +24,9 @@ export const useTaskEngine = () => {
             const milestoneData: Milestone[] = plan.milestones.map((m: any, index: number) => ({
                 id: (index + 1).toString(),
                 title: m.title,
+                description: m.description || "Auto-generated milestone",
                 effort: m.effort_points,
-                suggestedTimeline: m.suggested_timeline || "TBD",
+                dueDate: new Date(Date.now() + (index + 1) * 7 * 24 * 60 * 60 * 1000), // Weekly intervals
                 tasks: []
             }));
 
@@ -50,11 +51,19 @@ export const useTaskEngine = () => {
                 });
 
                 const tasks: Task[] = rawTasks.map((t: any, index: number) => ({
-                    id: `${m.id}-${index}`, // 🔥 guaranteed unique
+                    id: `${m.id}-${index}`,
+                    projectId: "temp", // Will be set by the calling component
                     title: t.name,
-                    assignee: t.assigned_to,
-                    status: t.status || "todo",
-                    skill_gap: t.is_skill_gap
+                    description: t.description || "Auto-generated task",
+                    status: (t.status || "todo") as "todo" | "in-progress" | "done",
+                    priority: "medium" as "low" | "medium" | "high",
+                    assignedTo: t.assigned_to ? [t.assigned_to] : [],
+                    createdBy: "system",
+                    aiAssignmentReason: t.assignment_reason || "AI-generated assignment",
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    skill_gap: t.is_skill_gap || false,
+                    assignee: t.assigned_to
                 }));
 
                 milestonesWithTasks.push({ ...m, tasks });

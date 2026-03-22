@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings, MessageSquare } from 'lucide-react';
-import FairnessScoreWidget from '../components/Dashboard/FairnessScoreWidget';
-import KanbanBoard from '../components/Kanban/KanbanBoard';
 import TasksTabView from '../components/Tasks/TasksTabView';
 import Avatar from '../components/UI/Avatar';
 import MeetingScheduler from '../components/Meetings/MeetingScheduler';
@@ -17,18 +15,22 @@ import FairnessScore from '../components/Progress/FairnessScore';
 import AIInsights from '../components/Progress/AIInsights';
 import TeamPerformance from '../components/Progress/TeamPerformance';
 import RiskAssessment from '../components/Progress/RiskAssessment';
-import { MOCK_PLAN } from '../types/mockData';
-import { calcOverallProgress } from '../utils/metrics';
+import { useFairness } from '../hooks/useFairness';
+import { useProgress } from '../hooks/useProgress';
 
 const ProjectDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { id: projectId } = useParams<{ id: string }>();
-    const { currentUser, projects, setActiveProject } = useApp();
+    const { currentUser, projects, setActiveProject, tasks } = useApp();
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'chat' | 'settings'>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     // Find the project by ID
     const project = projects.find((p) => p.id === projectId);
+
+    // Use real AI hooks for fairness and progress
+    const { fairnessScore, computeScore } = useFairness();
+    const { progressData, computeProjectProgress } = useProgress();
 
     // Set active project when component mounts or projectId changes
     React.useEffect(() => {
@@ -36,6 +38,28 @@ const ProjectDashboard: React.FC = () => {
             setActiveProject(project);
         }
     }, [project, setActiveProject]);
+
+    // Compute fairness and progress when project tasks change
+    useEffect(() => {
+        if (project && projectId) {
+            // Get tasks for this project
+            const projectTasks = tasks.filter(t => t.projectId === projectId);
+
+            // Compute fairness if we have tasks
+            if (projectTasks.length > 0) {
+                computeScore(projectTasks);
+            }
+
+            // Compute progress
+            computeProjectProgress({
+                name: project.name,
+                description: project.description || '',
+                milestones: [], // TODO: Get real milestones from project
+                teamMembers: project.teamMembers,
+                dueDate: new Date().toISOString() // TODO: Get real due date
+            });
+        }
+    }, [project, projectId, tasks, computeScore, computeProjectProgress]);
 
     // Redirect if project not found
     if (!project) {
@@ -172,10 +196,16 @@ const ProjectDashboard: React.FC = () => {
                             {/* Top Row: Circular Progress & Unified Stats */}
                             <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
                                 <div className="xl:col-span-4">
-                                    <ProgressBanner overallProgress={calcOverallProgress(MOCK_PLAN.milestones)} />
+                                    <ProgressBanner overallProgress={progressData?.overall_progress || 0} />
                                 </div>
                                 <div className="xl:col-span-8">
-                                    <ProgressStats plan={MOCK_PLAN} dueDate="2026-05-15" />
+                                    <ProgressStats
+                                        plan={{
+                                            project_name: project.name,
+                                            milestones: []
+                                        }}
+                                        dueDate="2026-05-15"
+                                    />
                                 </div>
                             </div>
 
@@ -183,18 +213,24 @@ const ProjectDashboard: React.FC = () => {
                             <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
                                 {/* Left — Fairness Score + AI Insights */}
                                 <div className="lg:col-span-3 flex flex-col gap-5">
-                                    <FairnessScore score={75} />
-                                    <AIInsights overallProgress={calcOverallProgress(MOCK_PLAN.milestones)} />
+                                    <FairnessScore score={fairnessScore || 0} />
+                                    <AIInsights overallProgress={progressData?.overall_progress || 0} />
                                 </div>
 
                                 {/* Middle — Team Performance */}
                                 <div className="lg:col-span-5">
-                                    <TeamPerformance plan={MOCK_PLAN} />
+                                    <TeamPerformance plan={{
+                                        project_name: project.name,
+                                        milestones: []
+                                    }} />
                                 </div>
 
                                 {/* Right — Risk Assessment */}
                                 <div className="lg:col-span-4">
-                                    <RiskAssessment riskScore={35} busFactorScore={65} />
+                                    <RiskAssessment
+                                        riskScore={progressData?.risk_factors?.length ? 50 + (progressData.risk_factors.length * 10) : 35}
+                                        busFactorScore={65}
+                                    />
                                 </div>
                             </div>
                         </div>

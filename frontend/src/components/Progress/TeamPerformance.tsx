@@ -12,15 +12,32 @@ import type { ProjectPlan } from "../../types";
 
 interface TeamPerformanceProps {
   plan: ProjectPlan;
+  memberNames?: string[];
 }
 
-export default function TeamPerformance({ plan }: TeamPerformanceProps) {
+export default function TeamPerformance({ plan, memberNames = [] }: TeamPerformanceProps) {
   const workload = calcTeamWorkload(plan.milestones);
-  const mostProductive = findMostProductiveMember(workload);
 
-  const members = Object.entries(workload)
+  const mergedWorkload: Record<string, { assigned: number; completed: number }> = {
+    ...workload,
+  };
+
+  Array.from(new Set(memberNames)).forEach((memberName) => {
+    if (!mergedWorkload[memberName]) {
+      mergedWorkload[memberName] = { assigned: 0, completed: 0 };
+    }
+  });
+
+  const mostProductive = findMostProductiveMember(mergedWorkload);
+
+  const members = Object.entries(mergedWorkload)
     .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.assigned - a.assigned);
+    .sort((a, b) => {
+      if (b.assigned !== a.assigned) {
+        return b.assigned - a.assigned;
+      }
+      return a.name.localeCompare(b.name);
+    });
 
   if (members.length === 0) {
     return (

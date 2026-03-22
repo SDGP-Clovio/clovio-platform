@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings, MessageSquare } from 'lucide-react';
@@ -17,12 +17,17 @@ import TeamPerformance from '../components/Progress/TeamPerformance';
 import RiskAssessment from '../components/Progress/RiskAssessment';
 import { useFairness } from '../hooks/useFairness';
 import { useProgress } from '../hooks/useProgress';
+import type {
+    Milestone as OverviewMilestone,
+    ProjectPlan as OverviewProjectPlan,
+    Task as OverviewTask,
+} from '../types';
 
 const ProjectDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { id: projectIdParam } = useParams<{ id: string }>();
     const projectId = projectIdParam ? Number(projectIdParam) : NaN;
-    const { currentUser, projects, setActiveProject, tasks } = useApp();
+    const { currentUser, projects, setActiveProject, tasks, users } = useApp();
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'chat' | 'settings'>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -32,6 +37,167 @@ const ProjectDashboard: React.FC = () => {
     // Use real AI hooks for fairness and progress
     const { fairnessScore, computeScore } = useFairness();
     const { progressData, computeProjectProgress } = useProgress();
+
+    const projectTasks = useMemo(
+        () => tasks.filter((task) => task.projectId === projectId),
+        [tasks, projectId]
+    );
+
+    const memberNameById = useMemo(() => {
+        const map = new Map<number, string>();
+        users.forEach((user) => {
+            map.set(user.id, user.name);
+        });
+        return map;
+    }, [users]);
+
+    const teamMemberNames = useMemo(() => {
+        if (!project) {
+            return [];
+        }
+
+        return project.teamMembers.map((memberId) => memberNameById.get(memberId) ?? `User ${memberId}`);
+    }, [memberNameById, project]);
+
+    const overviewMilestones = useMemo<OverviewMilestone[]>(() => {
+        const groups = new Map<string, { title: string; order: number; tasks: OverviewTask[] }>();
+
+        projectTasks.forEach((task) => {
+            const groupKey = task.milestoneId != null ? `milestone-${task.milestoneId}` : 'backlog';
+            const groupTitle = task.milestoneTitle || (task.milestoneId != null ? `Milestone ${task.milestoneId}` : 'Backlog');
+            const groupOrder = task.milestoneId ?? Number.MAX_SAFE_INTEGER;
+            const assignedMemberId = task.assignedTo[0] ?? task.assignee;
+            const assignedMemberName =
+                typeof assignedMemberId === 'number'
+                    ? memberNameById.get(assignedMemberId) ?? `User ${assignedMemberId}`
+                    : null;
+
+            const fallbackComplexity =
+                task.priority === 'high'
+                    ? 8
+                    : task.priority === 'low'
+                        ? 3
+                        : 5;
+
+            const mappedTask: OverviewTask = {
+                name: task.title,
+                description: task.description,
+                complexity: Math.max(
+                    1,
+                    Math.min(10, Math.round(task.estimatedHours ?? fallbackComplexity))
+                ),
+                required_skills: task.tags ?? [],
+                assigned_to: assignedMemberName,
+                assignment_reason: task.aiAssignmentReason ?? null,
+                is_skill_gap: Boolean(task.skill_gap),
+                status: task.status,
+            };
+
+            const existing = groups.get(groupKey);
+            if (existing) {
+                existing.tasks.push(mappedTask);
+                return;
+            }
+
+            groups.set(groupKey, {
+                title: groupTitle,
+                order: groupOrder,
+                tasks: [mappedTask],
+            });
+        });
+
+        const sortedMilestones = Array.from(groups.values())
+            .sort((a, b) => a.order - b.order)
+            .map<OverviewMilestone>((group) => {
+                const totalTasks = group.tasks.length;
+                const completedTasks = group.tasks.filter((task) => task.status === 'done').length;
+                const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+                return {
+                    title: group.title,
+                    tasks: group.tasks,
+                    order: Number.isFinite(group.order) ? group.order : null,
+                    progress,
+                };
+            });
+
+        const firstIncompleteIndex = sortedMilestones.findIndex(
+            (milestone) => (milestone.progress ?? 0) < 100
+        );
+
+        return sortedMilestones.map((milestone, index) => {
+            const phaseStatus: OverviewMilestone['phaseStatus'] =
+                (milestone.progress ?? 0) === 100
+                    ? 'completed'
+                    : firstIncompleteIndex === -1
+                        ? 'completed'
+                        : index === firstIncompleteIndex
+                            ? 'active'
+                            : 'upcoming';
+
+            return {
+                ...milestone,
+                phaseStatus,
+            };
+        });
+    }, [memberNameById, projectTasks]);
+
+    const overviewPlan = useMemo<OverviewProjectPlan>(
+        () => ({
+            project_name: project?.name ?? 'Project',
+            milestones: overviewMilestones,
+        }),
+        [overviewMilestones, project?.name]
+    );
+
+    const overviewDueDate = useMemo(() => {
+        if (project?.deadline) {
+            return project.deadline.toISOString();
+        }
+
+        const fallback = new Date();
+        fallback.setDate(fallback.getDate() + 30);
+        return fallback.toISOString();
+    }, [project?.deadline]);
+
+    const overviewBusFactorScore = useMemo(() => {
+        if (!project || project.teamMembers.length === 0) {
+            return 0;
+        }
+
+        const assigneeIds = new Set<number>();
+        projectTasks.forEach((task) => {
+            const assignedMemberId = task.assignedTo[0] ?? task.assignee;
+            if (typeof assignedMemberId === 'number') {
+                assigneeIds.add(assignedMemberId);
+            }
+        });
+
+        return Math.round((assigneeIds.size / project.teamMembers.length) * 100);
+    }, [project, projectTasks]);
+
+    const overviewRiskScore = useMemo(() => {
+        const overallProgress = progressData?.overall_progress ?? 0;
+        const severityWeights: Record<string, number> = {
+            low: 8,
+            medium: 15,
+            high: 25,
+            critical: 35,
+        };
+
+        const riskFactorPenalty = (progressData?.risk_factors ?? []).reduce((sum, factor) => {
+            const severity = typeof factor.severity === 'string' ? factor.severity.toLowerCase() : '';
+            return sum + (severityWeights[severity] ?? 10);
+        }, 0);
+
+        const deadlinePenalty =
+            project?.deadline && project.deadline.getTime() < Date.now() && overallProgress < 100
+                ? 20
+                : 0;
+
+        const progressPenalty = Math.round((100 - overallProgress) * 0.6);
+        return Math.max(0, Math.min(100, progressPenalty + riskFactorPenalty + deadlinePenalty));
+    }, [progressData, project?.deadline]);
 
     // Set active project when component mounts or projectId changes
     React.useEffect(() => {
@@ -43,25 +209,28 @@ const ProjectDashboard: React.FC = () => {
     // Compute fairness and progress when project tasks change
     useEffect(() => {
         if (project && Number.isFinite(projectId)) {
-            // Get tasks for this project
-            const projectTasks = tasks.filter(t => t.projectId === projectId);
-
-            // Compute fairness if we have tasks
-            if (projectTasks.length > 0) {
-                computeScore(projectTasks, project.teamMembers);
-            }
+            // Always recompute fairness, even for empty task lists, to avoid stale values.
+            computeScore(projectTasks, project.teamMembers);
 
             // Compute progress
             computeProjectProgress({
                 name: project.name,
                 description: project.description || '',
-                milestones: [], // TODO: Replace with persisted milestones when API is wired
+                milestones: overviewMilestones,
                 tasks: projectTasks,
                 teamMembers: project.teamMembers,
-                dueDate: project.deadline ? project.deadline.toISOString() : new Date().toISOString()
+                dueDate: overviewDueDate,
             });
         }
-    }, [project, projectId, tasks, computeScore, computeProjectProgress]);
+    }, [
+        project,
+        projectId,
+        projectTasks,
+        computeScore,
+        computeProjectProgress,
+        overviewMilestones,
+        overviewDueDate,
+    ]);
 
     // Redirect if project not found
     if (!project) {
@@ -202,11 +371,8 @@ const ProjectDashboard: React.FC = () => {
                                 </div>
                                 <div className="xl:col-span-8">
                                     <ProgressStats
-                                        plan={{
-                                            project_name: project.name,
-                                            milestones: []
-                                        }}
-                                        dueDate="2026-05-15"
+                                        plan={overviewPlan}
+                                        dueDate={overviewDueDate}
                                     />
                                 </div>
                             </div>
@@ -221,17 +387,14 @@ const ProjectDashboard: React.FC = () => {
 
                                 {/* Middle — Team Performance */}
                                 <div className="lg:col-span-5">
-                                    <TeamPerformance plan={{
-                                        project_name: project.name,
-                                        milestones: []
-                                    }} />
+                                    <TeamPerformance plan={overviewPlan} memberNames={teamMemberNames} />
                                 </div>
 
                                 {/* Right — Risk Assessment */}
                                 <div className="lg:col-span-4">
                                     <RiskAssessment
-                                        riskScore={progressData?.risk_factors?.length ? 50 + (progressData.risk_factors.length * 10) : 35}
-                                        busFactorScore={65}
+                                        riskScore={overviewRiskScore}
+                                        busFactorScore={overviewBusFactorScore}
                                     />
                                 </div>
                             </div>

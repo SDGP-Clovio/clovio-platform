@@ -2,6 +2,19 @@ import { useState } from "react";
 import type { Milestone, Task } from "../types/types";
 import { generateMilestones, generateTasks } from "../api/apiCalls";
 
+const normalizeTaskStatus = (status?: string): Task["status"] => {
+    if (!status) return "todo";
+
+    const normalized = status.toLowerCase();
+    if (normalized === "in_progress" || normalized === "in-progress") {
+        return "in-progress";
+    }
+    if (normalized === "done") {
+        return "done";
+    }
+    return "todo";
+};
+
 
 
 
@@ -53,9 +66,13 @@ export const useTaskEngine = () => {
                 const tasks: Task[] = rawTasks.map((t: any, index: number) => ({
                     id: `${m.id}-${index}`,
                     projectId: "temp", // Will be set by the calling component
+                    milestoneId: m.id,
+                    milestoneTitle: m.title,
+                    milestoneDescription: m.description,
+                    milestoneDueDate: m.dueDate,
                     title: t.name,
                     description: t.description || "Auto-generated task",
-                    status: (t.status || "todo") as "todo" | "in-progress" | "done",
+                    status: normalizeTaskStatus(t.status),
                     priority: "medium" as "low" | "medium" | "high",
                     assignedTo: t.assigned_to ? [t.assigned_to] : [],
                     createdBy: "system",

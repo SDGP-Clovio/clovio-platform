@@ -44,8 +44,12 @@ export default function TaskDistributionWizard({ isOpen, onClose, projectId }: T
             if (milestone.tasks) {
                 milestone.tasks.forEach((task: any) => {
                     addTask({
-                        id: task.id || `t-${Date.now()}-${Math.random()}`,
+                        id: task.id ? `ai-${projectId}-${task.id}-${Date.now()}` : `t-${Date.now()}-${Math.random()}`,
                         projectId,
+                        milestoneId: milestone.id,
+                        milestoneTitle: milestone.title,
+                        milestoneDescription: milestone.description,
+                        milestoneDueDate: milestone.dueDate,
                         title: task.title || task.name,
                         description: task.description || '',
                         status: task.status || 'todo',
@@ -54,8 +58,8 @@ export default function TaskDistributionWizard({ isOpen, onClose, projectId }: T
                         createdBy: 'ai-system',
                         createdAt: new Date(),
                         updatedAt: new Date(),
-                        aiAssignmentReason: task.assignment_reason,
-                        skill_gap: task.is_skill_gap || false,
+                        aiAssignmentReason: task.aiAssignmentReason || task.assignment_reason,
+                        skill_gap: task.skill_gap || task.is_skill_gap || false,
                         estimatedHours: task.complexity || 5,
                     });
                 });

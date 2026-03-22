@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { LayoutList, Trello, Wand2, Calendar, CheckCircle2, Circle, Clock } from 'lucide-react';
 import KanbanBoard from '../Kanban/KanbanBoard';
 import Avatar from '../UI/Avatar';
 import Modal from '../UI/Modal';
 import TaskDetailModal from '../Kanban/TaskDetailModal';
-import { getUserById } from '../../data/mockData';
 import type { Task } from '../../types/types';
 import { useApp } from '../../context/AppContext';
 import TaskDistributionWizard from '../TaskDistribution/TaskDistributionWizard';
@@ -19,37 +18,53 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isWizardOpen, setIsWizardOpen] = useState(false);
 
-    const { tasks } = useApp();
+    const { tasks, users } = useApp();
 
     // In a real app, tasks would be fetched per project.
     // Use tasks from context so updates reflect immediately.
     const projectTasks: Task[] = tasks.filter((t: Task) => t.projectId === projectId);
 
-    // Mock milestones derivation
-    // We'll group them purely for visual representation since there's no native milestone structure.
-    const milestones = [
-        {
-            id: 'm1',
-            title: 'Phase 1: Research & Planning',
-            description: 'Define requirements and architecture.',
-            tasks: projectTasks.slice(0, 2),
-            dueDate: new Date(Date.now() + 86400000 * 7), // 7 days from now
-        },
-        {
-            id: 'm2',
-            title: 'Phase 2: Core Implementation',
-            description: 'Build backend APIs and frontend UI components.',
-            tasks: projectTasks.slice(2, 5),
-            dueDate: new Date(Date.now() + 86400000 * 21), // 21 days from now
-        },
-        {
-            id: 'm3',
-            title: 'Phase 3: Testing & Polish',
-            description: 'Refining the experience and fixing bugs.',
-            tasks: projectTasks.slice(5),
-            dueDate: new Date(Date.now() + 86400000 * 35), // 35 days from now
-        }
-    ];
+    const milestones = useMemo(() => {
+        type MilestoneGroup = {
+            id: string;
+            title: string;
+            description: string;
+            dueDate?: Date;
+            tasks: Task[];
+            order: number;
+        };
+
+        const groups = new Map<string, MilestoneGroup>();
+
+        projectTasks.forEach((task) => {
+            const milestoneId = task.milestoneId?.trim();
+            const fallbackGroupId = 'backlog';
+            const groupId = milestoneId || fallbackGroupId;
+
+            if (!groups.has(groupId)) {
+                const numericOrder = milestoneId && /^\d+$/.test(milestoneId)
+                    ? Number.parseInt(milestoneId, 10)
+                    : Number.MAX_SAFE_INTEGER;
+
+                groups.set(groupId, {
+                    id: groupId,
+                    title: task.milestoneTitle || (milestoneId ? `Milestone ${milestoneId}` : 'Backlog Tasks'),
+                    description: task.milestoneDescription || (milestoneId ? 'Tasks generated for this milestone.' : 'Tasks not linked to a specific milestone yet.'),
+                    dueDate: task.milestoneDueDate,
+                    tasks: [],
+                    order: numericOrder,
+                });
+            }
+
+            groups.get(groupId)!.tasks.push(task);
+        });
+
+        return Array.from(groups.values()).sort((a, b) => a.order - b.order);
+    }, [projectTasks]);
+
+    const findUser = (idOrName: string) => {
+        return users.find((u) => u.id === idOrName) || users.find((u) => u.name === idOrName);
+    };
 
     const getStatusIcon = (status: Task['status']) => {
         if (status === 'done') return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
@@ -126,6 +141,12 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                 <KanbanBoard />
             ) : (
                 <div className="space-y-8">
+                    {milestones.length === 0 && (
+                        <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                            <p className="text-sm text-slate-500 font-medium">No tasks available yet.</p>
+                            <p className="text-xs text-slate-400 mt-1">Generate tasks with the Task Distribution Wizard to populate milestones.</p>
+                        </div>
+                    )}
                     {milestones.map((milestone) => (
                         <div key={milestone.id} className="bg-slate-50 rounded-2xl p-5 border border-slate-200">
                             {/* Milestone Header */}
@@ -138,7 +159,9 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                                     <div className="flex items-center gap-1.5 text-slate-400 bg-white px-3 py-1.5 rounded-lg border border-slate-100 shadow-sm">
                                         <Calendar className="w-4 h-4" />
                                         <span className="text-xs font-semibold">
-                                            Due {milestone.dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            {milestone.dueDate
+                                                ? `Due ${milestone.dueDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                                                : 'No due date'}
                                         </span>
                                     </div>
                                 </div>
@@ -148,7 +171,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                             {milestone.tasks.length > 0 ? (
                                 <div className="space-y-3">
                                     {milestone.tasks.map((task) => {
-                                        const assignees = task.assignedTo.map(id => getUserById(id)).filter(Boolean);
+                                        const assignees = task.assignedTo.map((id) => findUser(id)).filter(Boolean);
                                         return (
                                             <div
                                                 key={task.id}

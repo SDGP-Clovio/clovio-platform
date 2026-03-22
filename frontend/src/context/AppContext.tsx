@@ -111,6 +111,85 @@ interface AppContextState {
 // Create Context
 const AppContext = createContext<AppContextState | undefined>(undefined);
 
+const ACTIVITIES_STORAGE_KEY = 'clovio.activities.v1';
+const MAX_STORED_ACTIVITIES = 500;
+
+const isActivityType = (value: unknown): value is Activity['type'] => {
+    return (
+        value === 'task_created' ||
+        value === 'task_completed' ||
+        value === 'task_assigned' ||
+        value === 'meeting_scheduled' ||
+        value === 'comment_added' ||
+        value === 'project_created'
+    );
+};
+
+const hydrateStoredActivities = (): Activity[] | null => {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    try {
+        const raw = localStorage.getItem(ACTIVITIES_STORAGE_KEY);
+        if (!raw) {
+            return null;
+        }
+
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) {
+            return null;
+        }
+
+        const hydrated = parsed
+            .map((item): Activity | null => {
+                if (
+                    typeof item !== 'object' ||
+                    item === null ||
+                    typeof (item as { id?: unknown }).id !== 'number' ||
+                    !isActivityType((item as { type?: unknown }).type) ||
+                    typeof (item as { userId?: unknown }).userId !== 'number' ||
+                    typeof (item as { projectId?: unknown }).projectId !== 'number' ||
+                    typeof (item as { description?: unknown }).description !== 'string'
+                ) {
+                    return null;
+                }
+
+                const timestampRaw = (item as { timestamp?: unknown }).timestamp;
+                const timestamp = new Date(
+                    typeof timestampRaw === 'string' || typeof timestampRaw === 'number'
+                        ? timestampRaw
+                        : Date.now()
+                );
+                if (Number.isNaN(timestamp.getTime())) {
+                    return null;
+                }
+
+                const taskIdRaw = (item as { taskId?: unknown }).taskId;
+                const meetingIdRaw = (item as { meetingId?: unknown }).meetingId;
+
+                return {
+                    id: (item as { id: number }).id,
+                    type: (item as { type: Activity['type'] }).type,
+                    userId: (item as { userId: number }).userId,
+                    projectId: (item as { projectId: number }).projectId,
+                    taskId: typeof taskIdRaw === 'number' ? taskIdRaw : undefined,
+                    meetingId: typeof meetingIdRaw === 'number' ? meetingIdRaw : undefined,
+                    timestamp,
+                    description: (item as { description: string }).description,
+                };
+            })
+            .filter((activity): activity is Activity => activity !== null)
+            .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+            .slice(0, MAX_STORED_ACTIVITIES);
+
+        return hydrated;
+    } catch (error) {
+        console.error('Failed to restore stored activities', error);
+        return null;
+    }
+};
+
 // Provider Props
 interface AppProviderProps {
     children: ReactNode;
@@ -126,7 +205,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [fairnessMetrics] = useState<FairnessMetrics>(mockFairnessMetrics);
-    const [activities, setActivities] = useState<Activity[]>(mockActivities);
+    const [activities, setActivities] = useState<Activity[]>(() => {
+        const restored = hydrateStoredActivities();
+        return restored ?? mockActivities;
+    });
     const [dashboardStats, setDashboardStats] = useState<DashboardStats>(mockDashboardStats);
     const [projectChats, setProjectChats] = useState<ProjectChat[]>([]);
 
@@ -283,6 +365,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             isMounted = false;
         };
     }, []);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        try {
+            const trimmedActivities = activities
+                .slice()
+                .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+                .slice(0, MAX_STORED_ACTIVITIES);
+            localStorage.setItem(ACTIVITIES_STORAGE_KEY, JSON.stringify(trimmedActivities));
+        } catch (error) {
+            console.error('Failed to persist activities', error);
+        }
+    }, [activities]);
 
     // Project Actions
     const createProject = (projectData: {

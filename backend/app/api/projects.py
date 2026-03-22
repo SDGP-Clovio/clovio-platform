@@ -5,7 +5,7 @@ from typing import List
 # Import Database tools
 from app.core.database import get_db
 from app.models.project import Project
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.models.project_member import ProjectMember
 
 # Import Schemas (Both your AI ones and the new Database ones)
@@ -45,6 +45,14 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
     unique_member_ids = set(project.member_ids or [])
     unique_member_ids.add(project.created_by)
 
+    if project.supervisor_id is not None:
+        supervisor = db.query(User).filter(User.id == project.supervisor_id).first()
+        if not supervisor:
+            raise HTTPException(status_code=404, detail="Supervisor user not found")
+        if supervisor.role != UserRole.SUPERVISOR:
+            raise HTTPException(status_code=400, detail="Selected supervisor user must have supervisor role")
+        unique_member_ids.add(project.supervisor_id)
+
     # Validate that all provided member IDs exist in the database
     users = db.query(User).filter(User.id.in_(list(unique_member_ids))).all()
     found_ids = {u.id for u in users}
@@ -57,7 +65,8 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
             name=project.name,
             description=project.description,
             status=project.status,
-            created_by=project.created_by  # Updated to match the DB column!
+            created_by=project.created_by,  # Updated to match the DB column!
+            deadline=project.deadline,
         )
         db.add(new_project)
         # Flush to get the new project ID without fully committing yet

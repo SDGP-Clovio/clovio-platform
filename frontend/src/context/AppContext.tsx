@@ -46,11 +46,13 @@ interface AppContextState {
     activeProject: Project | null;
     setActiveProject: (project: Project | null) => void;
     createProject: (projectData: {
+        projectId?: string;
         name: string;
         description: string;
         deadline: string;
         courseName: string;
         teamMembers: string[];
+        supervisorId: string;
         tasks: Array<{
             title: string;
             description: string;
@@ -113,11 +115,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
     // Project Actions
     const createProject = (projectData: {
+        projectId?: string;
         name: string;
         description: string;
         deadline: string;
         courseName: string;
         teamMembers: string[];
+        supervisorId: string;
         tasks: Array<{
             title: string;
             description: string;
@@ -125,8 +129,14 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             estimatedHours: number;
         }>;
     }): Project => {
+        const defaultSupervisorId =
+            mockUsers.find((user) => user.role === 'supervisor')?.id ??
+            currentUser?.id ??
+            projectData.teamMembers[0] ??
+            '';
+
         // Generate unique ID
-        const projectId = `p${Date.now()}`;
+        const projectId = projectData.projectId || `p${Date.now()}`;
 
         // Create the project
         const newProject: Project = {
@@ -141,7 +151,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             createdAt: new Date(),
             deadline: projectData.deadline ? new Date(projectData.deadline) : undefined,
             courseName: projectData.courseName || undefined,
-            supervisorId: 'u3', // Default supervisor
+            supervisorId: projectData.supervisorId || defaultSupervisorId,
         };
 
         // Add project to state

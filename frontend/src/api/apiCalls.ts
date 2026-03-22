@@ -3,7 +3,7 @@ import axios from "axios";
 // Send API requests to the backend
 const API_BASE = "http://localhost:8000";
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
     baseURL: API_BASE,
     headers: {
         "Content-Type": "application/json",
@@ -63,6 +63,35 @@ export interface AuthResponse {
     token_type: string;
 }
 
+export interface BackendUserRecord {
+    id: number;
+    email: string;
+    username: string;
+    full_name: string | null;
+    role: "student" | "supervisor";
+    is_active: boolean;
+}
+
+export interface BackendProjectCreateRequest {
+    name: string;
+    description: string;
+    status: "planned" | "active" | "completed";
+    created_by: number;
+    member_ids: number[];
+    supervisor_id?: number;
+    deadline?: string;
+}
+
+export interface BackendProjectResponse {
+    id: number;
+    name: string;
+    description: string;
+    status: "planned" | "active" | "completed";
+    created_by: number;
+    created_at: string;
+    deadline?: string;
+}
+
 // Authentication endpoints
 export const register = async (userData: RegisterRequest): Promise<User> => {
     const response = await apiClient.post("/api/v1/auth/register", userData);
@@ -84,6 +113,18 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
 
 export const getCurrentUser = async (): Promise<User> => {
     const response = await apiClient.get("/api/v1/auth/me");
+    return response.data;
+};
+
+export const getUsers = async (): Promise<BackendUserRecord[]> => {
+    const response = await apiClient.get("/api/users");
+    return response.data;
+};
+
+export const createProjectInDatabase = async (
+    payload: BackendProjectCreateRequest,
+): Promise<BackendProjectResponse> => {
+    const response = await apiClient.post("/api/projects", payload);
     return response.data;
 };
 

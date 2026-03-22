@@ -95,10 +95,12 @@ class ProjectBase(BaseModel):
     description: str  # Removed Optional: Database strictly requires a description
     status: str = "planned"  # Lowercase to perfectly match the Database Enum
     created_by: int  # Changed from owner_id to perfectly match the Database column
+    deadline: Optional[datetime] = None
 
 # 2. Properties required when the frontend creates a new Project
 class ProjectCreate(ProjectBase):
     member_ids: List[int] = Field(default_factory=list)
+    supervisor_id: Optional[int] = None
 
 # 3. Properties returned when sending a Project back to the frontend
 class ProjectResponse(ProjectBase):

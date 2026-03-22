@@ -35,16 +35,19 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
     const [description, setDescription] = useState(project.description);
     const [courseName,  setCourseName]  = useState(project.courseName ?? '');
     const [deadline,    setDeadline]    = useState(toDateStr(project.deadline));
+    const [supervisorId, setSupervisorId] = useState(project.supervisorId);
     const [members,     setMembers]     = useState<string[]>(project.teamMembers);
     const [saved,       setSaved]       = useState(false);
     const [showDelete,  setShowDelete]  = useState(false);
 
     const allStudents = users.filter((u) => u.role !== 'supervisor');
+    const allSupervisors = users.filter((u) => u.role === 'supervisor');
 
     const save = () => {
         updateProject(project.id, {
             name, description, courseName,
             deadline: deadline ? new Date(deadline) : undefined,
+            supervisorId,
         });
         setSaved(true);
         setTimeout(() => setSaved(false), 2200);
@@ -80,18 +83,25 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                     <div className="p-6 space-y-4">
                         <div>
                             <Label>Project Name</Label>
-                            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={inputCls} />
+                            <input
+                                type="text"
+                                title="Project name"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className={inputCls}
+                            />
                         </div>
                         <div>
                             <Label>Description</Label>
                             <textarea
+                                title="Project description"
                                 value={description}
                                 onChange={(e) => setDescription(e.target.value)}
                                 rows={3}
                                 className={`${inputCls} resize-none`}
                             />
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <Label>Course</Label>
                                 <input
@@ -106,12 +116,35 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                                 <Label>Deadline</Label>
                                 <input
                                     type="date"
+                                    title="Project deadline"
                                     value={deadline}
                                     onChange={(e) => setDeadline(e.target.value)}
                                     className={inputCls}
                                 />
                             </div>
+                            <div>
+                                <Label>Supervisor</Label>
+                                <select
+                                    value={supervisorId}
+                                    onChange={(e) => setSupervisorId(e.target.value)}
+                                    title="Project supervisor"
+                                    className={inputCls}
+                                >
+                                    {allSupervisors.length === 0 ? (
+                                        <option value="">No supervisor available</option>
+                                    ) : (
+                                        allSupervisors.map((supervisor) => (
+                                            <option key={supervisor.id} value={supervisor.id}>
+                                                {supervisor.name}
+                                            </option>
+                                        ))
+                                    )}
+                                </select>
+                            </div>
                         </div>
+                        {allSupervisors.length === 0 && (
+                            <p className="text-xs text-amber-600">No supervisor account exists yet. Create one to assign supervision.</p>
+                        )}
                     </div>
                 </div>
 

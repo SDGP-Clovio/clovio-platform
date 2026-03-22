@@ -248,10 +248,10 @@ class SupervisorService:
     def _to_date(value: Any) -> Optional[date]:
         if value is None:
             return None
-        if isinstance(value, date):
-            return value
         if isinstance(value, datetime):
             return value.date()
+        if isinstance(value, date):
+            return value
         if isinstance(value, str):
             try:
                 return date.fromisoformat(value)

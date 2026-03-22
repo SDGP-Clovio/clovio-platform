@@ -62,9 +62,10 @@ export default function SupervisorProjectDetailsPage() {
 				setContributions(contributionData);
 				setFairness(fairnessData);
 				setAlerts(alertsData);
-			} catch {
+			} catch (err) {
 				if (isMounted) {
-					setError("Unable to load project details.");
+					const message = err instanceof Error ? err.message : "Unable to load project details.";
+					setError(message);
 				}
 			} finally {
 				if (isMounted) {

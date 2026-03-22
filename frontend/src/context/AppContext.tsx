@@ -95,7 +95,7 @@ interface AppContextState {
 
     // Meetings
     meetings: Meeting[];
-    addMeeting: (meeting: Meeting) => Promise<void>;
+    addMeeting: (meeting: Meeting) => Promise<boolean>;
 
     // Fairness Metrics
     fairnessMetrics: FairnessMetrics;
@@ -962,7 +962,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
 
     // Meeting Actions
-    const addMeeting = async (meeting: Meeting) => {
+    const addMeeting = async (meeting: Meeting): Promise<boolean> => {
         try {
             const createdMeeting = await createMeetingRecord({
                 project_id: meeting.projectId,
@@ -990,8 +990,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 };
                 addActivity(activity);
             }
+            return true;
         } catch (error) {
             console.error('Failed to create meeting', error);
+            return false;
         }
     };
 

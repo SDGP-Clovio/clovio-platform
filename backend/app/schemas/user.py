@@ -12,20 +12,22 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
-# 3. Properties returned to the frontend (Read)
-class UserResponse(UserBase):
-    id: int
-    role: UserRole
-    is_active: bool
-
-    class Config:
-        from_attributes = True
-
 
 class DayAvailabilitySlot(BaseModel):
     day_of_week: int = Field(..., ge=0, le=6)
     hours: List[int] = Field(default_factory=list)
     enabled: bool = True
+
+
+# 3. Properties returned to the frontend (Read)
+class UserResponse(UserBase):
+    id: int
+    role: UserRole
+    is_active: bool
+    default_availability: Optional[List[DayAvailabilitySlot]] = Field(default_factory=list)
+
+    class Config:
+        from_attributes = True
 
 
 class UserSkillSetting(BaseModel):

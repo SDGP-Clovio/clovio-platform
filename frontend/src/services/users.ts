@@ -8,6 +8,7 @@ interface BackendUserRecord {
     full_name: string | null;
     role: "student" | "supervisor";
     is_active: boolean;
+    default_availability?: BackendDayAvailability[] | null;
 }
 
 interface BackendCurrentUser {
@@ -42,6 +43,9 @@ function toAppUser(record: BackendUserRecord): User {
         email: record.email,
         role: record.role,
         studentId: record.role === "student" ? record.username : undefined,
+        defaultAvailability: Array.isArray(record.default_availability)
+            ? record.default_availability.map(toAppAvailability)
+            : [],
     };
 }
 

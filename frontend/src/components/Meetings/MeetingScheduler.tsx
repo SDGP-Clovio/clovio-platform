@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Users, Calendar, Clock, CheckCircle2, AlertTriangle, Plus, X, MapPin } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { mockAvailability } from '../../data/mockData';
 import Avatar from '../UI/Avatar';
-import type { AvailabilitySlot, Meeting } from '../../types/types';
+import type { Meeting } from '../../types/types';
 
 interface Props {
     projectId: number;
@@ -71,6 +70,44 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
         endHour: 11,
     });
     const [success, setSuccess] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
+
+    const memberAvailabilityByDay = useMemo(() => {
+        const map = new Map<number, Map<number, Set<number>>>();
+
+        members.forEach((member) => {
+            const dayMap = new Map<number, Set<number>>();
+
+            (member.defaultAvailability ?? []).forEach((slot) => {
+                if (!slot.enabled) {
+                    return;
+                }
+
+                const day = Number(slot.dayOfWeek);
+                if (!Number.isFinite(day) || day < 0 || day > 6) {
+                    return;
+                }
+
+                const currentHours = dayMap.get(day) ?? new Set<number>();
+                (slot.hours ?? []).forEach((hour) => {
+                    const parsedHour = Number(hour);
+                    if (Number.isFinite(parsedHour) && parsedHour >= 0 && parsedHour < 24) {
+                        currentHours.add(parsedHour);
+                    }
+                });
+                dayMap.set(day, currentHours);
+            });
+
+            map.set(member.id, dayMap);
+        });
+
+        return map;
+    }, [members]);
+
+    const selectedWithoutAvailability = useMemo(
+        () => selectedIds.filter((uid) => (memberAvailabilityByDay.get(uid)?.size ?? 0) === 0),
+        [memberAvailabilityByDay, selectedIds]
+    );
 
     // ── Selection helpers ────────────────────────────────────────────────────
     const allSelected = selectedIds.length === members.length;
@@ -88,23 +125,14 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
         const slots: FreeSlot[] = [];
 
         for (let day = 1; day <= 5; day++) {
-            // Gather each selected user's slots for this day
-            const byUser: Record<number, AvailabilitySlot[]> = {};
-            for (const uid of selectedIds) {
-                byUser[uid] = mockAvailability.filter(
-                    (s) => s.userId === uid && s.dayOfWeek === day
-                );
-            }
-
             // Build an hour-by-hour grid (hours 8-20)
             for (let startH = 8; startH < 20; startH++) {
                 const availableIds: number[] = [];
                 const missingIds: number[] = [];
 
                 for (const uid of selectedIds) {
-                    const free = byUser[uid].some(
-                        (s) => s.startHour <= startH && startH < s.endHour
-                    );
+                    const freeHours = memberAvailabilityByDay.get(uid)?.get(day);
+                    const free = Boolean(freeHours?.has(startH));
                     if (free) availableIds.push(uid);
                     else missingIds.push(uid);
                 }
@@ -140,7 +168,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
             if (!a.allPresent && b.allPresent) return 1;
             return 0;
         });
-    }, [selectedIds]);
+    }, [memberAvailabilityByDay, selectedIds]);
 
     const noOverlap =
         selectedIds.length > 0 && freeSlots.filter((s) => s.allPresent).length === 0;
@@ -152,6 +180,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
 
     // ── Prefill & open form from a slot ──────────────────────────────────────
     const openFormFromSlot = (slot: FreeSlot) => {
+        setSubmitError(null);
         setPrefillSlot(slot);
         setForm((f) => ({
             ...f,
@@ -163,9 +192,11 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
     };
 
     // ── Submit ────────────────────────────────────────────────────────────────
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!form.title.trim() || !currentUser) return;
+        setSubmitError(null);
+        setSuccess(false);
 
         const [yr, mo, dy] = form.date.split('-').map(Number);
         const start = new Date(yr, mo - 1, dy, form.startHour, 0);
@@ -178,13 +209,22 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
             description: form.description.trim() || undefined,
             startTime: start,
             endTime: end,
-            attendees: prefillSlot ? prefillSlot.availableIds : selectedIds,
+            attendees: prefillSlot
+                ? prefillSlot.availableIds
+                : selectedIds.length > 0
+                    ? selectedIds
+                    : [currentUser.id],
             createdBy: currentUser.id,
             location: form.location.trim() || undefined,
             status: 'scheduled',
         };
 
-        addMeeting(newMeeting);
+        const created = await addMeeting(newMeeting);
+        if (!created) {
+            setSubmitError('Failed to schedule meeting. Please try again.');
+            return;
+        }
+
         setSuccess(true);
         setShowForm(false);
         setPrefillSlot(null);
@@ -203,6 +243,13 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
                 <div className="flex items-center gap-3 bg-green-50 border border-green-200 text-green-700 px-5 py-3 rounded-xl">
                     <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
                     <span className="font-medium">Meeting scheduled successfully!</span>
+                </div>
+            )}
+
+            {submitError && (
+                <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-5 py-3 rounded-xl">
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0" />
+                    <span className="font-medium">{submitError}</span>
                 </div>
             )}
 
@@ -325,6 +372,11 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
                 {selectedIds.length < 2 && (
                     <p className="text-xs text-slate-400 mt-3 italic">Select at least 2 members to find overlapping free slots.</p>
                 )}
+                {selectedWithoutAvailability.length > 0 && (
+                    <p className="text-xs text-amber-600 mt-3">
+                        Some selected members do not have saved weekly availability in Settings and are treated as unavailable.
+                    </p>
+                )}
             </div>
 
             {/* ── No Overlap Warning ─────────────────────────────────────── */}
@@ -435,7 +487,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
             {showForm && (
                 <div
                     className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                    onClick={() => { setShowForm(false); setPrefillSlot(null); }}
+                    onClick={() => { setShowForm(false); setPrefillSlot(null); setSubmitError(null); }}
                 >
                     <div
                         className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden"
@@ -445,7 +497,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
                         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-purple-500 to-indigo-600">
                             <h3 className="text-white font-bold text-base">Schedule Meeting</h3>
                             <button
-                                onClick={() => { setShowForm(false); setPrefillSlot(null); }}
+                                onClick={() => { setShowForm(false); setPrefillSlot(null); setSubmitError(null); }}
                                 className="p-1.5 rounded-lg bg-white/20 text-white hover:bg-white/30 transition-colors"
                             >
                                 <X className="w-4 h-4" />
@@ -541,7 +593,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
                                 <div className="flex gap-3 pt-1">
                                     <button
                                         type="button"
-                                        onClick={() => { setShowForm(false); setPrefillSlot(null); }}
+                                        onClick={() => { setShowForm(false); setPrefillSlot(null); setSubmitError(null); }}
                                         className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors"
                                     >
                                         Cancel
@@ -563,7 +615,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
             {/* Manual schedule button when form is closed */}
             {!showForm && selectedIds.length >= 2 && (
                 <button
-                    onClick={() => { setPrefillSlot(null); setShowForm(true); }}
+                    onClick={() => { setPrefillSlot(null); setSubmitError(null); setShowForm(true); }}
                     className="flex items-center gap-2 text-sm font-semibold text-purple-600 hover:text-purple-800 transition-colors"
                 >
                     <Plus className="w-4 h-4" />

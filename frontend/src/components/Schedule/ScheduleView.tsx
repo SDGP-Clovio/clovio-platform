@@ -64,12 +64,14 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [location, setLocation] = useState('');
     const [projectId, setProjectId] = useState(projects[0]?.id ?? 0);
     const [attendees, setAttendees] = useState<number[]>(currentUser?.id != null ? [currentUser.id] : []);
+    const [submitError, setSubmitError] = useState<string>('');
 
     const toggleAttendee = (uid: number) =>
         setAttendees((prev) => prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]);
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!title || !date) return;
+        setSubmitError('');
         const meeting: Meeting = {
             id: Date.now(),
             projectId,
@@ -81,7 +83,12 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             location: location || undefined,
             status: 'scheduled',
         };
-        addMeeting(meeting);
+        const created = await addMeeting(meeting);
+        if (!created) {
+            setSubmitError('Failed to schedule meeting. Please retry.');
+            return;
+        }
+
         onClose();
     };
 
@@ -98,6 +105,9 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </div>
 
                 <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                    {submitError && (
+                        <p className="text-xs text-red-600 font-medium">{submitError}</p>
+                    )}
                     <div>
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Title</label>
                         <input autoFocus type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Sprint Planning"

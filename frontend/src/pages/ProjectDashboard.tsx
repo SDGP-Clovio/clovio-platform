@@ -47,16 +47,17 @@ const ProjectDashboard: React.FC = () => {
 
             // Compute fairness if we have tasks
             if (projectTasks.length > 0) {
-                computeScore(projectTasks);
+                computeScore(projectTasks, project.teamMembers);
             }
 
             // Compute progress
             computeProjectProgress({
                 name: project.name,
                 description: project.description || '',
-                milestones: [], // TODO: Get real milestones from project
+                milestones: [], // TODO: Replace with persisted milestones when API is wired
+                tasks: projectTasks,
                 teamMembers: project.teamMembers,
-                dueDate: new Date().toISOString() // TODO: Get real due date
+                dueDate: project.deadline ? project.deadline.toISOString() : new Date().toISOString()
             });
         }
     }, [project, projectId, tasks, computeScore, computeProjectProgress]);

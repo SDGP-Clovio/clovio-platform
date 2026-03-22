@@ -1,5 +1,26 @@
 import { useState, useCallback } from "react";
 import { computeFairness } from "../api/apiCalls";
+import type { Task } from "../types/types";
+
+interface FairnessApiResponse {
+    fairness_score?: number;
+    score?: number;
+    insights?: any[];
+}
+
+const normalizeStatus = (status?: string): "todo" | "in_progress" | "done" => {
+    if (!status) return "todo";
+    const normalized = status.toLowerCase();
+    if (normalized === "done") return "done";
+    if (normalized === "in-progress" || normalized === "in_progress") return "in_progress";
+    return "todo";
+};
+
+const normalizeComplexity = (value: unknown): number => {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return 1;
+    return Math.max(1, Math.min(10, Math.round(numeric)));
+};
 
 export const useFairness = () => {
     const [fairnessScore, setFairnessScore] = useState<number | null>(null);
@@ -7,9 +28,10 @@ export const useFairness = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const computeScore = useCallback(async (tasks: any[]) => {
+    const computeScore = useCallback(async (tasks: Task[], memberNames: string[] = []) => {
         if (!tasks || tasks.length === 0) {
             setFairnessScore(null);
+            setFairnessInsights([]);
             return;
         }
 
@@ -17,22 +39,49 @@ export const useFairness = () => {
             setLoading(true);
             setError(null);
 
-            const result = await computeFairness({
-                tasks: tasks.map(task => ({
-                    id: task.id,
-                    title: task.title,
-                    assigned_to: task.assignedTo?.[0] || task.assignee || "Unassigned",
-                    effort: task.estimatedHours || task.effort || 1,
-                    status: task.status
-                }))
+            const mappedTasks = tasks.map((task) => {
+                const assignee = task.assignedTo?.[0] || task.assignee || null;
+                return {
+                    name: task.title || "Untitled Task",
+                    description: task.description || null,
+                    complexity: normalizeComplexity(task.estimatedHours),
+                    required_skills: [],
+                    assigned_to: assignee,
+                    assignment_reason: task.aiAssignmentReason || null,
+                    is_skill_gap: Boolean(task.skill_gap),
+                    status: normalizeStatus(task.status),
+                };
             });
 
-            setFairnessScore(result.score);
-            setFairnessInsights(result.insights || []);
+            const assigneeNames = mappedTasks
+                .map((task) => task.assigned_to)
+                .filter((name): name is string => Boolean(name));
+
+            const derivedMemberNames = Array.from(new Set([...(memberNames || []), ...assigneeNames]));
+
+            const result = await computeFairness({
+                tasks: mappedTasks,
+                member_names: derivedMemberNames,
+            });
+
+            const data = result as FairnessApiResponse;
+            const rawScore = typeof data.score === "number"
+                ? data.score
+                : typeof data.fairness_score === "number"
+                    ? (data.fairness_score <= 1 ? (1 - data.fairness_score) * 100 : data.fairness_score)
+                    : null;
+
+            const finalScore = rawScore === null
+                ? null
+                : Number(Math.max(0, Math.min(100, rawScore)).toFixed(2));
+
+            setFairnessScore(finalScore);
+            setFairnessInsights(Array.isArray(data.insights) ? data.insights : []);
         } catch (err: any) {
             console.error("Error computing fairness:", err);
-            setError(err.message || "Failed to compute fairness");
+            setError(err?.response?.data?.detail || err.message || "Failed to compute fairness");
             setFairnessScore(null);
+            setFairnessInsights([]);
         } finally {
             setLoading(false);
         }

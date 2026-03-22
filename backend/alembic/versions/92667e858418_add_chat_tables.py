@@ -22,39 +22,39 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade():
     op.create_table(
         "conversations",
-        sa.Column("id", sa.UUID(), primary_key=True, default=uuid.uuid4),
+        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column(
             "project_id",
-            sa.UUID(),
+            sa.Integer(),  
             sa.ForeignKey("projects.id", ondelete="CASCADE"),
             nullable=False,
-            unique=True,   # one chat per project, enforced at DB level
+            unique=True,
         ),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
 
     op.create_table(
         "conversation_participants",
-        sa.Column("conversation_id", sa.UUID(), sa.ForeignKey("conversations.id", ondelete="CASCADE"), primary_key=True),
-        sa.Column("user_id", sa.UUID(), sa.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+        sa.Column("conversation_id", sa.Integer(), sa.ForeignKey("conversations.id", ondelete="CASCADE"), primary_key=True),
+        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),  # ✅ changed
         sa.Column("joined_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
 
     op.create_table(
         "direct_conversations",
-        sa.Column("id", sa.UUID(), primary_key=True, default=uuid.uuid4),
-        sa.Column("user_a_id", sa.UUID(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("user_b_id", sa.UUID(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
+        sa.Column("user_a_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),  # ✅ changed
+        sa.Column("user_b_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),  # ✅ changed
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         sa.UniqueConstraint("user_a_id", "user_b_id", name="uq_direct_conv"),
     )
 
     op.create_table(
         "messages",
-        sa.Column("id", sa.UUID(), primary_key=True, default=uuid.uuid4),
-        sa.Column("conversation_id", sa.UUID(), sa.ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True),
-        sa.Column("direct_conversation_id", sa.UUID(), sa.ForeignKey("direct_conversations.id", ondelete="CASCADE"), nullable=True),
-        sa.Column("sender_id", sa.UUID(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
+        sa.Column("conversation_id", sa.Integer(), sa.ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True),
+        sa.Column("direct_conversation_id", sa.Integer(), sa.ForeignKey("direct_conversations.id", ondelete="CASCADE"), nullable=True),
+        sa.Column("sender_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),  # ✅ changed
         sa.Column("content", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )

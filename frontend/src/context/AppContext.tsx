@@ -9,8 +9,6 @@ import type {
     DashboardStats,
     Skill,
     DayAvailability,
-    ProjectChat,
-    ChatMessage,
 } from '../types/types';
 
 import {
@@ -21,7 +19,6 @@ import {
     mockFairnessMetrics,
     mockActivities,
     mockDashboardStats,
-    mockProjectChats,
 } from '../data/mockData';
 
 // Context State Interface
@@ -84,10 +81,6 @@ interface AppContextState {
     dashboardStats: DashboardStats;
     updateDashboardStats: () => void;
 
-    // Project Chats
-    projectChats: ProjectChat[];
-    getProjectChat: (projectId: string) => ProjectChat | undefined;
-    sendProjectMessage: (projectId: string, content: string) => void;
 }
 
 // Create Context
@@ -109,7 +102,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [fairnessMetrics] = useState<FairnessMetrics>(mockFairnessMetrics);
     const [activities, setActivities] = useState<Activity[]>(mockActivities);
     const [dashboardStats, setDashboardStats] = useState<DashboardStats>(mockDashboardStats);
-    const [projectChats, setProjectChats] = useState<ProjectChat[]>(mockProjectChats);
 
     // Project Actions
     const createProject = (projectData: {
@@ -147,31 +139,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         // Add project to state
         setProjects((prev) => [...prev, newProject]);
 
-        const chatMembers = Array.from(
-            new Set(
-                [currentUser?.id, ...projectData.teamMembers].filter((id): id is string => Boolean(id))
-            )
-        );
-
-        const chatCreatedAt = new Date();
-        const initialMessage: ChatMessage = {
-            id: `msg-${projectId}-welcome`,
-            projectId,
-            senderId: currentUser?.id ?? chatMembers[0] ?? 'system',
-            content: `Group chat created for "${projectData.name}".`,
-            createdAt: chatCreatedAt,
-            type: 'system',
-        };
-
-        const newProjectChat: ProjectChat = {
-            id: `chat-${projectId}`,
-            projectId,
-            memberIds: chatMembers,
-            createdAt: chatCreatedAt,
-            messages: [initialMessage],
-        };
-
-        setProjectChats((prev) => [...prev, newProjectChat]);
 
         // Create tasks if any
         if (projectData.tasks && projectData.tasks.length > 0) {
@@ -369,36 +336,8 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         setProjects((prev) => prev.filter((p) => p.id !== id));
         setTasks((prev) => prev.filter((t) => t.projectId !== id));
         setMeetings((prev) => prev.filter((m) => m.projectId !== id));
-        setProjectChats((prev) => prev.filter((c) => c.projectId !== id));
     };
 
-    // Chat Actions
-    const getProjectChat = (projectId: string): ProjectChat | undefined => {
-        return projectChats.find((chat) => chat.projectId === projectId);
-    };
-
-    const sendProjectMessage = (projectId: string, content: string) => {
-        if (!currentUser) return;
-        const trimmed = content.trim();
-        if (!trimmed) return;
-
-        const newMessage: ChatMessage = {
-            id: `msg-${Date.now()}`,
-            projectId,
-            senderId: currentUser.id,
-            content: trimmed,
-            createdAt: new Date(),
-            type: 'text',
-        };
-
-        setProjectChats((prevChats) =>
-            prevChats.map((chat) =>
-                chat.projectId === projectId
-                    ? { ...chat, messages: [...chat.messages, newMessage] }
-                    : chat
-            )
-        );
-    };
 
     // Meeting Actions
     const addMeeting = (meeting: Meeting) => {
@@ -471,9 +410,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         addActivity,
         dashboardStats,
         updateDashboardStats,
-        projectChats,
-        getProjectChat,
-        sendProjectMessage,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

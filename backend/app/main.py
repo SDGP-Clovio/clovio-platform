@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from fastapi import FastAPI, HTTPException
-from app.services.ai_service import generate_task_breakdown
+# from app.services.ai_service import generate_task_breakdown
 from app.schemas.project import ProjectPlan, ProjectRequest
 from app.api.supervisor import router as supervisor_router
 from app.schemas.project import ProjectPlan, ProjectRequest
@@ -14,6 +14,7 @@ from app.api.projects import router as projects_router   # Import the projects r
 from app.api.milestones import router as milestones_router   # Import the milestones router to register it with the app
 from app.api.fairness import router as fairness_router   # Import the fairness router to register it with the app
 from app.api.progress import router as progress_router # Import the progress router to register it with the app
+from app.api.chat import router as chat_router # Import the chat router to register it with the app
 import logging
 
 # Configure logging
@@ -72,24 +73,3 @@ app.include_router(progress_router)
 app.include_router(chat_router)
 
 
-
-# 3. The Main Door (Project Generation)
-@app.post("/api/v1/generate-plan", response_model=ProjectPlan)
-def generate_plan(request: ProjectRequest):
-    """
-    Receives a project description, validates it, and returns a task breakdown.
-    """
-    try:
-        # Pass the Validated Data (request.description) to the AI Service
-        plan = generate_task_breakdown(request.description, request.team_members)
-        
-        # Check if the AI refused the request (e.g., nonsense input)
-        if plan.overall_risk_warning == "INVALID_INPUT":
-             raise HTTPException(status_code=400, detail="Please describe a valid project (e.g., 'Plan a wedding' or 'Build an app').")
-             
-        return plan
-        
-    except Exception as e:
-        # If anything explodes, tell us why
-        print(f"Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))

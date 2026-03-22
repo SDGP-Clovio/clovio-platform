@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// Send API requests to the local Vite proxy instead of directly to port 8000
+// Send API requests to the backend
 const API_BASE = "http://localhost:8000";
 
 const apiClient = axios.create({
@@ -11,9 +11,86 @@ const apiClient = axios.create({
     timeout: 10000 // optional: timeout in ms
 });
 
+// Add auth token to requests if available
+apiClient.interceptors.request.use((config) => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
+
+// Handle auth errors
+apiClient.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // Clear invalid token and redirect to login
+            localStorage.removeItem('access_token');
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
+        }
+        return Promise.reject(error);
+    }
+);
+
+// Auth types
+export interface LoginRequest {
+    username: string;
+    password: string;
+}
+
+export interface RegisterRequest {
+    email: string;
+    username: string;
+    full_name: string;
+    password: string;
+    role?: "student" | "supervisor";
+}
+
+export interface User {
+    id: number;
+    email: string;
+    username: string;
+    full_name: string;
+    role: "student" | "supervisor";
+    is_active: boolean;
+}
+
+export interface AuthResponse {
+    access_token: string;
+    token_type: string;
+}
+
+// Authentication endpoints
+export const register = async (userData: RegisterRequest): Promise<User> => {
+    const response = await apiClient.post("/api/v1/auth/register", userData);
+    return response.data;
+};
+
+export const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
+    const formData = new FormData();
+    formData.append('username', credentials.username);
+    formData.append('password', credentials.password);
+
+    const response = await apiClient.post("/api/v1/auth/login", formData, {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+    });
+    return response.data;
+};
+
+export const getCurrentUser = async (): Promise<User> => {
+    const response = await apiClient.get("/api/v1/auth/me");
+    return response.data;
+};
+
+// AI endpoints (existing)
 export const generateMilestones = async (projectDescription: string, teamMembers: string[]) => {
-    const response = await apiClient.post("/projects/breakdown", { 
-        description: projectDescription, 
+    const response = await apiClient.post("/projects/breakdown", {
+        description: projectDescription,
         team_members: teamMembers.map(name => ({
             name,
             skills: [
@@ -31,7 +108,6 @@ export const generateTasks = async (milestoneId: string, milestoneData: any) => 
     const response = await apiClient.post(`/milestones/${milestoneId}/generate-tasks`, milestoneData);
     return response.data;
 };
-
 
 export const computeFairness = async (tasksData: any) => {
     const response = await apiClient.post("/fairness/compute", tasksData);

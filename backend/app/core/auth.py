@@ -13,8 +13,11 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.database import get_db
+from app.models.user import User
 
 # Password hashing context using bcrypt algorithm
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -47,10 +50,7 @@ def create_access_token(data: dict):
     """
     to_encode = data.copy()
 
-    expire = expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-
-    
-   
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
 
     encoded_jwt = jwt.encode(
@@ -81,20 +81,35 @@ def verify_token(token: str):
         detail="Authentication token is invalid or has expired",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
-def get_current_user(token: str = Depends(oauth2_scheme)):
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
     """
     FastAPI dependency that retrieves the current user from the JWT token.
     """
     payload = verify_token(token)
 
-    username = payload.get("sub")
+    user_id = payload.get("sub")
+    if user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-    if username is None:
-      raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid authentication credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    # Get user from database
+    user = db.query(User).filter(User.id == int(user_id)).first()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
-    return username
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Inactive user",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return user

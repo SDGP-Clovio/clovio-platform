@@ -89,7 +89,7 @@ const SignUp: React.FC = () => {
 		setErrors(validateSignUpForm(formValues));
 	};
 
-	const handleSignUp = (e: React.FormEvent) => {
+	const handleSignUp = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		const validationErrors = validateSignUpForm(formValues);
@@ -106,11 +106,25 @@ const SignUp: React.FC = () => {
 			return;
 		}
 
-		// Navigate based on role
-		if (formValues.role === 'student') {
-			navigate('/dashboard');
-		} else {
-			navigate('/supervisordashboard');
+		try {
+			// Use the existing register API
+			const { register } = await import('../api/apiCalls');
+			await register({
+				email: formValues.email,
+				username: formValues.email.split('@')[0], // Generate username from email
+				full_name: formValues.fullName,
+				password: formValues.password,
+				role: formValues.role as "student" | "supervisor"
+			});
+
+			// Navigate to login with success message
+			navigate('/login', {
+				state: { message: 'Account created successfully! Please sign in.' }
+			});
+		} catch (error: any) {
+			setErrors({
+				email: error.response?.data?.detail || 'Registration failed. Please try again.'
+			});
 		}
 	};
 

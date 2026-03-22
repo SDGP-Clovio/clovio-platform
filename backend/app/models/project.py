@@ -15,6 +15,7 @@ class Project(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=True)
     description = Column(Text, nullable=False)
+    course_name = Column(String, nullable=True)
     created_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     deadline = Column(DateTime, nullable=True)
     status = Column(Enum(ProjectStatus), default=ProjectStatus.PLANNED)

@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { AlertTriangle, Users } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { mockBusFactorAlerts } from '../../data/mockData';
+import type { BusFactorAlert } from '../../types/types';
 import Avatar from '../UI/Avatar';
 
 const severityBorder = { low: 'border-l-yellow-400', medium: 'border-l-orange-400', high: 'border-l-red-400' };
@@ -12,14 +12,112 @@ const severityBadge = {
     high:   'bg-red-100 text-red-700',
 };
 
-const TeamAlertsDropdown: React.FC = () => {
+interface Props {
+    projectId?: number;
+}
+
+const TeamAlertsDropdown: React.FC<Props> = ({ projectId }) => {
     const { tasks, users } = useApp();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
-    const activeAlerts = mockBusFactorAlerts.filter((a) =>
-        tasks.some((t) => t.id === a.taskId)
-    );
+    const activeAlerts = useMemo<BusFactorAlert[]>(() => {
+        const scopedTasks = tasks.filter((task) => {
+            if (projectId != null && task.projectId !== projectId) {
+                return false;
+            }
+            return task.status !== 'done';
+        });
+
+        const alertsByTaskId = new Map<number, BusFactorAlert>();
+        const assignmentCounts = new Map<number, number>();
+
+        for (const task of scopedTasks) {
+            const explicitAssignees = Array.isArray(task.assignedTo)
+                ? task.assignedTo.filter((assigneeId): assigneeId is number => Number.isFinite(assigneeId))
+                : [];
+
+            const resolvedAssigneeId =
+                explicitAssignees.length === 1
+                    ? explicitAssignees[0]
+                    : explicitAssignees.length === 0 && typeof task.assignee === 'number'
+                        ? task.assignee
+                        : null;
+
+            if (resolvedAssigneeId == null) {
+                continue;
+            }
+
+            assignmentCounts.set(
+                resolvedAssigneeId,
+                (assignmentCounts.get(resolvedAssigneeId) ?? 0) + 1
+            );
+
+            alertsByTaskId.set(task.id, {
+                taskId: task.id,
+                taskTitle: task.title,
+                assignedUserId: resolvedAssigneeId,
+                severity: 'low',
+                recommendation: '',
+            });
+        }
+
+        const totalAssignedTasks = Array.from(assignmentCounts.values()).reduce(
+            (sum, count) => sum + count,
+            0
+        );
+
+        if (totalAssignedTasks < 2) {
+            return [];
+        }
+
+        const computedAlerts = Array.from(alertsByTaskId.values())
+            .map<BusFactorAlert | null>((alert) => {
+                const ownerLoad = assignmentCounts.get(alert.assignedUserId) ?? 0;
+                const ownershipShare = ownerLoad / totalAssignedTasks;
+
+                if (ownershipShare < 0.25 && ownerLoad < 2) {
+                    return null;
+                }
+
+                const severity: BusFactorAlert['severity'] =
+                    ownershipShare >= 0.6 || ownerLoad >= 5
+                        ? 'high'
+                        : ownershipShare >= 0.4 || ownerLoad >= 3
+                            ? 'medium'
+                            : 'low';
+
+                const recommendation =
+                    severity === 'high'
+                        ? 'Reassign at least one critical task and pair this owner with another teammate this week.'
+                        : severity === 'medium'
+                            ? 'Assign a backup reviewer to reduce single-owner dependency.'
+                            : 'Rotate ownership of upcoming tasks to improve knowledge coverage.';
+
+                return {
+                    ...alert,
+                    severity,
+                    recommendation,
+                };
+            })
+            .filter((alert): alert is BusFactorAlert => alert !== null);
+
+        const severityRank: Record<BusFactorAlert['severity'], number> = {
+            high: 3,
+            medium: 2,
+            low: 1,
+        };
+
+        return computedAlerts
+            .sort((left, right) => {
+                const rankDiff = severityRank[right.severity] - severityRank[left.severity];
+                if (rankDiff !== 0) {
+                    return rankDiff;
+                }
+                return left.taskTitle.localeCompare(right.taskTitle);
+            })
+            .slice(0, 8);
+    }, [tasks, projectId]);
 
     // Close on outside click
     useEffect(() => {

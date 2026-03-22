@@ -354,7 +354,7 @@ const ProjectDashboard: React.FC = () => {
                         </div>
                         {/* Header icons */}
                         <div className="flex items-center gap-1">
-                            <TeamAlertsDropdown />
+                            <TeamAlertsDropdown projectId={project.id} />
                             <NotificationDropdown projectId={project.id} />
                         </div>
                     </div>

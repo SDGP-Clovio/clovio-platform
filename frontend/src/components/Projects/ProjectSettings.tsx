@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Trash2, ChevronRight, Sparkles, Save,
+    Trash2, Sparkles, Save,
     AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
@@ -281,17 +281,9 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                                 Describe your project goals and the wizard generates a structured task list —
                                 priorities, time estimates, and smart assignments based on team skills.
                             </p>
-                            <div className="mt-4 flex items-center gap-3">
-                                <button
-                                    onClick={() => {/* wizard TBD */}}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:brightness-110 transition-all shadow-md shadow-indigo-200 group"
-                                >
-                                    <Sparkles className="w-4 h-4" />
-                                    Start Wizard
-                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                                </button>
-                                <span className="text-[10px] text-slate-400">Results reviewed before saving</span>
-                            </div>
+                            <p className="mt-4 text-[11px] text-slate-500">
+                                Use the Tasks tab and open AI Task Distribution to generate and review milestones and tasks.
+                            </p>
                         </div>
                     </div>
                 </div>

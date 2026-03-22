@@ -7,6 +7,7 @@ interface BackendProjectRecord {
     description: string;
     status: "planned" | "active" | "completed";
     created_by: number;
+    course_name?: string | null;
     deadline?: string | null;
     created_at: string;
     member_ids: number[];
@@ -18,6 +19,7 @@ export interface CreateProjectApiRequest {
     description: string;
     status: "planned" | "active" | "completed";
     created_by: number;
+    course_name?: string;
     member_ids: number[];
     supervisor_id?: number;
     deadline?: string;
@@ -27,6 +29,7 @@ export interface UpdateProjectApiRequest {
     name?: string;
     description?: string;
     status?: "planned" | "active" | "completed";
+    course_name?: string | null;
     deadline?: string | null;
     member_ids?: number[];
     supervisor_id?: number | null;
@@ -49,17 +52,19 @@ function toBackendProjectStatus(status: Project["status"]): "planned" | "active"
 }
 
 function toAppProject(record: BackendProjectRecord): Project {
+    const normalizedCourseName = record.course_name?.trim() || undefined;
+
     return {
         id: record.id,
         name: record.name,
-        module: "General",
+        module: normalizedCourseName ?? "General",
         tag: record.status,
         description: record.description,
         supervisorId: record.supervisor_id ?? null,
         teamMembers: record.member_ids || [],
         createdAt: new Date(record.created_at),
         deadline: record.deadline ? new Date(record.deadline) : undefined,
-        courseName: undefined,
+        courseName: normalizedCourseName,
         fairnessScore: 0,
         status: mapProjectStatus(record.status),
     };

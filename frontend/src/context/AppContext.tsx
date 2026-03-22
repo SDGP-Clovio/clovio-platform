@@ -804,20 +804,33 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             return false;
         }
 
-        const optimisticProject: Project = { ...previousProject, ...patch };
+        const normalizedCourseName =
+            typeof patch.courseName === 'string' ? patch.courseName.trim() : undefined;
+
+        const optimisticProject: Project = {
+            ...previousProject,
+            ...patch,
+            ...(patch.courseName !== undefined
+                ? {
+                    courseName: normalizedCourseName || undefined,
+                    module: normalizedCourseName || 'General',
+                }
+                : {}),
+        };
 
         setProjects((prev) => prev.map((project) => (project.id === id ? optimisticProject : project)));
         setActiveProject((prev) => {
             if (!prev || prev.id !== id) {
                 return prev;
             }
-            return { ...prev, ...patch };
+            return optimisticProject;
         });
 
         const payload: {
             name?: string;
             description?: string;
             status?: 'planned' | 'active' | 'completed';
+            course_name?: string | null;
             deadline?: string | null;
             member_ids?: number[];
             supervisor_id?: number | null;
@@ -831,6 +844,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
         if (patch.status !== undefined) {
             payload.status = mapProjectStatusForApi(patch.status);
+        }
+        if (patch.courseName !== undefined) {
+            payload.course_name = normalizedCourseName ? normalizedCourseName : null;
         }
         if (patch.deadline !== undefined) {
             payload.deadline = patch.deadline ? new Date(patch.deadline).toISOString() : null;
@@ -848,11 +864,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
         try {
             const persistedProject = await updateProjectRecord(id, payload);
-            const mergedPersistedProject: Project = {
-                ...persistedProject,
-                module: optimisticProject.module,
-                courseName: optimisticProject.courseName,
-            };
+            const mergedPersistedProject: Project = persistedProject;
 
             const chatMemberIds = Array.from(
                 new Set(

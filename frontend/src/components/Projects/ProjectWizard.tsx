@@ -144,6 +144,7 @@ const ProjectWizard: React.FC = () => {
                 description: formData.description.trim(),
                 status: 'planned',
                 created_by: currentUser.id,
+                course_name: formData.courseName.trim() || undefined,
                 member_ids: Array.from(new Set(formData.teamMembers)),
                 supervisor_id: formData.supervisorId ?? undefined,
                 deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,

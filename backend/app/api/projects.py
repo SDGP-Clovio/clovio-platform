@@ -53,6 +53,7 @@ def _serialize_project(db: Session, project: Project) -> dict[str, Any]:
         "description": project.description,
         "status": status_value,
         "created_by": int(project.created_by) if project.created_by is not None else 0,
+        "course_name": project.course_name,
         "deadline": project.deadline,
         "created_at": project.created_at,
         "member_ids": member_ids,
@@ -111,6 +112,7 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
             description=project.description,
             status=project.status,
             created_by=project.created_by,  # Updated to match the DB column!
+            course_name=project.course_name,
             deadline=project.deadline,
         )
         db.add(new_project)
@@ -203,7 +205,7 @@ def update_project(project_id: int, project_update: ProjectUpdate, db: Session =
         if missing_ids:
             raise HTTPException(status_code=400, detail=f"Invalid member IDs: {sorted(list(missing_ids))}")
 
-    for field in ("name", "description", "status", "deadline"):
+    for field in ("name", "description", "status", "course_name", "deadline"):
         if field in updates:
             setattr(project, field, updates[field])
 

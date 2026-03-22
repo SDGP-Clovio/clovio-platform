@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings, MessageSquare } from 'lucide-react';
 import TasksTabView from '../components/Tasks/TasksTabView';
 import Avatar from '../components/UI/Avatar';
+import ClovioMark from '../components/common/ClovioMark';
 import MeetingScheduler from '../components/Meetings/MeetingScheduler';
 import NotificationDropdown from '../components/Notifications/NotificationDropdown';
 import TeamAlertsDropdown from '../components/Kanban/TeamAlertsDropdown';
@@ -279,8 +280,8 @@ const ProjectDashboard: React.FC = () => {
             >
                 {/* Logo */}
                 <div className="flex items-center gap-2.5 px-6 pt-6 pb-5">
-                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-emerald-500 rounded-lg flex items-center justify-center font-bold text-white text-sm shadow">
-                        C
+                    <div className="flex w-8 h-8 bg-gradient-to-br from-indigo-600 to-emerald-500 rounded-lg items-center justify-center text-white shadow">
+                        <ClovioMark className="h-5 w-5 text-white" />
                     </div>
                     <span className="text-lg font-bold tracking-tight text-white">Clovio</span>
                 </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, FolderKanban, LogOut } from 'lucide-react';
 import Avatar from '../UI/Avatar';
+import ClovioMark from '../common/ClovioMark';
 import { useApp } from '../../context/AppContext';
 
 interface SupervisorSidebarProps {
@@ -30,8 +31,8 @@ const SupervisorSidebar: React.FC<SupervisorSidebarProps> = ({ sidebarOpen, setS
         >
             {/* Logo */}
             <div className="flex items-center gap-2.5 px-6 pt-6 pb-5">
-                <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-white text-sm shadow">
-                    C
+                <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-emerald-500 rounded-lg flex items-center justify-center text-white shadow">
+                    <ClovioMark className="h-5 w-5 text-white" />
                 </div>
                 <span className="text-lg font-bold tracking-tight text-white">Clovio</span>
             </div>

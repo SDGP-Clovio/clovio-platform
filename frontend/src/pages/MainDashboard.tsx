@@ -11,6 +11,7 @@ import SettingsPanel from '../components/Settings/SettingsPanel';
 import ScheduleView from '../components/Schedule/ScheduleView';
 import type { Project } from '../types/types';
 import GlobalChatView from '../components/Chat/GlobalChatView';
+import ClovioMark from '../components/common/ClovioMark';
 
 /* ─── Circular progress ring ────────────────────────────────────────────── */
 const ProgressRing: React.FC<{ progress: number; status: string }> = ({ progress, status }) => {
@@ -415,7 +416,9 @@ const MainDashboard: React.FC = () => {
 
                 {/* Logo */}
                 <div className="flex items-center gap-2.5 px-5 pt-6 pb-5">
-                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-600 to-emerald-500 rounded-lg flex items-center justify-center font-bold text-white text-sm shadow">C</div>
+                    <div className="flex w-8 h-8 bg-gradient-to-br from-indigo-600 to-emerald-500 rounded-lg items-center justify-center text-white shadow">
+                        <ClovioMark className="h-5 w-5 text-white" />
+                    </div>
                     <span className="text-lg font-bold tracking-tight text-white">Clovio</span>
                 </div>
 

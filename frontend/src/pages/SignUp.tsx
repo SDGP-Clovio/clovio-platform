@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Eye, EyeOff, Sparkles, UserRound } from 'lucide-react';
+import ClovioMark from '../components/common/ClovioMark';
 
 type SignUpFormValues = {
 	fullName: string;
@@ -22,7 +23,7 @@ const passwordRules = [
 	{ label: 'One special character (!@#…)', test: (p: string) => /[^A-Za-z0-9]/.test(p) },
 ];
 
-const validateSignUpForm = (values: SignUpFormValues): SignUpFormErrors => {
+const validateStepOne = (values: SignUpFormValues): SignUpFormErrors => {
 	const errors: SignUpFormErrors = {};
 
 	if (!values.fullName.trim()) {
@@ -39,6 +40,12 @@ const validateSignUpForm = (values: SignUpFormValues): SignUpFormErrors => {
 		errors.role = 'Please select a role.';
 	}
 
+	return errors;
+};
+
+const validateStepTwo = (values: SignUpFormValues): SignUpFormErrors => {
+	const errors: SignUpFormErrors = {};
+
 	if (!values.password.trim()) {
 		errors.password = 'Password is required.';
 	} else if (passwordRules.some((rule) => !rule.test(values.password))) {
@@ -46,7 +53,7 @@ const validateSignUpForm = (values: SignUpFormValues): SignUpFormErrors => {
 	}
 
 	if (!values.confirmPassword.trim()) {
-		errors.confirmPassword = 'Confirm password is required.';
+		errors.confirmPassword = 'Please verify your password.';
 	} else if (values.confirmPassword !== values.password) {
 		errors.confirmPassword = 'Passwords do not match.';
 	}
@@ -54,10 +61,18 @@ const validateSignUpForm = (values: SignUpFormValues): SignUpFormErrors => {
 	return errors;
 };
 
+const validateSignUpForm = (values: SignUpFormValues): SignUpFormErrors => {
+	return {
+		...validateStepOne(values),
+		...validateStepTwo(values),
+	};
+};
+
 const SignUp: React.FC = () => {
 	const navigate = useNavigate();
 	const [showPassword, setShowPassword] = useState(false);
 	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+	const [currentStep, setCurrentStep] = useState<1 | 2>(1);
 	const [formValues, setFormValues] = useState<SignUpFormValues>({
 		fullName: '',
 		email: '',
@@ -89,17 +104,33 @@ const SignUp: React.FC = () => {
 		setErrors(validateSignUpForm(formValues));
 	};
 
+	const handleContinue = () => {
+		const stepOneErrors = validateStepOne(formValues);
+		setTouchedFields((previous) => ({
+			...previous,
+			fullName: true,
+			email: true,
+			role: true,
+		}));
+		setErrors(stepOneErrors);
+
+		if (Object.keys(stepOneErrors).length === 0) {
+			setCurrentStep(2);
+		}
+	};
+
 	const handleSignUp = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		const validationErrors = validateSignUpForm(formValues);
-		setTouchedFields({
+		setTouchedFields((previous) => ({
+			...previous,
 			fullName: true,
 			email: true,
 			password: true,
 			confirmPassword: true,
 			role: true,
-		});
+		}));
 		setErrors(validationErrors);
 
 		if (Object.keys(validationErrors).length > 0) {
@@ -131,7 +162,7 @@ const SignUp: React.FC = () => {
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-4 font-sans">
 			
-			<div className="relative flex w-full max-w-5xl overflow-hidden rounded-[40px] bg-white shadow-2xl min-h-[650px] flex-col md:flex-row-reverse">
+			<div className="relative flex h-[92vh] max-h-[640px] w-full max-w-5xl overflow-hidden rounded-[40px] bg-white shadow-2xl flex-col md:flex-row-reverse">
 
 				
 				<div className="absolute left-0 top-0 h-full w-1/2 bg-gradient-to-b from-emerald-500 via-blue-600 to-indigo-600">
@@ -142,18 +173,18 @@ const SignUp: React.FC = () => {
 				</div>
 
 				
-				<div className="z-10 flex w-full flex-col justify-center p-12 md:w-1/2 lg:p-20">
-					<div className="mb-12 flex items-center gap-2 text-[#4F46E5]">
-						<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-current shadow-lg shadow-indigo-200">
-							<span className="text-xl font-bold text-white">C</span>
+				<div className="z-10 flex w-full flex-col justify-center overflow-y-auto p-8 md:w-1/2 md:p-10 lg:p-12">
+					<div className="mb-8 flex items-center gap-2 text-[#4F46E5]">
+						<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#10B981] shadow-lg shadow-indigo-200">
+							<ClovioMark className="h-6 w-6 text-white" />
 						</div>
 						<span className="text-xs font-bold uppercase tracking-widest text-slate-500">
-							System logo
+							Clovio
 						</span>
 					</div>
 
 					<h1 className="text-4xl font-bold leading-tight text-slate-800">Create an account</h1>
-					<p className="mb-10 text-sm text-slate-400">
+					<p className="mb-6 text-sm text-slate-400">
 						Already have an account?{' '}
 						<Link
 							to="/login"
@@ -163,166 +194,216 @@ const SignUp: React.FC = () => {
 						</Link>
 					</p>
 
-					<form className="space-y-5" onSubmit={handleSignUp} noValidate>
-						<div className="space-y-2">
-							<label
-								htmlFor="fullName"
-								className="block text-sm font-semibold text-slate-700"
-							>
-								Full Name <span className="text-red-500">*</span>
-							</label>
-							<input
-								id="fullName"
-								type="text"
-								placeholder="Enter your full name"
-								required
-								value={formValues.fullName}
-								onChange={(e) => handleChange('fullName', e.target.value)}
-								onBlur={() => handleBlur('fullName')}
-								aria-invalid={Boolean(errors.fullName)}
-								className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
-							/>
-							{errors.fullName && touchedFields.fullName && (
-								<p className="text-sm text-red-500">{errors.fullName}</p>
-							)}
-						</div>
-
-						<div className="space-y-2">
-							<label
-								htmlFor="email"
-								className="block text-sm font-semibold text-slate-700"
-							>
-								Email <span className="text-red-500">*</span>
-							</label>
-							<input
-								id="email"
-								type="email"
-								placeholder="Enter your email"
-								required
-								value={formValues.email}
-								onChange={(e) => handleChange('email', e.target.value)}
-								onBlur={() => handleBlur('email')}
-								aria-invalid={Boolean(errors.email)}
-								className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
-							/>
-							{errors.email && touchedFields.email && (
-								<p className="text-sm text-red-500">{errors.email}</p>
-							)}
-						</div>
-
-						<div className="space-y-2">
-							<label className="block text-sm font-semibold text-slate-700">
-								Role <span className="text-red-500">*</span>
-							</label>
-							<div className="flex gap-3">
-								{(['student', 'supervisor'] as const).map((option) => (
-									<button
-										key={option}
-										type="button"
-										onClick={() => handleChange('role', option)}
-										onBlur={() => handleBlur('role')}
-										className={`flex-1 rounded-2xl border py-3 text-sm font-semibold capitalize transition-all ${formValues.role === option
-												? 'border-[#4F46E5] bg-[#4F46E5] text-white shadow-lg shadow-indigo-300/30'
-												: 'border-slate-100 bg-slate-50 text-slate-500 hover:border-[#4F46E5]/40'
-											}`}
-									>
-										{option.charAt(0).toUpperCase() + option.slice(1)}
-									</button>
-								))}
-							</div>
-							{errors.role && touchedFields.role && (
-								<p className="text-sm text-red-500">{errors.role}</p>
-							)}
-						</div>
-
-						<div className="space-y-2">
-							<label
-								htmlFor="password"
-								className="block text-sm font-semibold text-slate-700"
-							>
-								Password <span className="text-red-500">*</span>
-							</label>
-							<div className="relative">
-								<input
-									id="password"
-									type={showPassword ? 'text' : 'password'}
-									placeholder="Create a password"
-									required
-									value={formValues.password}
-									onChange={(e) => handleChange('password', e.target.value)}
-									onBlur={() => handleBlur('password')}
-									aria-invalid={Boolean(errors.password)}
-									className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
-								/>
-								<button
-									type="button"
-									onClick={() => setShowPassword((previous) => !previous)}
-									className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600"
-									aria-label={showPassword ? 'Hide password' : 'Show password'}
-								>
-									{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-								</button>
-							</div>
-							{errors.password && touchedFields.password && (
-								<p className="text-sm text-red-500">{errors.password}</p>
-							)}
-
-							{touchedFields.password && formValues.password && (
-								<ul className="space-y-1 pt-1">
-									{passwordRules.map((rule) => {
-										const passed = rule.test(formValues.password);
-										return (
-											<li key={rule.label} className={`flex items-center gap-2 text-xs ${passed ? 'text-green-500' : 'text-slate-400'}`}>
-												<span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${passed ? 'bg-green-100 text-green-500' : 'bg-slate-100 text-slate-400'}`}>
-													{passed ? '✓' : '×'}
-												</span>
-												{rule.label}
-											</li>
-										);
-									})}
-								</ul>
-							)}
-						</div>
-
-						<div className="space-y-2">
-							<label
-								htmlFor="confirmPassword"
-								className="block text-sm font-semibold text-slate-700"
-							>
-								Confirm Password <span className="text-red-500">*</span>
-							</label>
-							<div className="relative">
-								<input
-									id="confirmPassword"
-									type={showConfirmPassword ? 'text' : 'password'}
-									placeholder="Confirm your password"
-									required
-									value={formValues.confirmPassword}
-									onChange={(e) => handleChange('confirmPassword', e.target.value)}
-									onBlur={() => handleBlur('confirmPassword')}
-									aria-invalid={Boolean(errors.confirmPassword)}
-									className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
-								/>
-								<button
-									type="button"
-									onClick={() => setShowConfirmPassword((previous) => !previous)}
-									className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600"
-									aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
-								>
-									{showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-								</button>
-							</div>
-							{errors.confirmPassword && touchedFields.confirmPassword && (
-								<p className="text-sm text-red-500">{errors.confirmPassword}</p>
-							)}
-						</div>
-
+					<div className="mb-6 flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 p-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
 						<button
-							type="submit"
-							className="mt-4 w-full rounded-2xl bg-[#4F46E5] py-4 text-base font-bold text-white shadow-xl shadow-indigo-400/30 transition-all hover:brightness-110"
+							type="button"
+							onClick={() => setCurrentStep(1)}
+							className={`flex-1 rounded-xl px-3 py-2 transition ${
+								currentStep === 1 ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500'
+							}`}
 						>
-							Sign up
+							Step 1: Profile
 						</button>
+						<button
+							type="button"
+							onClick={() => {
+								if (currentStep === 1) {
+									handleContinue();
+									return;
+								}
+								setCurrentStep(2);
+							}}
+							className={`flex-1 rounded-xl px-3 py-2 transition ${
+								currentStep === 2 ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'
+							}`}
+						>
+							Step 2: Security
+						</button>
+					</div>
+
+					<form className="space-y-5" onSubmit={handleSignUp} noValidate>
+						{currentStep === 1 ? (
+							<>
+								<div className="space-y-2">
+									<label
+										htmlFor="fullName"
+										className="block text-sm font-semibold text-slate-700"
+									>
+										Full Name <span className="text-red-500">*</span>
+									</label>
+									<input
+										id="fullName"
+										type="text"
+										placeholder="Enter your full name"
+										required
+										value={formValues.fullName}
+										onChange={(e) => handleChange('fullName', e.target.value)}
+										onBlur={() => handleBlur('fullName')}
+										aria-invalid={Boolean(errors.fullName)}
+										className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
+									/>
+									{errors.fullName && touchedFields.fullName && (
+										<p className="text-sm text-red-500">{errors.fullName}</p>
+									)}
+								</div>
+
+								<div className="space-y-2">
+									<label
+										htmlFor="email"
+										className="block text-sm font-semibold text-slate-700"
+									>
+										Email <span className="text-red-500">*</span>
+									</label>
+									<input
+										id="email"
+										type="email"
+										placeholder="Enter your email"
+										required
+										value={formValues.email}
+										onChange={(e) => handleChange('email', e.target.value)}
+										onBlur={() => handleBlur('email')}
+										aria-invalid={Boolean(errors.email)}
+										className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
+									/>
+									{errors.email && touchedFields.email && (
+										<p className="text-sm text-red-500">{errors.email}</p>
+									)}
+								</div>
+
+								<div className="space-y-2">
+									<label className="block text-sm font-semibold text-slate-700">
+										Role <span className="text-red-500">*</span>
+									</label>
+									<div className="flex gap-3">
+										{(['student', 'supervisor'] as const).map((option) => (
+											<button
+												key={option}
+												type="button"
+												onClick={() => handleChange('role', option)}
+												onBlur={() => handleBlur('role')}
+												className={`flex-1 rounded-2xl border py-3 text-sm font-semibold capitalize transition-all ${formValues.role === option
+														? 'border-[#4F46E5] bg-[#4F46E5] text-white shadow-lg shadow-indigo-300/30'
+														: 'border-slate-100 bg-slate-50 text-slate-500 hover:border-[#4F46E5]/40'
+													}`}
+											>
+												{option.charAt(0).toUpperCase() + option.slice(1)}
+											</button>
+										))}
+									</div>
+									{errors.role && touchedFields.role && (
+										<p className="text-sm text-red-500">{errors.role}</p>
+									)}
+								</div>
+
+								<button
+									type="button"
+									onClick={handleContinue}
+									className="mt-2 w-full rounded-2xl bg-[#4F46E5] py-4 text-base font-bold text-white shadow-xl shadow-indigo-400/30 transition-all hover:brightness-110"
+								>
+									Continue
+								</button>
+							</>
+						) : (
+							<>
+								<div className="space-y-2">
+									<label
+										htmlFor="password"
+										className="block text-sm font-semibold text-slate-700"
+									>
+										Password <span className="text-red-500">*</span>
+									</label>
+									<div className="relative">
+										<input
+											id="password"
+											type={showPassword ? 'text' : 'password'}
+											placeholder="Create a password"
+											required
+											value={formValues.password}
+											onChange={(e) => handleChange('password', e.target.value)}
+											onBlur={() => handleBlur('password')}
+											aria-invalid={Boolean(errors.password)}
+											className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
+										/>
+										<button
+											type="button"
+											onClick={() => setShowPassword((previous) => !previous)}
+											className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600"
+											aria-label={showPassword ? 'Hide password' : 'Show password'}
+										>
+											{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+										</button>
+									</div>
+									{errors.password && touchedFields.password && (
+										<p className="text-sm text-red-500">{errors.password}</p>
+									)}
+
+									{touchedFields.password && formValues.password && (
+										<ul className="space-y-1 pt-1">
+											{passwordRules.map((rule) => {
+												const passed = rule.test(formValues.password);
+												return (
+													<li key={rule.label} className={`flex items-center gap-2 text-xs ${passed ? 'text-green-500' : 'text-slate-400'}`}>
+														<span className={`flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold ${passed ? 'bg-green-100 text-green-500' : 'bg-slate-100 text-slate-400'}`}>
+															{passed ? '✓' : '×'}
+														</span>
+														{rule.label}
+													</li>
+												);
+											})}
+										</ul>
+									)}
+								</div>
+
+								<div className="space-y-2">
+									<label
+										htmlFor="confirmPassword"
+										className="block text-sm font-semibold text-slate-700"
+									>
+										Verify Password <span className="text-red-500">*</span>
+									</label>
+									<div className="relative">
+										<input
+											id="confirmPassword"
+											type={showConfirmPassword ? 'text' : 'password'}
+											placeholder="Re-enter your password"
+											required
+											value={formValues.confirmPassword}
+											onChange={(e) => handleChange('confirmPassword', e.target.value)}
+											onBlur={() => handleBlur('confirmPassword')}
+											aria-invalid={Boolean(errors.confirmPassword)}
+											className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
+										/>
+										<button
+											type="button"
+											onClick={() => setShowConfirmPassword((previous) => !previous)}
+											className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-600"
+											aria-label={showConfirmPassword ? 'Hide verify password' : 'Show verify password'}
+										>
+											{showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+										</button>
+									</div>
+									{errors.confirmPassword && touchedFields.confirmPassword && (
+										<p className="text-sm text-red-500">{errors.confirmPassword}</p>
+									)}
+								</div>
+
+								<div className="mt-2 flex items-center gap-3">
+									<button
+										type="button"
+										onClick={() => setCurrentStep(1)}
+										className="w-1/2 rounded-2xl border border-slate-200 bg-white py-4 text-sm font-bold text-slate-700 transition-all hover:border-[#4F46E5]/40"
+									>
+										Back
+									</button>
+									<button
+										type="submit"
+										className="w-1/2 rounded-2xl bg-[#4F46E5] py-4 text-sm font-bold text-white shadow-xl shadow-indigo-400/30 transition-all hover:brightness-110"
+									>
+										Sign up
+									</button>
+								</div>
+							</>
+						)}
 					</form>
 				</div>
 

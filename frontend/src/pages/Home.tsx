@@ -14,6 +14,7 @@ import {
   X,
   type LucideIcon,
 } from 'lucide-react';
+import ClovioMark from '../components/common/ClovioMark';
 
 type FeatureCard = {
   title: string;
@@ -160,7 +161,7 @@ const Home: React.FC = () => {
         <div className="mx-auto flex w-[92%] max-w-7xl items-center justify-between">
           <Link to="/" className="flex items-center gap-3" onClick={closeMobileMenu}>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-emerald-500 text-lg font-bold text-white shadow-lg shadow-indigo-300/40">
-              C
+              <ClovioMark className="h-6 w-6 text-white" />
             </div>
             <div className="flex flex-col">
               <span className="text-lg font-bold tracking-tight text-slate-900">Clovio</span>

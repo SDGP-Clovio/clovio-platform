@@ -1,5 +1,6 @@
 import type { NavItem } from "../../types/index";
 import { NAV_ITEMS, NAV_BOTTOM } from "../../types/mockData"
+import ClovioMark from "../common/ClovioMark";
 
 interface SidebarProps {
   expanded: boolean;
@@ -28,8 +29,8 @@ export default function Sidebar({
         className="flex items-center gap-3 px-4 pb-6 cursor-pointer"
         onClick={onToggle}
       >
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#10B981] flex items-center justify-center text-white font-extrabold text-sm flex-shrink-0 tracking-tight">
-          M
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#10B981] flex items-center justify-center text-white flex-shrink-0">
+          <ClovioMark className="h-5 w-5 text-white" />
         </div>
         {expanded && (
           <span className="text-white font-bold text-lg whitespace-nowrap tracking-tight">

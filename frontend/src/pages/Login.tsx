@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle2, Clock3, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import ClovioMark from '../components/common/ClovioMark';
 
 type LoginFormValues = {
 	email: string;
@@ -119,11 +120,11 @@ const Login: React.FC = () => {
 
 				{/* 4. CONTENT LAYERS (Must be z-10 to sit above the background) */}
 				<div className="z-10 flex w-full flex-col justify-center p-12 md:w-1/2 lg:p-20">
-					<div className="mb-12 flex items-center gap-2">
-						<div className="h-10 w-10 rounded-xl bg-[#4F46E5] flex items-center justify-center shadow-lg shadow-indigo-200">
-							<span className="text-white font-bold">C</span>
+					<div className="mb-12 flex items-center gap-2.5">
+						<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#10B981] shadow-lg shadow-indigo-200">
+							<ClovioMark className="h-6 w-6 text-white" />
 						</div>
-						<span className="text-xs font-bold tracking-widest text-slate-500 uppercase">System logo</span>
+						<span className="text-xs font-bold tracking-widest text-slate-500 uppercase">Clovio</span>
 					</div>
 
 					<h1 className="text-4xl font-bold text-slate-800 leading-tight">Log in</h1>

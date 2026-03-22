@@ -9,7 +9,6 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-import uuid
 
 
 # revision identifiers, used by Alembic.
@@ -22,10 +21,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade():
     op.create_table(
         "conversations",
-        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
+        sa.Column("id", sa.Integer(), primary_key=True, index=True),
         sa.Column(
             "project_id",
-            sa.Integer(),  
+            sa.Integer(),
             sa.ForeignKey("projects.id", ondelete="CASCADE"),
             nullable=False,
             unique=True,
@@ -35,31 +34,42 @@ def upgrade():
 
     op.create_table(
         "conversation_participants",
-        sa.Column("conversation_id", sa.Integer(), sa.ForeignKey("conversations.id", ondelete="CASCADE"), primary_key=True),
-        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),  # ✅ changed
+        sa.Column("id", sa.Integer(), primary_key=True, index=True),
+        sa.Column("conversation_id", sa.Integer(), sa.ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
         sa.Column("joined_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
+        sa.UniqueConstraint("conversation_id", "user_id", name="uq_conversation_participant"),
     )
 
     op.create_table(
         "direct_conversations",
-        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("user_a_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),  # ✅ changed
-        sa.Column("user_b_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),  # ✅ changed
+        sa.Column("id", sa.Integer(), primary_key=True, index=True),
+        sa.Column("user_a_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("user_b_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
         sa.UniqueConstraint("user_a_id", "user_b_id", name="uq_direct_conv"),
     )
 
     op.create_table(
         "messages",
-        sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
-        sa.Column("conversation_id", sa.Integer(), sa.ForeignKey("conversations.id", ondelete="CASCADE"), nullable=True),
-        sa.Column("direct_conversation_id", sa.Integer(), sa.ForeignKey("direct_conversations.id", ondelete="CASCADE"), nullable=True),
-        sa.Column("sender_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),  # ✅ changed
+        sa.Column("id", sa.Integer(), primary_key=True, index=True),
+        sa.Column("conversation_id", sa.Integer(), sa.ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("sender_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("content", sa.Text(), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
+    )
+
+    op.create_table(
+        "direct_messages",
+        sa.Column("id", sa.Integer(), primary_key=True, index=True),
+        sa.Column("direct_conversation_id", sa.Integer(), sa.ForeignKey("direct_conversations.id", ondelete="CASCADE"), nullable=False),
+        sa.Column("sender_id", sa.Integer(), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )
 
 def downgrade():
+    op.drop_table("direct_messages")
     op.drop_table("messages")
     op.drop_table("direct_conversations")
     op.drop_table("conversation_participants")

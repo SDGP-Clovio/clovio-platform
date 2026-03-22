@@ -1,55 +1,116 @@
 """
-Authentication API routes.
+Authentication API routes with database integration.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
 
-from app.core.auth import create_access_token, get_current_user
-from app.schemas.auth_schema import TokenResponse
+from app.core.auth import create_access_token, get_current_user, hash_password, verify_password
+from app.core.database import get_db
+from app.models.user import User
+from app.schemas.auth_schema import RegisterRequest, TokenResponse, UserResponse
 
 router = APIRouter(
     prefix="/api/v1/auth",
     tags=["Authentication"]
 )
 
-# Temporary in-memory user store (replace with DB later)
-fake_user_db = {
-    "admin": {
-        "username": "admin",
-        "password": "admin123"
-    }
-}
+
+def authenticate_user(db: Session, username: str, password: str) -> User:
+    """
+    Authenticate a user by username/email and password.
+    """
+    # Try to find user by username or email
+    user = db.query(User).filter(
+        (User.username == username) | (User.email == username)
+    ).first()
+
+    if not user:
+        return None
+
+    if not verify_password(password, user.hashed_password):
+        return None
+
+    if not user.is_active:
+        return None
+
+    return user
+
+
+def get_user_by_username_or_email(db: Session, username: str, email: str) -> User:
+    """
+    Check if a user exists by username or email.
+    """
+    return db.query(User).filter(
+        (User.username == username) | (User.email == email)
+    ).first()
+
+
+@router.post("/register", response_model=UserResponse)
+def register(user_data: RegisterRequest, db: Session = Depends(get_db)):
+    """
+    Register a new user account.
+    """
+    # Check if user already exists
+    existing_user = get_user_by_username_or_email(db, user_data.username, user_data.email)
+    if existing_user:
+        if existing_user.email == user_data.email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already taken"
+            )
+
+    # Create new user
+    hashed_password = hash_password(user_data.password)
+    new_user = User(
+        email=user_data.email,
+        username=user_data.username,
+        full_name=user_data.full_name,
+        hashed_password=hashed_password,
+        role=user_data.role,
+        is_active=True
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return new_user
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
     Authenticate user and return JWT token.
     """
+    user = authenticate_user(db, form_data.username, form_data.password)
 
-    user = fake_user_db.get(form_data.username)
-
-    if not user or user["password"] != form_data.password:
+    if not user:
         raise HTTPException(
-            status_code=401,
-            detail="Invalid username or password"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
-    token = create_access_token(
-        {"sub": user["username"]}
+    access_token = create_access_token(
+        data={"sub": str(user.id), "username": user.username}
     )
 
     return {
-        "access_token": token,
+        "access_token": access_token,
         "token_type": "bearer"
     }
 
 
-@router.get("/me")
-def get_profile(user: str = Depends(get_current_user)):
+@router.get("/me", response_model=UserResponse)
+def get_current_user_profile(current_user: User = Depends(get_current_user)):
     """
-    Example protected endpoint.
+    Get the current authenticated user's profile.
     """
-
-    return {"username": user}
+    return current_user

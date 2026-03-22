@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 
 type LoginFormValues = {
@@ -29,7 +29,9 @@ const validateLoginForm = (values: LoginFormValues): LoginFormErrors => {
 
 const Login: React.FC = () => {
 	const navigate = useNavigate();
+	const location = useLocation();
 	const [showPassword, setShowPassword] = useState(false);
+	const [successMessage, setSuccessMessage] = useState<string | null>(null);
 	const [formValues, setFormValues] = useState<LoginFormValues>({
 		email: '',
 		password: '',
@@ -39,6 +41,15 @@ const Login: React.FC = () => {
 		password: false,
 	});
 	const [errors, setErrors] = useState<LoginFormErrors>({});
+
+	// Check for success message from registration
+	useEffect(() => {
+		if (location.state?.message) {
+			setSuccessMessage(location.state.message);
+			// Clear the message from location state
+			navigate(location.pathname, { replace: true });
+		}
+	}, [location.state, navigate, location.pathname]);
 
 	const handleChange = (field: keyof LoginFormValues, value: string) => {
 		const nextValues = { ...formValues, [field]: value };
@@ -55,7 +66,7 @@ const Login: React.FC = () => {
 		setErrors(validateLoginForm(formValues));
 	};
 
-	const handleLogin = (e: React.FormEvent) => {
+	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
 
 		const validationErrors = validateLoginForm(formValues);
@@ -66,7 +77,24 @@ const Login: React.FC = () => {
 			return;
 		}
 
-		navigate('/dashboard');
+		try {
+			// Use the existing login API
+			const { login } = await import('../api/apiCalls');
+			const response = await login({
+				username: formValues.email, // Backend accepts email as username
+				password: formValues.password
+			});
+
+			// Store token
+			localStorage.setItem('access_token', response.access_token);
+
+			// Navigate to dashboard
+			navigate('/dashboard');
+		} catch (error: any) {
+			setErrors({
+				password: error.response?.data?.detail || 'Login failed. Please try again.'
+			});
+		}
 	};
 
 	return (
@@ -100,6 +128,13 @@ const Login: React.FC = () => {
 							Create an account
 						</Link>
 					</p>
+
+					{/* Success Message */}
+					{successMessage && (
+						<div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-2xl">
+							<p className="text-green-700 text-sm">{successMessage}</p>
+						</div>
+					)}
 
 					<form className="space-y-5" onSubmit={handleLogin} noValidate>
 						<div className="space-y-2">

@@ -8,7 +8,7 @@ interface TaskDistributionModelProps {
 }
 
 export default function TaskDistributionModal({ milestones, onClose, onConfirm }: TaskDistributionModelProps) {
-    const [selectedMilestoneId, setSelectedMilestoneId] = useState<string | null>(null);
+    const [selectedMilestoneId, setSelectedMilestoneId] = useState<number | null>(null);
 
     // Auto-select the first milestone when loaded
     useEffect(() => {

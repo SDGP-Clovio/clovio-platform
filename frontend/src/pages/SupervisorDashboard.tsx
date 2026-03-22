@@ -28,9 +28,10 @@ export default function SupervisorDashboard() {
 				if (isMounted) {
 					setData(response);
 				}
-			} catch {
+			} catch (err) {
 				if (isMounted) {
-					setError("Unable to load supervisor dashboard.");
+					const message = err instanceof Error ? err.message : "Unable to load supervisor dashboard.";
+					setError(message);
 				}
 			} finally {
 				if (isMounted) {

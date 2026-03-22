@@ -1,6 +1,19 @@
 import { useState } from "react";
-import type { Milestone, Task } from "../types/index";
+import type { Milestone, Task } from "../types/types";
 import { generateMilestones, generateTasks } from "../api/apiCalls";
+
+const normalizeTaskStatus = (status?: string): Task["status"] => {
+    if (!status) return "todo";
+
+    const normalized = status.toLowerCase();
+    if (normalized === "in_progress" || normalized === "in-progress") {
+        return "in-progress";
+    }
+    if (normalized === "done") {
+        return "done";
+    }
+    return "todo";
+};
 
 
 
@@ -22,10 +35,11 @@ export const useTaskEngine = () => {
 
 
             const milestoneData: Milestone[] = plan.milestones.map((m: any, index: number) => ({
-                id: (index + 1).toString(),
+                id: index + 1,
                 title: m.title,
+                description: m.description || "Auto-generated milestone",
                 effort: m.effort_points,
-                suggestedTimeline: m.suggested_timeline || "TBD",
+                dueDate: new Date(Date.now() + (index + 1) * 7 * 24 * 60 * 60 * 1000), // Weekly intervals
                 tasks: []
             }));
 
@@ -50,11 +64,29 @@ export const useTaskEngine = () => {
                 });
 
                 const tasks: Task[] = rawTasks.map((t: any, index: number) => ({
-                    id: `${m.id}-${index}`, // 🔥 guaranteed unique
+                    id: m.id * 100 + index + 1,
+                    projectId: 0, // Will be set by the calling component
+                    milestoneId: m.id,
+                    milestoneTitle: m.title,
+                    milestoneDescription: m.description,
+                    milestoneDueDate: m.dueDate,
                     title: t.name,
-                    assignee: t.assigned_to,
-                    status: t.status || "todo",
-                    skill_gap: t.is_skill_gap
+                    description: t.description || "Auto-generated task",
+                    status: normalizeTaskStatus(t.status),
+                    priority: "medium" as "low" | "medium" | "high",
+                    assignedTo: (() => {
+                        const numericAssignee = Number(t.assigned_to);
+                        return Number.isFinite(numericAssignee) ? [numericAssignee] : [];
+                    })(),
+                    createdBy: 0,
+                    aiAssignmentReason: t.assignment_reason || "AI-generated assignment",
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    skill_gap: t.is_skill_gap || false,
+                    assignee: (() => {
+                        const numericAssignee = Number(t.assigned_to);
+                        return Number.isFinite(numericAssignee) ? numericAssignee : undefined;
+                    })()
                 }));
 
                 milestonesWithTasks.push({ ...m, tasks });

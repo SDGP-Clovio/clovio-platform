@@ -3,11 +3,9 @@ import { useApp } from '../../context/AppContext';
 import Card from '../UI/Card';
 import Badge from '../UI/Badge';
 import Avatar from '../UI/Avatar';
-import { getUserById } from '../../data/mockData';
 
 const FairnessScoreWidget: React.FC = () => {
-    const { fairnessMetrics } = useApp();
-
+    const { fairnessMetrics, users } = useApp();
     const { giniCoefficient, fairnessLevel, contributions } = fairnessMetrics;
 
     // Calculate percentage for visual display (invert for fairness: lower Gini = better)
@@ -89,7 +87,7 @@ const FairnessScoreWidget: React.FC = () => {
                 </h4>
                 <div className="space-y-3">
                     {contributions.map((contribution) => {
-                        const user = getUserById(contribution.userId);
+                        const user = users.find((candidate) => candidate.id === contribution.userId);
                         if (!user) return null;
 
                         return (

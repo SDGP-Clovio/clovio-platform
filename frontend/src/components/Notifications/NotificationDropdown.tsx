@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import type { Activity } from '../../types/types';
 
 interface Props {
-    projectId: string; // only show notifications for this project
+    projectId: number; // only show notifications for this project
 }
 
 const iconFor = (type: Activity['type']) => {
@@ -41,7 +41,7 @@ const timeAgo = (date: Date) => {
 const NotificationDropdown: React.FC<Props> = ({ projectId }) => {
     const { activities } = useApp();
     const [open, setOpen] = useState(false);
-    const [readIds, setReadIds] = useState<Set<string>>(new Set());
+    const [readIds, setReadIds] = useState<Set<number>>(new Set());
     const ref = useRef<HTMLDivElement>(null);
 
     // Filter to this project only, most recent first

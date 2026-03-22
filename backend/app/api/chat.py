@@ -45,8 +45,11 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
-def _current_db_user(db: Session, username: str) -> User:
-    user = db.query(User).filter(User.username == username).first()
+def _current_db_user(db: Session, principal: User | str) -> User:
+    if isinstance(principal, User):
+        return principal
+
+    user = db.query(User).filter(User.username == principal).first()
     if not user:
         raise HTTPException(status_code=401, detail="Authenticated user not found")
     return user
@@ -54,10 +57,20 @@ def _current_db_user(db: Session, username: str) -> User:
 
 def _user_from_token(db: Session, token: str) -> User:
     payload = verify_token(token)
-    username = payload.get("sub")
-    if not username:
+    subject = payload.get("sub")
+    if subject is None:
         raise HTTPException(status_code=401, detail="Invalid token payload")
-    user = db.query(User).filter(User.username == username).first()
+
+    user = None
+    try:
+        user_id = int(subject)
+        user = db.query(User).filter(User.id == user_id).first()
+    except (TypeError, ValueError):
+        user = db.query(User).filter(User.username == str(subject)).first()
+
+    if not user and payload.get("username"):
+        user = db.query(User).filter(User.username == payload.get("username")).first()
+
     if not user:
         raise HTTPException(status_code=401, detail="Authenticated user not found")
     return user
@@ -67,9 +80,9 @@ def _user_from_token(db: Session, token: str) -> User:
 def list_project_messages(
     project_id: int,
     db: Session = Depends(get_db),
-    username: str = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    current = _current_db_user(db, username)
+    current = _current_db_user(db, current_user)
     conv = get_conversation_by_project(db, project_id)
 
     if not is_participant(db, conv.id, current.id):
@@ -95,9 +108,9 @@ def send_project_message(
     project_id: int,
     payload: SendMessageRequest,
     db: Session = Depends(get_db),
-    username: str = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    current = _current_db_user(db, username)
+    current = _current_db_user(db, current_user)
     conv = get_conversation_by_project(db, project_id)
 
     if not is_participant(db, conv.id, current.id):

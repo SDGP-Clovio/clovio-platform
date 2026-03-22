@@ -5,4 +5,5 @@ from .project import Project
 from .milestone import Milestone
 from .task import Task
 from .chat import Conversation, ConversationParticipant, Message
+from .meeting import Meeting
 from .project_member import ProjectMember

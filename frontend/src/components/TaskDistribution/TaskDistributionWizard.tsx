@@ -2,137 +2,115 @@ import { useState } from 'react';
 import Modal from '../UI/Modal';
 import DistributionPrompt from './DistributionPrompt';
 import TaskDistributionModal from './TaskDistributionModel';
-import type { Milestone, Task } from '../../types/types';
 import { useApp } from '../../context/AppContext';
-import { mockUsers } from '../../data/mockData';
+import { useTaskEngine } from '../../hooks/TaskEngine';
 
 interface TaskDistributionWizardProps {
     isOpen: boolean;
     onClose: () => void;
-    projectId: string;
+    projectId: number;
 }
 
 export default function TaskDistributionWizard({ isOpen, onClose, projectId }: TaskDistributionWizardProps) {
-    const { addTask } = useApp();
+    const { addTask, activeProject, users } = useApp();
     const [step, setStep] = useState<'prompt' | 'generating' | 'results'>('prompt');
-    const [projectDescription, setProjectDescription] = useState('');
-    const [file, setFile] = useState<File | null>(null);
 
-    // State to hold the newly generated mock milestones
-    const [generatedMilestones, setGeneratedMilestones] = useState<Milestone[]>([]);
+    // Use the real AI task engine
+    const {
+        projectDescription,
+        setProjectDescription,
+        file,
+        setFile,
+        milestones,
+        loading,
+        distributeTasks
+    } = useTaskEngine();
 
-    const generateMockMilestones = (): Milestone[] => {
-        // Mock team members picking up random users
-        const team = mockUsers.slice(1, 4);
-
-        return [
-            {
-                id: 'gen-m1',
-                title: 'Phase 1: Architecture & Planning',
-                description: 'Initial structural design derived from your prompt',
-                dueDate: new Date(Date.now() + 86400000 * 5),
-                effort: 15,
-                tasks: [
-                    {
-                        id: `t${Date.now()}-1`,
-                        projectId,
-                        title: 'Design Database Schema',
-                        description: 'Architect the primary relations for the platform output.',
-                        status: 'todo',
-                        priority: 'high',
-                        assignedTo: [team[0].id],
-                        assignee: team[0].name,
-                        createdBy: 'system',
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        skill_gap: false,
-                        actualHours: 0,
-                        estimatedHours: 4
-                    },
-                    {
-                        id: `t${Date.now()}-2`,
-                        projectId,
-                        title: 'Setup Core API Controllers',
-                        description: 'Initialize base routing architecture.',
-                        status: 'todo',
-                        priority: 'medium',
-                        assignedTo: [team[1].id],
-                        assignee: team[1].name,
-                        createdBy: 'system',
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        skill_gap: true,
-                        actualHours: 0,
-                        estimatedHours: 6
-                    }
-                ]
-            },
-            {
-                id: 'gen-m2',
-                title: 'Phase 2: Frontend Implementation',
-                description: 'Component creation mapped from the uploaded specs.',
-                dueDate: new Date(Date.now() + 86400000 * 12),
-                effort: 20,
-                tasks: [
-                    {
-                        id: `t${Date.now()}-3`,
-                        projectId,
-                        title: 'Build Wizard Layout components',
-                        description: 'Construct the master orchestrator logic visually.',
-                        status: 'todo',
-                        priority: 'high',
-                        assignedTo: [team[2].id],
-                        assignee: team[2].name,
-                        createdBy: 'system',
-                        createdAt: new Date(),
-                        updatedAt: new Date(),
-                        skill_gap: false,
-                        actualHours: 0,
-                        estimatedHours: 8
-                    }
-                ]
-            }
-        ];
-    };
-
-    const handleDistribute = () => {
+    const handleDistribute = async () => {
         setStep('generating');
-        
-        setTimeout(() => {
-            setGeneratedMilestones(generateMockMilestones());
-            setStep('results');
-        }, 3000);
+
+        // Get team members from active project
+        const teamMembers = (activeProject?.teamMembers || [])
+            .map((memberId) => users.find((user) => user.id === memberId)?.name)
+            .filter((name): name is string => Boolean(name));
+
+        const distributionMembers = teamMembers.length > 0
+            ? teamMembers
+            : ['Team Member 1', 'Team Member 2'];
+
+        // Call the real AI backend
+        await distributeTasks(distributionMembers);
+
+        setStep('results');
     };
 
-    const handleConfirm = () => {
-        // Export newly generated tasks sequentially into AppContext
-        generatedMilestones.forEach(milestone => {
-            milestone.tasks.forEach(task => {
-                addTask(task);
-            });
+    const handleConfirm = async () => {
+        // Convert AI-generated tasks to AppContext format and add them
+        let generatedId = Date.now();
+        const createTaskPromises: Array<Promise<void>> = [];
+
+        milestones.forEach(milestone => {
+            if (milestone.tasks) {
+                milestone.tasks.forEach((task: any) => {
+                    const parsedAssignee = Number(task.assignee ?? task.assigned_to);
+                    const assigneeId = Number.isFinite(parsedAssignee) ? parsedAssignee : undefined;
+
+                    createTaskPromises.push(
+                        addTask({
+                            id: typeof task.id === 'number' ? task.id : generatedId++,
+                            projectId,
+                            milestoneId: milestone.id,
+                            milestoneTitle: milestone.title,
+                            milestoneDescription: milestone.description,
+                            milestoneDueDate: milestone.dueDate,
+                            title: task.title || task.name,
+                            description: task.description || '',
+                            status: task.status || 'todo',
+                            priority: task.priority || 'medium',
+                            assignedTo: assigneeId != null ? [assigneeId] : [],
+                            createdBy: 0,
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                            aiAssignmentReason: task.aiAssignmentReason || task.assignment_reason,
+                            skill_gap: task.skill_gap || task.is_skill_gap || false,
+                            estimatedHours: task.complexity || 5,
+                            assignee: assigneeId,
+                        })
+                    );
+                });
+            }
         });
 
-        // Close and fully reset
+        await Promise.all(createTaskPromises);
+
+        // Close and reset
         onClose();
         setTimeout(() => {
             setStep('prompt');
             setProjectDescription('');
             setFile(null);
-            setGeneratedMilestones([]);
         }, 300);
     };
 
     const handleClose = () => {
         onClose();
-        // Reset state shortly after modal closes to prepare for next run
         setTimeout(() => setStep('prompt'), 300);
     };
 
     if (!isOpen) return null;
 
     if (step === 'results') {
-        // The user's TaskDistributionModal handles its own fixed overlay
-        return <TaskDistributionModal milestones={generatedMilestones} onClose={handleClose} onConfirm={handleConfirm} />;
+        // Convert API milestones to frontend Milestone format
+        const convertedMilestones = milestones.map((m, index) => ({
+            id: typeof m.id === 'number' ? m.id : Date.now() + index,
+            title: m.title,
+            description: m.description || 'AI-generated milestone',
+            dueDate: m.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            effort: m.effort || 0,
+            tasks: m.tasks || []
+        }));
+
+        return <TaskDistributionModal milestones={convertedMilestones} onClose={handleClose} onConfirm={handleConfirm} />;
     }
 
     return (
@@ -157,7 +135,7 @@ export default function TaskDistributionWizard({ isOpen, onClose, projectId }: T
                     file={file}
                     setFile={setFile}
                     onDistribute={handleDistribute}
-                    loading={step === 'generating'}
+                    loading={loading || step === 'generating'}
                 />
             </div>
         </Modal>

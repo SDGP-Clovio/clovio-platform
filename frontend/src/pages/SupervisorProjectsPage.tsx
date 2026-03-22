@@ -30,16 +30,23 @@ export default function SupervisorProjectsPage() {
 	const [filters, setFilters] = useState<SupervisorProjectFilters>(INITIAL_FILTERS);
 	const [data, setData] = useState<SupervisorProjectsResponse | null>(null);
 	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState("");
 
 	useEffect(() => {
 		let isMounted = true;
 
 		const load = async () => {
 			setLoading(true);
+			setError("");
 			try {
 				const response = await getSupervisorProjects();
 				if (isMounted) {
 					setData(response);
+				}
+			} catch (err) {
+				if (isMounted) {
+					const message = err instanceof Error ? err.message : "Unable to load supervisor projects.";
+					setError(message);
 				}
 			} finally {
 				if (isMounted) {
@@ -89,6 +96,8 @@ export default function SupervisorProjectsPage() {
 
 				<div className="flex-1 p-6 space-y-6">
 					<ProjectsFilterBar filters={filters} onFiltersChange={setFilters} />
+
+					{error && <p className="text-sm text-red-600">{error}</p>}
 
 					{loading ? (
 						<p className="text-sm text-gray-500">Loading projects...</p>

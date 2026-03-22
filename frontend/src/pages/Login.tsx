@@ -79,7 +79,7 @@ const Login: React.FC = () => {
 
 		try {
 			// Use the existing login API
-			const { login } = await import('../api/apiCalls');
+			const { login, getCurrentUser } = await import('../api/apiCalls');
 			const response = await login({
 				username: formValues.email, // Backend accepts email as username
 				password: formValues.password
@@ -88,9 +88,15 @@ const Login: React.FC = () => {
 			// Store token
 			localStorage.setItem('access_token', response.access_token);
 
-			// Navigate to dashboard
-			navigate('/dashboard');
+			// Resolve role and route to the correct dashboard
+			const user = await getCurrentUser();
+			const destination = user.role === 'supervisor' ? '/supervisor' : '/dashboard';
+
+			navigate(destination);
 		} catch (error: any) {
+			if (error?.response?.status === 401) {
+				localStorage.removeItem('access_token');
+			}
 			setErrors({
 				password: error.response?.data?.detail || 'Login failed. Please try again.'
 			});

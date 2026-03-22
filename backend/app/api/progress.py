@@ -15,6 +15,13 @@ async def compute_progress(request: ProgressRequest):
     """
     try:
         progress = compute_overall_progress(request.milestones)
-        return {"progress": progress}
+        return {
+            "progress": progress,
+            "overall_progress": round(progress * 100.0, 2),
+            "milestones": [],
+            "team_performance": [],
+            "risk_factors": [],
+            "ai_insights": [],
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

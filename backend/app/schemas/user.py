@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from app.models.user import UserRole
 
 # 1. Base properties shared across all user interactions
 class UserBase(BaseModel):
@@ -13,6 +14,7 @@ class UserCreate(UserBase):
 # 3. Properties returned to the frontend (Read)
 class UserResponse(UserBase):
     id: int
+    role: UserRole
     is_active: bool
 
     class Config:

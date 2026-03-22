@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
-import { getUserById } from '../../data/mockData';
 import Avatar from '../UI/Avatar';
 import {
     Calendar, ChevronLeft, ChevronRight, Clock, MapPin,
@@ -54,7 +53,7 @@ const PROJECT_COLORS = [
 
 /* ── New Meeting Modal ───────────────────────────────────────────────────── */
 const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-    const { addMeeting, projects, currentUser } = useApp();
+    const { addMeeting, projects, currentUser, users } = useApp();
 
     const [title,    setTitle]    = useState('');
     const [date,     setDate]     = useState('');
@@ -63,22 +62,22 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [endH,     setEndH]     = useState('10');
     const [endM,     setEndM]     = useState('00');
     const [location, setLocation] = useState('');
-    const [projectId, setProjectId] = useState(projects[0]?.id ?? '');
-    const [attendees, setAttendees] = useState<string[]>([currentUser?.id ?? '']);
+    const [projectId, setProjectId] = useState(projects[0]?.id ?? 0);
+    const [attendees, setAttendees] = useState<number[]>(currentUser?.id != null ? [currentUser.id] : []);
 
-    const toggleAttendee = (uid: string) =>
+    const toggleAttendee = (uid: number) =>
         setAttendees((prev) => prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]);
 
     const handleSubmit = () => {
         if (!title || !date) return;
         const meeting: Meeting = {
-            id: `m${Date.now()}`,
+            id: Date.now(),
             projectId,
             title,
             startTime: new Date(`${date}T${startH}:${startM}`),
             endTime:   new Date(`${date}T${endH}:${endM}`),
             attendees,
-            createdBy: currentUser?.id ?? '',
+            createdBy: currentUser?.id ?? 0,
             location: location || undefined,
             status: 'scheduled',
         };
@@ -106,7 +105,13 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     </div>
                     <div>
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Project</label>
-                        <select value={projectId} onChange={(e) => { setProjectId(e.target.value); setAttendees([currentUser?.id ?? '']); }}
+                        <select
+                            value={projectId}
+                            onChange={(e) => {
+                                const parsedProjectId = Number(e.target.value);
+                                setProjectId(Number.isFinite(parsedProjectId) ? parsedProjectId : 0);
+                                setAttendees(currentUser?.id != null ? [currentUser.id] : []);
+                            }}
                             className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-300">
                             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
@@ -142,7 +147,7 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Attendees</label>
                         <div className="flex flex-wrap gap-2">
                             {projectMembers.map((uid) => {
-                                const u = getUserById(uid);
+                                const u = users.find((candidate) => candidate.id === uid);
                                 if (!u) return null;
                                 const checked = attendees.includes(uid);
                                 return (
@@ -177,7 +182,7 @@ interface ScheduleViewProps {
 
 /* ══════════════════════════════════════════════════════════════════════════ */
 const ScheduleView: React.FC<ScheduleViewProps> = ({ markMode, showModal, setShowModal }) => {
-    const { meetings, projects, currentUser, weeklyOverrides, toggleHourAvailability, clearDayOverride } = useApp();
+    const { meetings, projects, currentUser, users, weeklyOverrides, toggleHourAvailability, clearDayOverride } = useApp();
 
     const [weekStart, setWeekStart]  = useState(() => startOfWeek(new Date()));
     const [selected,  setSelected]   = useState<Meeting | null>(null);
@@ -188,7 +193,7 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ markMode, showModal, setSho
     const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)), [weekStart]);
 
     const projectColorMap = useMemo(() => {
-        const map: Record<string, string> = {};
+        const map: Record<number, string> = {};
         projects.forEach((p, i) => { map[p.id] = PROJECT_COLORS[i % PROJECT_COLORS.length]; });
         return map;
     }, [projects]);
@@ -418,7 +423,7 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ markMode, showModal, setSho
                                 <Users className="w-4 h-4 text-slate-400 mt-0.5" />
                                 <div className="flex flex-wrap gap-2">
                                     {selected.attendees.map((uid) => {
-                                        const u = getUserById(uid);
+                                        const u = users.find((candidate) => candidate.id === uid);
                                         return u ? (
                                             <div key={uid} className="flex items-center gap-1.5">
                                                 <Avatar name={u.name} size="sm" />

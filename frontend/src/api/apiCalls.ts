@@ -3,7 +3,7 @@ import axios from "axios";
 // Send API requests to the backend
 const API_BASE = "http://localhost:8000";
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
     baseURL: API_BASE,
     headers: {
         "Content-Type": "application/json",
@@ -63,6 +63,35 @@ export interface AuthResponse {
     token_type: string;
 }
 
+export interface BackendUserRecord {
+    id: number;
+    email: string;
+    username: string;
+    full_name: string | null;
+    role: "student" | "supervisor";
+    is_active: boolean;
+}
+
+export interface BackendProjectCreateRequest {
+    name: string;
+    description: string;
+    status: "planned" | "active" | "completed";
+    created_by: number;
+    member_ids: number[];
+    supervisor_id?: number;
+    deadline?: string;
+}
+
+export interface BackendProjectResponse {
+    id: number;
+    name: string;
+    description: string;
+    status: "planned" | "active" | "completed";
+    created_by: number;
+    created_at: string;
+    deadline?: string;
+}
+
 // Authentication endpoints
 export const register = async (userData: RegisterRequest): Promise<User> => {
     const response = await apiClient.post("/api/v1/auth/register", userData);
@@ -87,9 +116,21 @@ export const getCurrentUser = async (): Promise<User> => {
     return response.data;
 };
 
+export const getUsers = async (): Promise<BackendUserRecord[]> => {
+    const response = await apiClient.get("/api/users");
+    return response.data;
+};
+
+export const createProjectInDatabase = async (
+    payload: BackendProjectCreateRequest,
+): Promise<BackendProjectResponse> => {
+    const response = await apiClient.post("/api/projects", payload);
+    return response.data;
+};
+
 // AI endpoints (existing)
 export const generateMilestones = async (projectDescription: string, teamMembers: string[]) => {
-    const response = await apiClient.post("/projects/breakdown", {
+    const response = await apiClient.post("/breakdown", {
         description: projectDescription,
         team_members: teamMembers.map(name => ({
             name,
@@ -104,7 +145,7 @@ export const generateMilestones = async (projectDescription: string, teamMembers
     return response.data;
 };
 
-export const generateTasks = async (milestoneId: string, milestoneData: any) => {
+export const generateTasks = async (milestoneId: number | string, milestoneData: any) => {
     const response = await apiClient.post(`/milestones/${milestoneId}/generate-tasks`, milestoneData);
     return response.data;
 };

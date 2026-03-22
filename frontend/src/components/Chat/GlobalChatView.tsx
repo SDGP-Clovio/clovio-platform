@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import ProjectChatBox from './ProjectChatBox';
 import { MessageSquareOff, Hash, Users } from 'lucide-react';
@@ -10,6 +10,23 @@ export default function GlobalChatView() {
     const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
         activeProjects.length > 0 ? Number(activeProjects[0].id) : null
     );
+
+    useEffect(() => {
+        if (activeProjects.length === 0) {
+            setSelectedProjectId(null);
+            return;
+        }
+
+        if (selectedProjectId == null) {
+            setSelectedProjectId(activeProjects[0].id);
+            return;
+        }
+
+        const stillExists = activeProjects.some((project) => project.id === selectedProjectId);
+        if (!stillExists) {
+            setSelectedProjectId(activeProjects[0].id);
+        }
+    }, [activeProjects, selectedProjectId]);
 
     return (
         <div className="flex h-[calc(100vh-140px)] bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-[500px]">

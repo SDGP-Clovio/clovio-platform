@@ -9,7 +9,6 @@ import Avatar from '../components/UI/Avatar';
 import NotificationsPanel from '../components/Notifications/NotificationsPanel';
 import SettingsPanel from '../components/Settings/SettingsPanel';
 import ScheduleView from '../components/Schedule/ScheduleView';
-import { getUserById } from '../data/mockData';
 import type { Project } from '../types/types';
 import GlobalChatView from '../components/Chat/GlobalChatView';
 
@@ -57,7 +56,10 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 /* ─── Project row card ──────────────────────────────────────────────────── */
 const ProjectRowCard: React.FC<{ project: Project }> = ({ project }) => {
     const navigate = useNavigate();
-    const teamMembers = project.teamMembers.map((id) => getUserById(id)).filter(Boolean);
+    const { users } = useApp();
+    const teamMembers = project.teamMembers
+        .map((id) => users.find((user) => user.id === id))
+        .filter((member): member is NonNullable<typeof member> => Boolean(member));
 
     const getProgress = () => {
         if (project.status === 'completed' || project.status === 'archived') return 100;
@@ -76,15 +78,15 @@ const ProjectRowCard: React.FC<{ project: Project }> = ({ project }) => {
                              'bg-red-400';
 
     const courseCode = project.courseName ?? (
-        project.id === 'p1' ? '5CDSC021C' :
-        project.id === 'p2' ? '4CDSC018W' :
-        project.id === 'p3' ? '6CDSC024C' :
+        project.id === 1 ? '5CDSC021C' :
+        project.id === 2 ? '4CDSC018W' :
+        project.id === 3 ? '6CDSC024C' :
                                '5CDSC020C'
     );
     const courseType =
-        project.id === 'p1' ? 'AI / Web App' :
-        project.id === 'p2' ? 'Mobile / IoT' :
-        project.id === 'p3' ? 'Data / React' :
+        project.id === 1 ? 'AI / Web App' :
+        project.id === 2 ? 'Mobile / IoT' :
+        project.id === 3 ? 'Data / React' :
                                'Security / Node';
 
     return (
@@ -121,7 +123,7 @@ const ProjectRowCard: React.FC<{ project: Project }> = ({ project }) => {
             <div className="flex flex-col items-center gap-1 flex-shrink-0">
                 <div className="flex -space-x-2">
                     {teamMembers.slice(0, 4).map((m) => (
-                        <Avatar key={m!.id} name={m!.name} size="sm" className="ring-2 ring-white" />
+                        <Avatar key={m.id} name={m.name} size="sm" className="ring-2 ring-white" />
                     ))}
                     {teamMembers.length > 4 && (
                         <div className="w-7 h-7 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold flex items-center justify-center ring-2 ring-white">

@@ -14,7 +14,7 @@ from app.core.config import settings
 
 # 3. Import ALL your models so Alembic can read them
 # Include project_member so Alembic autogenerate sees it too
-from app.models import user, skill, user_skill, project, milestone, task, chat, project_member
+from app.models import user, skill, user_skill, project, milestone, task, chat, project_member, meeting
 
 # This is the Alembic Config object
 config = context.config

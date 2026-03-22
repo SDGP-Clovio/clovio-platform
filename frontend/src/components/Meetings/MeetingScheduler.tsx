@@ -6,16 +6,16 @@ import Avatar from '../UI/Avatar';
 import type { AvailabilitySlot, Meeting } from '../../types/types';
 
 interface Props {
-    projectId: string;
-    projectMemberIds: string[];
+    projectId: number;
+    projectMemberIds: number[];
 }
 
 interface FreeSlot {
     dayOfWeek: number;           // 1-5
     startHour: number;
     endHour: number;
-    availableIds: string[];
-    missingIds: string[];
+    availableIds: number[];
+    missingIds: number[];
     allPresent: boolean;
 }
 
@@ -59,7 +59,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
         [users, projectMemberIds]
     );
 
-    const [selectedIds, setSelectedIds] = useState<string[]>(projectMemberIds);
+    const [selectedIds, setSelectedIds] = useState<number[]>(projectMemberIds);
     const [showForm, setShowForm] = useState(false);
     const [prefillSlot, setPrefillSlot] = useState<FreeSlot | null>(null);
     const [form, setForm] = useState<ScheduleForm>({
@@ -75,7 +75,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
     // ── Selection helpers ────────────────────────────────────────────────────
     const allSelected = selectedIds.length === members.length;
     const toggleAll = () => setSelectedIds(allSelected ? [] : members.map((m) => m.id));
-    const toggleMember = (id: string) =>
+    const toggleMember = (id: number) =>
         setSelectedIds((prev) =>
             prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
         );
@@ -89,7 +89,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
 
         for (let day = 1; day <= 5; day++) {
             // Gather each selected user's slots for this day
-            const byUser: Record<string, AvailabilitySlot[]> = {};
+            const byUser: Record<number, AvailabilitySlot[]> = {};
             for (const uid of selectedIds) {
                 byUser[uid] = mockAvailability.filter(
                     (s) => s.userId === uid && s.dayOfWeek === day
@@ -98,8 +98,8 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
 
             // Build an hour-by-hour grid (hours 8-20)
             for (let startH = 8; startH < 20; startH++) {
-                const availableIds: string[] = [];
-                const missingIds: string[] = [];
+                const availableIds: number[] = [];
+                const missingIds: number[] = [];
 
                 for (const uid of selectedIds) {
                     const free = byUser[uid].some(
@@ -172,7 +172,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
         const end = new Date(yr, mo - 1, dy, form.endHour, 0);
 
         const newMeeting: Meeting = {
-            id: `m${Date.now()}`,
+            id: Date.now(),
             projectId,
             title: form.title.trim(),
             description: form.description.trim() || undefined,
@@ -192,8 +192,8 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
         setTimeout(() => setSuccess(false), 3000);
     };
 
-    const getUserName = (id: string) =>
-        users.find((u) => u.id === id)?.name ?? id;
+    const getUserName = (id: number) =>
+        users.find((u) => u.id === id)?.name ?? `User ${id}`;
 
     return (
         <div className="space-y-6">

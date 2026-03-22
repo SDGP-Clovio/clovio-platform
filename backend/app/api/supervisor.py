@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
-
 from fastapi import APIRouter, Depends, HTTPException
 
+from app.core.auth import get_current_user
+from app.models.user import User, UserRole
 from app.schemas.supervisor import (
     SupervisorAlertsResponse,
     SupervisorContributionsResponse,
@@ -17,17 +17,13 @@ from app.services.supervisor_service import SupervisorDataProvider, SupervisorSe
 router = APIRouter(prefix="/supervisor", tags=["Supervisor"])
 
 
-def get_supervisor_user() -> Mapping[str, Any]:
+def get_supervisor_user(current_user: User = Depends(get_current_user)) -> User:
     """
-    Integration hook for existing JWT + role guard.
-
-    Replace this dependency with your existing branch dependency that ensures
-    supervisor-only access and returns the authenticated user payload.
+    Enforce supervisor-only access for supervisor routes.
     """
-    raise HTTPException(
-        status_code=500,
-        detail="Supervisor auth dependency is not configured. Wire existing JWT/role dependency.",
-    )
+    if current_user.role != UserRole.SUPERVISOR:
+        raise HTTPException(status_code=403, detail="Supervisor access required")
+    return current_user
 
 
 def get_supervisor_service(
@@ -36,61 +32,51 @@ def get_supervisor_service(
     return SupervisorService(provider=provider)
 
 
-def _extract_user_id(user_payload: Mapping[str, Any]) -> int:
-    raw_id = user_payload.get("id")
-    if raw_id is None:
-        raise HTTPException(status_code=401, detail="Authenticated user payload missing id")
-    try:
-        return int(raw_id)
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=401, detail="Authenticated user id is invalid")
-
-
 @router.get("/projects", response_model=SupervisorProjectsResponse)
 def get_supervisor_projects(
-    current_user: Mapping[str, Any] = Depends(get_supervisor_user),
+    current_user: User = Depends(get_supervisor_user),
     service: SupervisorService = Depends(get_supervisor_service),
 ) -> SupervisorProjectsResponse:
-    supervisor_id = _extract_user_id(current_user)
+    supervisor_id = int(current_user.id)
     return service.get_projects(supervisor_id=supervisor_id)
 
 
 @router.get("/project/{project_id}", response_model=SupervisorProjectDetailResponse)
 def get_supervisor_project_detail(
     project_id: int,
-    current_user: Mapping[str, Any] = Depends(get_supervisor_user),
+    current_user: User = Depends(get_supervisor_user),
     service: SupervisorService = Depends(get_supervisor_service),
 ) -> SupervisorProjectDetailResponse:
-    supervisor_id = _extract_user_id(current_user)
+    supervisor_id = int(current_user.id)
     return service.get_project_detail(supervisor_id=supervisor_id, project_id=project_id)
 
 
 @router.get("/project/{project_id}/contributions", response_model=SupervisorContributionsResponse)
 def get_supervisor_project_contributions(
     project_id: int,
-    current_user: Mapping[str, Any] = Depends(get_supervisor_user),
+    current_user: User = Depends(get_supervisor_user),
     service: SupervisorService = Depends(get_supervisor_service),
 ) -> SupervisorContributionsResponse:
-    supervisor_id = _extract_user_id(current_user)
+    supervisor_id = int(current_user.id)
     return service.get_contributions(supervisor_id=supervisor_id, project_id=project_id)
 
 
 @router.get("/project/{project_id}/fairness", response_model=SupervisorFairnessResponse)
 def get_supervisor_project_fairness(
     project_id: int,
-    current_user: Mapping[str, Any] = Depends(get_supervisor_user),
+    current_user: User = Depends(get_supervisor_user),
     service: SupervisorService = Depends(get_supervisor_service),
 ) -> SupervisorFairnessResponse:
-    supervisor_id = _extract_user_id(current_user)
+    supervisor_id = int(current_user.id)
     return service.get_fairness(supervisor_id=supervisor_id, project_id=project_id)
 
 
 @router.get("/project/{project_id}/alerts", response_model=SupervisorAlertsResponse)
 def get_supervisor_project_alerts(
     project_id: int,
-    current_user: Mapping[str, Any] = Depends(get_supervisor_user),
+    current_user: User = Depends(get_supervisor_user),
     service: SupervisorService = Depends(get_supervisor_service),
 ) -> SupervisorAlertsResponse:
-    supervisor_id = _extract_user_id(current_user)
+    supervisor_id = int(current_user.id)
     return service.get_alerts(supervisor_id=supervisor_id, project_id=project_id)
 

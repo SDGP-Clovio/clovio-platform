@@ -1,21 +1,60 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import ProgressIndicator from '../UI/ProgressIndicator';
 import { useApp } from '../../context/AppContext';
 import MemberSearch from './MemberSearch';
+import type { User } from '../../types/types';
+import { fetchCurrentUserAsAppUser, fetchUsers } from '../../services/users';
+import { createProjectRecord, type CreateProjectApiRequest } from '../../services/projects';
 
 interface ProjectFormData {
     name: string;
     description: string;
     deadline: string;
     courseName: string;
-    teamMembers: string[];
+    teamMembers: number[];
+    supervisorId: number | null;
 }
+
+const resolveErrorMessage = (error: unknown, fallback: string): string => {
+    if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as { response?: unknown }).response === 'object'
+    ) {
+        const response = (error as { response?: { data?: { detail?: unknown } } }).response;
+        const detail = response?.data?.detail;
+        if (typeof detail === 'string' && detail.length > 0) {
+            return detail;
+        }
+        if (Array.isArray(detail)) {
+            const combined = detail
+                .map((entry: { msg?: string }) => entry?.msg)
+                .filter((value): value is string => typeof value === 'string' && value.length > 0)
+                .join(', ');
+            if (combined.length > 0) {
+                return combined;
+            }
+        }
+    }
+
+    if (error instanceof Error && error.message.length > 0) {
+        return error.message;
+    }
+
+    return fallback;
+};
 
 const ProjectWizard: React.FC = () => {
     const navigate = useNavigate();
-    const { users, createProject } = useApp();
+    const { createProject } = useApp();
+    const [availableUsers, setAvailableUsers] = useState<User[]>([]);
+    const [loadingUsers, setLoadingUsers] = useState(true);
+    const [usersError, setUsersError] = useState('');
+    const [createError, setCreateError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState<ProjectFormData>({
         name: '',
@@ -23,7 +62,48 @@ const ProjectWizard: React.FC = () => {
         deadline: '',
         courseName: '',
         teamMembers: [],
+        supervisorId: null,
     });
+
+    const supervisors = availableUsers.filter((user) => user.role === 'supervisor');
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadUsers = async () => {
+            setLoadingUsers(true);
+            setUsersError('');
+
+            try {
+                const records = await fetchUsers();
+                if (!isMounted) {
+                    return;
+                }
+                setAvailableUsers(records);
+            } catch (error) {
+                if (isMounted) {
+                    setUsersError(resolveErrorMessage(error, 'Unable to load users from the database.'));
+                    setAvailableUsers([]);
+                }
+            } finally {
+                if (isMounted) {
+                    setLoadingUsers(false);
+                }
+            }
+        };
+
+        loadUsers();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (formData.supervisorId == null && supervisors.length > 0) {
+            setFormData((prev) => ({ ...prev, supervisorId: supervisors[0].id }));
+        }
+    }, [formData.supervisorId, supervisors]);
 
     const steps = [
         { label: 'Details', description: 'Project info' },
@@ -47,22 +127,57 @@ const ProjectWizard: React.FC = () => {
         navigate('/dashboard');
     };
 
-    const handleCreate = () => {
-        const newProject = createProject({
-            name: formData.name,
-            description: formData.description,
-            deadline: formData.deadline,
-            courseName: formData.courseName,
-            teamMembers: formData.teamMembers,
-            tasks: [],
-        });
-        navigate(`/project/${newProject.id}`);
+    const handleCreate = async () => {
+        setCreateError('');
+
+        if (!isStepValid()) {
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            const currentUser = await fetchCurrentUserAsAppUser();
+
+            const payload: CreateProjectApiRequest = {
+                name: formData.name.trim(),
+                description: formData.description.trim(),
+                status: 'planned',
+                created_by: currentUser.id,
+                member_ids: Array.from(new Set(formData.teamMembers)),
+                supervisor_id: formData.supervisorId ?? undefined,
+                deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
+            };
+
+            const savedProject = await createProjectRecord(payload);
+
+            const localProject = createProject({
+                projectId: savedProject.id,
+                name: formData.name,
+                description: formData.description,
+                deadline: formData.deadline,
+                courseName: formData.courseName,
+                teamMembers: formData.teamMembers,
+                supervisorId: formData.supervisorId,
+                tasks: [],
+            });
+
+            navigate(`/project/${localProject.id}`);
+        } catch (error) {
+            setCreateError(resolveErrorMessage(error, 'Project creation failed. Please try again.'));
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const isStepValid = () => {
         switch (currentStep) {
             case 1: return formData.name.trim() !== '' && formData.description.trim() !== '';
-            case 2: return formData.teamMembers.length > 0;
+            case 2:
+                if (loadingUsers || availableUsers.length === 0) {
+                    return false;
+                }
+                return formData.teamMembers.length > 0 && formData.supervisorId != null;
             case 3: return true;
             default: return false;
         }
@@ -93,12 +208,23 @@ const ProjectWizard: React.FC = () => {
                         <Step1ProjectDetails formData={formData} setFormData={setFormData} />
                     )}
                     {currentStep === 2 && (
-                        <Step2TeamSelection formData={formData} setFormData={setFormData} users={users} />
+                        <Step2TeamSelection
+                            formData={formData}
+                            setFormData={setFormData}
+                            users={availableUsers}
+                            supervisors={supervisors}
+                            loadingUsers={loadingUsers}
+                            usersError={usersError}
+                        />
                     )}
                     {currentStep === 3 && (
-                        <Step3Review formData={formData} users={users} />
+                        <Step3Review formData={formData} users={availableUsers} />
                     )}
                 </div>
+
+                {createError && (
+                    <p className="mb-4 text-sm text-red-600">{createError}</p>
+                )}
 
                 {/* Navigation Buttons */}
                 <div className="flex items-center justify-between">
@@ -129,10 +255,15 @@ const ProjectWizard: React.FC = () => {
                     ) : (
                         <button
                             onClick={handleCreate}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-medium hover:brightness-110 shadow-md transition-all"
+                            disabled={!isStepValid() || isSubmitting}
+                            className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all ${
+                                !isStepValid() || isSubmitting
+                                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:brightness-110 shadow-md'
+                            }`}
                         >
                             <Check className="w-4 h-4" />
-                            Create Project
+                            {isSubmitting ? 'Creating...' : 'Create Project'}
                         </button>
                     )}
                 </div>
@@ -195,6 +326,7 @@ const Step1ProjectDetails: React.FC<{
                     <label className="block text-sm font-medium text-slate-700 mb-2">Deadline</label>
                     <input
                         type="date"
+                        title="Project deadline"
                         value={formData.deadline}
                         onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                         className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 transition-all"
@@ -209,27 +341,130 @@ const Step1ProjectDetails: React.FC<{
 const Step2TeamSelection: React.FC<{
     formData: ProjectFormData;
     setFormData: React.Dispatch<React.SetStateAction<ProjectFormData>>;
-    users: any[];
-}> = ({ formData, setFormData, users }) => (
-    <div className="space-y-6">
-        <div>
-            <h2 className="text-xl font-bold text-slate-800 mb-1">Select Team Members</h2>
-            <p className="text-sm text-slate-500">Search by name or email to add members</p>
+    users: User[];
+    supervisors: User[];
+    loadingUsers: boolean;
+    usersError: string;
+}> = ({ formData, setFormData, users, supervisors, loadingUsers, usersError }) => {
+    const [supervisorQuery, setSupervisorQuery] = useState('');
+    const [showSupervisorResults, setShowSupervisorResults] = useState(false);
+
+    const selectedSupervisor = supervisors.find((supervisor) => supervisor.id === formData.supervisorId) ?? null;
+
+    const filteredSupervisors = supervisors.filter((supervisor) => {
+        const query = supervisorQuery.trim().toLowerCase();
+        if (!query) {
+            return true;
+        }
+
+        return (
+            supervisor.name.toLowerCase().includes(query) ||
+            supervisor.email.toLowerCase().includes(query)
+        );
+    });
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h2 className="text-xl font-bold text-slate-800 mb-1">Select Team Members</h2>
+                <p className="text-sm text-slate-500">Search users from your database and assign a supervisor</p>
+            </div>
+
+            {loadingUsers && <p className="text-sm text-slate-500">Loading users from database...</p>}
+            {usersError && <p className="text-sm text-red-600">{usersError}</p>}
+
+            {!loadingUsers && !usersError && (
+                <>
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-slate-700">
+                            Supervisor <span className="text-red-500">*</span>
+                        </label>
+
+                        <div className="relative">
+                            <input
+                                type="text"
+                                title="Search supervisor"
+                                value={supervisorQuery}
+                                onChange={(e) => {
+                                    setSupervisorQuery(e.target.value);
+                                    setShowSupervisorResults(true);
+                                }}
+                                onFocus={() => setShowSupervisorResults(true)}
+                                onBlur={() => window.setTimeout(() => setShowSupervisorResults(false), 120)}
+                                placeholder="Search supervisor by name or email..."
+                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 transition-all"
+                            />
+
+                            {showSupervisorResults && (
+                                <div className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+                                    {filteredSupervisors.length > 0 ? (
+                                        filteredSupervisors.slice(0, 8).map((supervisor) => (
+                                            <button
+                                                key={supervisor.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setFormData({ ...formData, supervisorId: supervisor.id });
+                                                    setSupervisorQuery('');
+                                                    setShowSupervisorResults(false);
+                                                }}
+                                                className="w-full px-4 py-2.5 text-left hover:bg-purple-50 transition-colors"
+                                            >
+                                                <p className="text-sm font-medium text-slate-800">{supervisor.name}</p>
+                                                <p className="text-xs text-slate-500">{supervisor.email}</p>
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <p className="px-4 py-3 text-xs text-slate-500">No supervisor users match your search.</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {selectedSupervisor ? (
+                            <div className="inline-flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
+                                <span className="text-sm font-medium text-purple-800">{selectedSupervisor.name}</span>
+                                <span className="text-xs text-purple-600">{selectedSupervisor.email}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setFormData({ ...formData, supervisorId: null })}
+                                    title="Clear selected supervisor"
+                                    aria-label="Clear selected supervisor"
+                                    className="ml-1 text-purple-600 hover:text-purple-800"
+                                >
+                                    <X className="h-4 w-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <p className="text-xs text-slate-500">No supervisor selected.</p>
+                        )}
+
+                        {supervisors.length === 0 && (
+                            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                                No supervisor users found in the database.
+                            </p>
+                        )}
+                    </div>
+
+                    <MemberSearch
+                        allUsers={users.filter((user) => user.role !== 'supervisor')}
+                        selectedIds={formData.teamMembers}
+                        onChange={(ids) => setFormData({ ...formData, teamMembers: ids })}
+                    />
+                </>
+            )}
         </div>
-        <MemberSearch
-            allUsers={users}
-            selectedIds={formData.teamMembers}
-            onChange={(ids) => setFormData({ ...formData, teamMembers: ids })}
-        />
-    </div>
-);
+    );
+};
 
 // Step 3: Review
 const Step3Review: React.FC<{
     formData: ProjectFormData;
-    users: any[];
+    users: User[];
 }> = ({ formData, users }) => {
     const selectedUsers = users.filter(u => formData.teamMembers.includes(u.id));
+    const selectedSupervisor = users.find(
+        (user) => user.id === formData.supervisorId && user.role === 'supervisor',
+    );
 
     return (
         <div className="space-y-6">
@@ -264,6 +499,12 @@ const Step3Review: React.FC<{
                                 </p>
                             </div>
                         )}
+                        <div>
+                            <span className="text-xs text-slate-500">Supervisor:</span>
+                            <p className="text-sm text-slate-700">
+                                {selectedSupervisor ? selectedSupervisor.name : 'Not selected'}
+                            </p>
+                        </div>
                     </div>
                 </div>
 

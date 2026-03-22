@@ -110,11 +110,14 @@ def generate_milestones_only(description: str, team_members: List[TeamMember]) -
     Calls AI to generate only milestones with effort points.
     Returns a MilestonePlanResponse object containing project name, milestones, and optional warnings/timeline.
     """
+    logger.info(f"generate_milestones_only called with {len(team_members)} team members")
+    
     # Format team members for the prompt (same as before)
     members_info = "\n".join(
         f"{member.name}: " + (", ".join(str(skill) for skill in member.skills) if member.skills else "no skills listed")
         for member in team_members
     )
+    logger.info(f"Team members info: {members_info}")
 
     prompt = f"""
     You are a Senior Project Manager. Given a project description and a team, your task is to break the project into a logical set of milestones.
@@ -148,6 +151,7 @@ def generate_milestones_only(description: str, team_members: List[TeamMember]) -
     """
 
     try:
+        logger.info("Calling LLM for milestone generation")
         raw_content = _call_llm(
             messages=[
                 {"role": "system", "content": prompt},
@@ -156,6 +160,7 @@ def generate_milestones_only(description: str, team_members: List[TeamMember]) -
             max_tokens=settings.MAX_TOKENS,
             temperature=settings.AI_TEMPERATURE
         )
+        logger.info(f"LLM response received, length: {len(raw_content)}")
 
         # Clean markdown fences (same as before)
         if "```json" in raw_content:
@@ -163,6 +168,8 @@ def generate_milestones_only(description: str, team_members: List[TeamMember]) -
         elif "```" in raw_content:
             raw_content = raw_content.split("```")[1].split("```")[0].strip()
 
+        logger.info(f"Cleaned response: {raw_content[:200]}...")
+        
         # Parse JSON
         data = json.loads(raw_content)
         # Basic validation
@@ -172,8 +179,10 @@ def generate_milestones_only(description: str, team_members: List[TeamMember]) -
         for m in data["milestones"]:
             if "title" not in m or "effort_points" not in m:
                 raise ValueError("Milestone missing title or effort_points")
+        logger.info(f"Successfully generated {len(data['milestones'])} milestones")
         return MilestonePlanResponse.model_validate(data)
     except Exception as e:
+        logger.error(f"Milestone generation failed: {str(e)}", exc_info=True)
         raise RuntimeError(f"Milestone generation failed: {str(e)}")
 
 def generate_tasks_for_milestone(
@@ -264,6 +273,12 @@ def generate_tasks_for_milestone(
             raw_content = raw_content.split("```")[1].split("```")[0].strip()
         # Parse JSON into list of dicts
         tasks_data = json.loads(raw_content)
+        
+        # Clamp complexity to valid range (1-10) to avoid Pydantic validation errors
+        for t in tasks_data:
+            if "complexity" in t and isinstance(t["complexity"], (int, float)):
+                t["complexity"] = max(1, min(int(t["complexity"]), 10))
+                
         # Convert each dict to a Task object
         return [Task(**t) for t in tasks_data]
     except Exception as e:

@@ -27,7 +27,7 @@ class Settings:
     AI_TEMPERATURE: float = float(os.getenv("AI_TEMPERATURE", 0.3)) # A lower temperature means more focused and deterministic output.
 
     # CORS settings
-    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000"]
+    ALLOWED_ORIGINS: list[str] = ["*"]
 
     def __init__(self):
         if not self.DEEPSEEK_API_KEY and not self.GROQ_API_KEY:

@@ -20,6 +20,7 @@ class TaskCreate(TaskBase):
 # 3. Properties returned when sending a Task back to the frontend
 class TaskResponse(TaskBase):
     id: int
+    project_id: int
 
     class Config:
         from_attributes = True

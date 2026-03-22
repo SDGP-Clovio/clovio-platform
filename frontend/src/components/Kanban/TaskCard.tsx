@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
+import { useApp } from '../../context/AppContext';
 import type { Task } from '../../types/types';
 import Badge from '../UI/Badge';
 import Avatar from '../UI/Avatar';
-import { getUserById } from '../../data/mockData';
 
 interface TaskCardProps {
     task: Task;
-    onDragStart: (e: React.DragEvent, taskId: string) => void;
+    onDragStart: (e: React.DragEvent, taskId: number) => void;
     onClick: (task: Task) => void;
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onClick }) => {
     const [isDragging, setIsDragging] = useState(false);
+    const { users } = useApp();
 
-    const assignedUsers = task.assignedTo.map((userId) => getUserById(userId)).filter((user) => user !== undefined);
+    const assignedUsers = task.assignedTo
+        .map((userId) => users.find((user) => user.id === userId))
+        .filter((member): member is NonNullable<typeof member> => Boolean(member));
 
     const priorityVariant = {
         low: 'low' as const,
@@ -76,8 +79,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onDragStart, onClick }) => {
                 <div className="flex -space-x-2">
                     {assignedUsers.map((user) => (
                         <Avatar
-                            key={user!.id}
-                            name={user!.name}
+                            key={user.id}
+                            name={user.name}
                             size="sm"
                             className="ring-2 ring-white"
                         />

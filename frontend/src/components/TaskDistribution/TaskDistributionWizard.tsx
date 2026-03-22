@@ -8,11 +8,11 @@ import { useTaskEngine } from '../../hooks/TaskEngine';
 interface TaskDistributionWizardProps {
     isOpen: boolean;
     onClose: () => void;
-    projectId: string;
+    projectId: number;
 }
 
 export default function TaskDistributionWizard({ isOpen, onClose, projectId }: TaskDistributionWizardProps) {
-    const { addTask, activeProject } = useApp();
+    const { addTask, activeProject, users } = useApp();
     const [step, setStep] = useState<'prompt' | 'generating' | 'results'>('prompt');
 
     // Use the real AI task engine
@@ -30,21 +30,31 @@ export default function TaskDistributionWizard({ isOpen, onClose, projectId }: T
         setStep('generating');
 
         // Get team members from active project
-        const teamMembers = activeProject?.teamMembers || ['Team Member 1', 'Team Member 2'];
+        const teamMembers = (activeProject?.teamMembers || [])
+            .map((memberId) => users.find((user) => user.id === memberId)?.name)
+            .filter((name): name is string => Boolean(name));
+
+        const distributionMembers = teamMembers.length > 0
+            ? teamMembers
+            : ['Team Member 1', 'Team Member 2'];
 
         // Call the real AI backend
-        await distributeTasks(teamMembers);
+        await distributeTasks(distributionMembers);
 
         setStep('results');
     };
 
     const handleConfirm = () => {
         // Convert AI-generated tasks to AppContext format and add them
+        let generatedId = Date.now();
         milestones.forEach(milestone => {
             if (milestone.tasks) {
                 milestone.tasks.forEach((task: any) => {
+                    const parsedAssignee = Number(task.assignee ?? task.assigned_to);
+                    const assigneeId = Number.isFinite(parsedAssignee) ? parsedAssignee : undefined;
+
                     addTask({
-                        id: task.id ? `ai-${projectId}-${task.id}-${Date.now()}` : `t-${Date.now()}-${Math.random()}`,
+                        id: typeof task.id === 'number' ? task.id : generatedId++,
                         projectId,
                         milestoneId: milestone.id,
                         milestoneTitle: milestone.title,
@@ -54,13 +64,14 @@ export default function TaskDistributionWizard({ isOpen, onClose, projectId }: T
                         description: task.description || '',
                         status: task.status || 'todo',
                         priority: task.priority || 'medium',
-                        assignedTo: task.assignee ? [task.assignee] : [],
-                        createdBy: 'ai-system',
+                        assignedTo: assigneeId != null ? [assigneeId] : [],
+                        createdBy: 0,
                         createdAt: new Date(),
                         updatedAt: new Date(),
                         aiAssignmentReason: task.aiAssignmentReason || task.assignment_reason,
                         skill_gap: task.skill_gap || task.is_skill_gap || false,
                         estimatedHours: task.complexity || 5,
+                        assignee: assigneeId,
                     });
                 });
             }
@@ -84,11 +95,11 @@ export default function TaskDistributionWizard({ isOpen, onClose, projectId }: T
 
     if (step === 'results') {
         // Convert API milestones to frontend Milestone format
-        const convertedMilestones = milestones.map(m => ({
-            id: m.id || `m-${Date.now()}`,
+        const convertedMilestones = milestones.map((m, index) => ({
+            id: typeof m.id === 'number' ? m.id : Date.now() + index,
             title: m.title,
             description: m.description || 'AI-generated milestone',
-            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            dueDate: m.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
             effort: m.effort || 0,
             tasks: m.tasks || []
         }));

@@ -21,9 +21,10 @@ export default function ProjectTrackingDashboard() {
   const { projects } = useApp();
 
   const { id } = useParams();
+  const projectId = id ? Number(id) : NaN;
 
   const project = projects.find(
-    (p) => p.id === id
+    (p) => p.id === projectId
   );
 
   if (!project) return <div>Project not found</div>;

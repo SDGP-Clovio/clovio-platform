@@ -145,7 +145,7 @@ export const generateMilestones = async (projectDescription: string, teamMembers
     return response.data;
 };
 
-export const generateTasks = async (milestoneId: string, milestoneData: any) => {
+export const generateTasks = async (milestoneId: number | string, milestoneData: any) => {
     const response = await apiClient.post(`/milestones/${milestoneId}/generate-tasks`, milestoneData);
     return response.data;
 };

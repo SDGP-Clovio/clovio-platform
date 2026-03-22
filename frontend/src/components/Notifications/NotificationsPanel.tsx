@@ -51,7 +51,7 @@ type FilterType = 'all' | Activity['type'];
 const NotificationsPanel: React.FC = () => {
     const { activities, projects } = useApp();
     const [filter, setFilter] = useState<FilterType>('all');
-    const [projectFilter, setProjectFilter] = useState<string>('all');
+    const [projectFilter, setProjectFilter] = useState<'all' | number>('all');
 
     // All activities across all projects, sorted newest first
     const allActivities = [...activities].sort(
@@ -64,7 +64,7 @@ const NotificationsPanel: React.FC = () => {
         return typeOk && projOk;
     });
 
-    const getProjectName = (id: string) =>
+    const getProjectName = (id: number) =>
         projects.find((p) => p.id === id)?.name ?? 'Unknown Project';
 
     const filterTypes: { label: string; value: FilterType }[] = [
@@ -109,8 +109,15 @@ const NotificationsPanel: React.FC = () => {
 
                     {/* Project filter */}
                     <select
-                        value={projectFilter}
-                        onChange={(e) => setProjectFilter(e.target.value)}
+                        value={projectFilter === 'all' ? 'all' : String(projectFilter)}
+                        onChange={(e) => {
+                            if (e.target.value === 'all') {
+                                setProjectFilter('all');
+                                return;
+                            }
+                            const parsed = Number(e.target.value);
+                            setProjectFilter(Number.isFinite(parsed) ? parsed : 'all');
+                        }}
                         className="ml-auto text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-200"
                     >
                         <option value="all">All Projects</option>

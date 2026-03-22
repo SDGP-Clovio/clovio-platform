@@ -4,7 +4,7 @@ import { useApp } from '../../context/AppContext';
 import Avatar from '../UI/Avatar';
 
 interface ProjectChatBoxProps {
-    projectId: string;
+    projectId: number;
     standalone?: boolean;
 }
 

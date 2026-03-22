@@ -81,24 +81,27 @@ const mapTaskForProgress = (task: Task | any): ProgressTaskPayload => ({
     description: task.description || null,
     complexity: normalizeComplexity(task.estimatedHours ?? task.complexity),
     required_skills: Array.isArray(task.required_skills) ? task.required_skills : [],
-    assigned_to: task.assignedTo?.[0] || task.assignee || task.assigned_to || null,
+    assigned_to: (() => {
+        const assignee = task.assignedTo?.[0] ?? task.assignee ?? task.assigned_to ?? null;
+        return assignee == null ? null : String(assignee);
+    })(),
     assignment_reason: task.aiAssignmentReason || task.assignment_reason || null,
     is_skill_gap: Boolean(task.skill_gap || task.is_skill_gap),
     status: normalizeStatus(task.status),
 });
 
 const milestonesFromTasks = (tasks: Task[]): ProgressMilestonePayload[] => {
-    const grouped = new Map<string, { title: string; order: number; tasks: Task[] }>();
+    const grouped = new Map<number | "backlog", { title: string; order: number; tasks: Task[] }>();
 
     tasks.forEach((task) => {
-        const groupId = task.milestoneId || "backlog";
+        const groupId = task.milestoneId ?? "backlog";
         if (!grouped.has(groupId)) {
-            const order = task.milestoneId && /^\d+$/.test(task.milestoneId)
-                ? Number.parseInt(task.milestoneId, 10)
+            const order = typeof task.milestoneId === "number"
+                ? task.milestoneId
                 : Number.MAX_SAFE_INTEGER;
 
             grouped.set(groupId, {
-                title: task.milestoneTitle || (task.milestoneId ? `Milestone ${task.milestoneId}` : "Backlog"),
+                title: task.milestoneTitle || (typeof task.milestoneId === "number" ? `Milestone ${task.milestoneId}` : "Backlog"),
                 order,
                 tasks: [],
             });

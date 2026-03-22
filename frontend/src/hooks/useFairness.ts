@@ -28,7 +28,7 @@ export const useFairness = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const computeScore = useCallback(async (tasks: Task[], memberNames: string[] = []) => {
+    const computeScore = useCallback(async (tasks: Task[], memberIds: number[] = []) => {
         if (!tasks || tasks.length === 0) {
             setFairnessScore(null);
             setFairnessInsights([]);
@@ -40,13 +40,13 @@ export const useFairness = () => {
             setError(null);
 
             const mappedTasks = tasks.map((task) => {
-                const assignee = task.assignedTo?.[0] || task.assignee || null;
+                const assignee = task.assignedTo?.[0] ?? task.assignee ?? null;
                 return {
                     name: task.title || "Untitled Task",
                     description: task.description || null,
                     complexity: normalizeComplexity(task.estimatedHours),
                     required_skills: [],
-                    assigned_to: assignee,
+                    assigned_to: assignee == null ? null : String(assignee),
                     assignment_reason: task.aiAssignmentReason || null,
                     is_skill_gap: Boolean(task.skill_gap),
                     status: normalizeStatus(task.status),
@@ -57,7 +57,11 @@ export const useFairness = () => {
                 .map((task) => task.assigned_to)
                 .filter((name): name is string => Boolean(name));
 
-            const derivedMemberNames = Array.from(new Set([...(memberNames || []), ...assigneeNames]));
+            const normalizedMemberNames = (memberIds || [])
+                .filter((id): id is number => Number.isFinite(id))
+                .map((id) => String(id));
+
+            const derivedMemberNames = Array.from(new Set([...normalizedMemberNames, ...assigneeNames]));
 
             const result = await computeFairness({
                 tasks: mappedTasks,

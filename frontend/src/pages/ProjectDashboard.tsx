@@ -20,7 +20,8 @@ import { useProgress } from '../hooks/useProgress';
 
 const ProjectDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { id: projectId } = useParams<{ id: string }>();
+    const { id: projectIdParam } = useParams<{ id: string }>();
+    const projectId = projectIdParam ? Number(projectIdParam) : NaN;
     const { currentUser, projects, setActiveProject, tasks } = useApp();
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'chat' | 'settings'>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -41,7 +42,7 @@ const ProjectDashboard: React.FC = () => {
 
     // Compute fairness and progress when project tasks change
     useEffect(() => {
-        if (project && projectId) {
+        if (project && Number.isFinite(projectId)) {
             // Get tasks for this project
             const projectTasks = tasks.filter(t => t.projectId === projectId);
 

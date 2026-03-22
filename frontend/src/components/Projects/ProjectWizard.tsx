@@ -5,34 +5,17 @@ import ProgressIndicator from '../UI/ProgressIndicator';
 import { useApp } from '../../context/AppContext';
 import MemberSearch from './MemberSearch';
 import type { User } from '../../types/types';
-import {
-    createProjectInDatabase,
-    getCurrentUser,
-    getUsers,
-    type BackendProjectCreateRequest,
-    type BackendUserRecord,
-} from '../../api/apiCalls';
+import { fetchCurrentUserAsAppUser, fetchUsers } from '../../services/users';
+import { createProjectRecord, type CreateProjectApiRequest } from '../../services/projects';
 
 interface ProjectFormData {
     name: string;
     description: string;
     deadline: string;
     courseName: string;
-    teamMembers: string[];
-    supervisorId: string;
+    teamMembers: number[];
+    supervisorId: number | null;
 }
-
-const toFrontendUser = (record: BackendUserRecord): User => ({
-    id: String(record.id),
-    name: record.full_name && record.full_name.trim().length > 0 ? record.full_name : record.username,
-    email: record.email,
-    role: record.role,
-});
-
-const parseIdList = (ids: string[]): number[] =>
-    ids
-        .map((id) => Number(id))
-        .filter((id) => Number.isFinite(id));
 
 const resolveErrorMessage = (error: unknown, fallback: string): string => {
     if (
@@ -79,7 +62,7 @@ const ProjectWizard: React.FC = () => {
         deadline: '',
         courseName: '',
         teamMembers: [],
-        supervisorId: '',
+        supervisorId: null,
     });
 
     const supervisors = availableUsers.filter((user) => user.role === 'supervisor');
@@ -92,15 +75,11 @@ const ProjectWizard: React.FC = () => {
             setUsersError('');
 
             try {
-                const records = await getUsers();
+                const records = await fetchUsers();
                 if (!isMounted) {
                     return;
                 }
-
-                const mapped = records
-                    .filter((record) => record.is_active)
-                    .map(toFrontendUser);
-                setAvailableUsers(mapped);
+                setAvailableUsers(records);
             } catch (error) {
                 if (isMounted) {
                     setUsersError(resolveErrorMessage(error, 'Unable to load users from the database.'));
@@ -121,7 +100,7 @@ const ProjectWizard: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        if (!formData.supervisorId && supervisors.length > 0) {
+        if (formData.supervisorId == null && supervisors.length > 0) {
             setFormData((prev) => ({ ...prev, supervisorId: supervisors[0].id }));
         }
     }, [formData.supervisorId, supervisors]);
@@ -158,23 +137,22 @@ const ProjectWizard: React.FC = () => {
         setIsSubmitting(true);
 
         try {
-            const currentUser = await getCurrentUser();
-            const supervisorIdNumber = Number(formData.supervisorId);
+            const currentUser = await fetchCurrentUserAsAppUser();
 
-            const payload: BackendProjectCreateRequest = {
+            const payload: CreateProjectApiRequest = {
                 name: formData.name.trim(),
                 description: formData.description.trim(),
                 status: 'planned',
                 created_by: currentUser.id,
-                member_ids: Array.from(new Set(parseIdList(formData.teamMembers))),
-                supervisor_id: Number.isFinite(supervisorIdNumber) ? supervisorIdNumber : undefined,
+                member_ids: Array.from(new Set(formData.teamMembers)),
+                supervisor_id: formData.supervisorId ?? undefined,
                 deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
             };
 
-            const savedProject = await createProjectInDatabase(payload);
+            const savedProject = await createProjectRecord(payload);
 
             const localProject = createProject({
-                projectId: String(savedProject.id),
+                projectId: savedProject.id,
                 name: formData.name,
                 description: formData.description,
                 deadline: formData.deadline,
@@ -199,7 +177,7 @@ const ProjectWizard: React.FC = () => {
                 if (loadingUsers || availableUsers.length === 0) {
                     return false;
                 }
-                return formData.teamMembers.length > 0 && formData.supervisorId !== '';
+                return formData.teamMembers.length > 0 && formData.supervisorId != null;
             case 3: return true;
             default: return false;
         }
@@ -448,7 +426,7 @@ const Step2TeamSelection: React.FC<{
                                 <span className="text-xs text-purple-600">{selectedSupervisor.email}</span>
                                 <button
                                     type="button"
-                                    onClick={() => setFormData({ ...formData, supervisorId: '' })}
+                                    onClick={() => setFormData({ ...formData, supervisorId: null })}
                                     title="Clear selected supervisor"
                                     aria-label="Clear selected supervisor"
                                     className="ml-1 text-purple-600 hover:text-purple-800"

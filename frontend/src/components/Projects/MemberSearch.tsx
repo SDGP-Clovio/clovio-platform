@@ -7,9 +7,9 @@ interface Props {
     /** All users available to add */
     allUsers: User[];
     /** Currently selected user IDs */
-    selectedIds: string[];
+    selectedIds: number[];
     /** Fires when a user is added or removed */
-    onChange: (ids: string[]) => void;
+    onChange: (ids: number[]) => void;
 }
 
 const MemberSearch: React.FC<Props> = ({ allUsers, selectedIds, onChange }) => {
@@ -28,8 +28,8 @@ const MemberSearch: React.FC<Props> = ({ allUsers, selectedIds, onChange }) => {
         return () => document.removeEventListener('mousedown', onClickOutside);
     }, []);
 
-    const add    = (uid: string) => { onChange([...selectedIds, uid]); setQuery(''); };
-    const remove = (uid: string) => onChange(selectedIds.filter((id) => id !== uid));
+    const add    = (uid: number) => { onChange([...selectedIds, uid]); setQuery(''); };
+    const remove = (uid: number) => onChange(selectedIds.filter((id) => id !== uid));
 
     const selectedUsers = allUsers.filter((u) => selectedIds.includes(u.id));
     const results = allUsers.filter(

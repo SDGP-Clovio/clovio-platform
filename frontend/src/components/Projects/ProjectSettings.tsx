@@ -36,7 +36,7 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
     const [courseName,  setCourseName]  = useState(project.courseName ?? '');
     const [deadline,    setDeadline]    = useState(toDateStr(project.deadline));
     const [supervisorId, setSupervisorId] = useState(project.supervisorId);
-    const [members,     setMembers]     = useState<string[]>(project.teamMembers);
+    const [members,     setMembers]     = useState<number[]>(project.teamMembers);
     const [saved,       setSaved]       = useState(false);
     const [showDelete,  setShowDelete]  = useState(false);
 
@@ -125,8 +125,15 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                             <div>
                                 <Label>Supervisor</Label>
                                 <select
-                                    value={supervisorId}
-                                    onChange={(e) => setSupervisorId(e.target.value)}
+                                    value={supervisorId ?? ''}
+                                    onChange={(e) => {
+                                        if (e.target.value === '') {
+                                            setSupervisorId(null);
+                                            return;
+                                        }
+                                        const parsed = Number(e.target.value);
+                                        setSupervisorId(Number.isFinite(parsed) ? parsed : null);
+                                    }}
                                     title="Project supervisor"
                                     className={inputCls}
                                 >

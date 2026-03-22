@@ -45,7 +45,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, onClose }) => {
         updateTask(task.id, { dueDate: newDate });
     };
 
-    const toggleAssignee = (userId: string) => {
+    const toggleAssignee = (userId: number) => {
         const isAssigned = task.assignedTo.includes(userId);
         const newAssignedTo = isAssigned
             ? task.assignedTo.filter(id => id !== userId)

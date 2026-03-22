@@ -7,7 +7,7 @@ import TaskDetailModal from './TaskDetailModal';
 
 const KanbanBoard: React.FC = () => {
     const { tasks, updateTaskStatus, activeProject } = useApp();
-    const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+    const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
@@ -21,7 +21,7 @@ const KanbanBoard: React.FC = () => {
         { status: 'done', title: 'Done', color: 'bg-green-50' },
     ];
 
-    const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    const handleDragStart = (e: React.DragEvent, taskId: number) => {
         setDraggedTaskId(taskId);
         e.dataTransfer.effectAllowed = 'move';
     };

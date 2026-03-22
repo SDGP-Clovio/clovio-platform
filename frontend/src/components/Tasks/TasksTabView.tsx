@@ -9,7 +9,7 @@ import { useApp } from '../../context/AppContext';
 import TaskDistributionWizard from '../TaskDistribution/TaskDistributionWizard';
 
 interface TasksTabViewProps {
-    projectId: string;
+    projectId: number;
 }
 
 const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
@@ -26,7 +26,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
 
     const milestones = useMemo(() => {
         type MilestoneGroup = {
-            id: string;
+            id: number | 'backlog';
             title: string;
             description: string;
             dueDate?: Date;
@@ -34,22 +34,22 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
             order: number;
         };
 
-        const groups = new Map<string, MilestoneGroup>();
+        const groups = new Map<number | 'backlog', MilestoneGroup>();
 
         projectTasks.forEach((task) => {
-            const milestoneId = task.milestoneId?.trim();
+            const milestoneId = task.milestoneId;
             const fallbackGroupId = 'backlog';
             const groupId = milestoneId || fallbackGroupId;
 
             if (!groups.has(groupId)) {
-                const numericOrder = milestoneId && /^\d+$/.test(milestoneId)
-                    ? Number.parseInt(milestoneId, 10)
+                const numericOrder = typeof milestoneId === 'number'
+                    ? milestoneId
                     : Number.MAX_SAFE_INTEGER;
 
                 groups.set(groupId, {
                     id: groupId,
-                    title: task.milestoneTitle || (milestoneId ? `Milestone ${milestoneId}` : 'Backlog Tasks'),
-                    description: task.milestoneDescription || (milestoneId ? 'Tasks generated for this milestone.' : 'Tasks not linked to a specific milestone yet.'),
+                    title: task.milestoneTitle || (typeof milestoneId === 'number' ? `Milestone ${milestoneId}` : 'Backlog Tasks'),
+                    description: task.milestoneDescription || (typeof milestoneId === 'number' ? 'Tasks generated for this milestone.' : 'Tasks not linked to a specific milestone yet.'),
                     dueDate: task.milestoneDueDate,
                     tasks: [],
                     order: numericOrder,
@@ -62,8 +62,11 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
         return Array.from(groups.values()).sort((a, b) => a.order - b.order);
     }, [projectTasks]);
 
-    const findUser = (idOrName: string) => {
-        return users.find((u) => u.id === idOrName) || users.find((u) => u.name === idOrName);
+    const findUser = (idOrName: number | string) => {
+        if (typeof idOrName === 'number') {
+            return users.find((u) => u.id === idOrName);
+        }
+        return users.find((u) => u.name === idOrName);
     };
 
     const getStatusIcon = (status: Task['status']) => {

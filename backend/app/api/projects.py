@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from typing import List
+from typing import Any, List
 
 # Import Database tools
 from app.core.database import get_db
@@ -31,6 +31,32 @@ from app.services.chat_service import (
 
 # We leave the prefix blank here because main.py handles it!
 router = APIRouter()
+
+
+def _serialize_project(db: Session, project: Project) -> dict[str, Any]:
+    member_rows = (
+        db.query(ProjectMember.user_id, User.role)
+        .join(User, User.id == ProjectMember.user_id)
+        .filter(ProjectMember.project_id == project.id)
+        .all()
+    )
+
+    member_ids = [int(user_id) for user_id, role in member_rows if role != UserRole.SUPERVISOR]
+    supervisor_ids = [int(user_id) for user_id, role in member_rows if role == UserRole.SUPERVISOR]
+
+    status_value = project.status.value if hasattr(project.status, "value") else str(project.status)
+
+    return {
+        "id": int(project.id),
+        "name": project.name,
+        "description": project.description,
+        "status": status_value,
+        "created_by": int(project.created_by) if project.created_by is not None else 0,
+        "deadline": project.deadline,
+        "created_at": project.created_at,
+        "member_ids": member_ids,
+        "supervisor_id": supervisor_ids[0] if supervisor_ids else None,
+    }
 
 
 @router.post("/", response_model=ProjectResponse, status_code=201)
@@ -85,7 +111,7 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
 
         db.commit()
         db.refresh(new_project)
-        return new_project
+        return _serialize_project(db, new_project)
     except Exception:
         # Roll back all changes if anything goes wrong
         db.rollback()
@@ -96,7 +122,7 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
 def get_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """Retrieve all projects from the database."""
     projects = db.query(Project).offset(skip).limit(limit).all()
-    return projects
+    return [_serialize_project(db, project) for project in projects]
 
 
 @router.post("/{project_id}/members/{user_id}", status_code=204)

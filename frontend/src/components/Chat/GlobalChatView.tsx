@@ -8,7 +8,7 @@ export default function GlobalChatView() {
     
     // Filter projects that actually have initialize chats
     const activeProjects = projects.filter(p => getProjectChat(p.id));
-    const [selectedProjectId, setSelectedProjectId] = useState<string | null>(activeProjects.length > 0 ? activeProjects[0].id : null);
+    const [selectedProjectId, setSelectedProjectId] = useState<number | null>(activeProjects.length > 0 ? activeProjects[0].id : null);
 
     return (
         <div className="flex h-[calc(100vh-140px)] bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-[500px]">

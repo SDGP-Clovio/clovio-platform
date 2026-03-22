@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AlertTriangle, Users } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { mockBusFactorAlerts, getUserById } from '../../data/mockData';
+import { mockBusFactorAlerts } from '../../data/mockData';
 import Avatar from '../UI/Avatar';
 
 const severityBorder = { low: 'border-l-yellow-400', medium: 'border-l-orange-400', high: 'border-l-red-400' };
@@ -13,7 +13,7 @@ const severityBadge = {
 };
 
 const TeamAlertsDropdown: React.FC = () => {
-    const { tasks } = useApp();
+    const { tasks, users } = useApp();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -66,7 +66,7 @@ const TeamAlertsDropdown: React.FC = () => {
                             </div>
                         ) : (
                             activeAlerts.map((alert) => {
-                                const user = getUserById(alert.assignedUserId);
+                                const user = users.find((candidate) => candidate.id === alert.assignedUserId);
                                 return (
                                     <div
                                         key={alert.taskId}

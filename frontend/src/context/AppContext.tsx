@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, type ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type {
     User,
     Project,
@@ -14,15 +14,15 @@ import type {
 } from '../types/types';
 
 import {
-    mockUsers,
-    mockProjects,
-    mockTasks,
     mockMeetings,
     mockFairnessMetrics,
     mockActivities,
     mockDashboardStats,
     mockProjectChats,
 } from '../data/mockData';
+import { fetchCurrentUserAsAppUser, fetchUsers } from '../services/users';
+import { fetchProjects } from '../services/projects';
+import { fetchTasks } from '../services/tasks';
 
 // Context State Interface
 interface AppContextState {
@@ -46,13 +46,13 @@ interface AppContextState {
     activeProject: Project | null;
     setActiveProject: (project: Project | null) => void;
     createProject: (projectData: {
-        projectId?: string;
+        projectId?: number;
         name: string;
         description: string;
         deadline: string;
         courseName: string;
-        teamMembers: string[];
-        supervisorId: string;
+        teamMembers: number[];
+        supervisorId: number | null;
         tasks: Array<{
             title: string;
             description: string;
@@ -60,16 +60,16 @@ interface AppContextState {
             estimatedHours: number;
         }>;
     }) => Project;
-    updateProject: (id: string, patch: Partial<Project>) => void;
-    deleteProject: (id: string) => void;
+    updateProject: (id: number, patch: Partial<Project>) => void;
+    deleteProject: (id: number) => void;
 
     // Tasks
     tasks: Task[];
-    updateTaskStatus: (taskId: string, status: Task['status']) => void;
-    updateTask: (taskId: string, patch: Partial<Task>) => void;
-    addTaskComment: (taskId: string, content: string) => void;
+    updateTaskStatus: (taskId: number, status: Task['status']) => void;
+    updateTask: (taskId: number, patch: Partial<Task>) => void;
+    addTaskComment: (taskId: number, content: string) => void;
     addTask: (task: Task) => void;
-    deleteTask: (taskId: string) => void;
+    deleteTask: (taskId: number) => void;
 
     // Meetings
     meetings: Meeting[];
@@ -88,8 +88,8 @@ interface AppContextState {
 
     // Project Chats
     projectChats: ProjectChat[];
-    getProjectChat: (projectId: string) => ProjectChat | undefined;
-    sendProjectMessage: (projectId: string, content: string) => void;
+    getProjectChat: (projectId: number) => ProjectChat | undefined;
+    sendProjectMessage: (projectId: number, content: string) => void;
 }
 
 // Create Context
@@ -103,25 +103,83 @@ interface AppProviderProps {
 // Provider Component
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     // State
-    const [currentUser, setCurrentUser] = useState<User | null>(mockUsers[0]); // Default to Sarah
-    const [projects, setProjects] = useState<Project[]>(mockProjects);
-    const [activeProject, setActiveProject] = useState<Project | null>(mockProjects[0]);
-    const [tasks, setTasks] = useState<Task[]>(mockTasks);
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [users, setUsers] = useState<User[]>([]);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [activeProject, setActiveProject] = useState<Project | null>(null);
+    const [tasks, setTasks] = useState<Task[]>([]);
     const [meetings, setMeetings] = useState<Meeting[]>(mockMeetings);
     const [fairnessMetrics] = useState<FairnessMetrics>(mockFairnessMetrics);
     const [activities, setActivities] = useState<Activity[]>(mockActivities);
     const [dashboardStats, setDashboardStats] = useState<DashboardStats>(mockDashboardStats);
     const [projectChats, setProjectChats] = useState<ProjectChat[]>(mockProjectChats);
 
+    useEffect(() => {
+        let isMounted = true;
+
+        const bootstrapFromApi = async () => {
+            try {
+                const [apiUsers, apiProjects, apiTasks] = await Promise.all([
+                    fetchUsers(),
+                    fetchProjects(),
+                    fetchTasks(),
+                ]);
+
+                if (!isMounted) {
+                    return;
+                }
+
+                setUsers(apiUsers);
+                setProjects(apiProjects);
+                setTasks(apiTasks);
+                setActiveProject((previous) => previous ?? apiProjects[0] ?? null);
+
+                const hasToken = Boolean(localStorage.getItem('access_token'));
+                if (hasToken) {
+                    try {
+                        const me = await fetchCurrentUserAsAppUser();
+                        if (isMounted) {
+                            setCurrentUser(me);
+                        }
+                    } catch {
+                        if (isMounted) {
+                            setCurrentUser(null);
+                        }
+                    }
+                } else {
+                    const firstStudent = apiUsers.find((user) => user.role === 'student') ?? apiUsers[0] ?? null;
+                    setCurrentUser(firstStudent);
+                }
+            } catch (error) {
+                console.error('Failed to bootstrap users/projects/tasks from API', error);
+                if (!isMounted) {
+                    return;
+                }
+
+                setUsers([]);
+                setProjects([]);
+                setTasks([]);
+                setActiveProject(null);
+                setCurrentUser(null);
+            }
+        };
+
+        bootstrapFromApi();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
     // Project Actions
     const createProject = (projectData: {
-        projectId?: string;
+        projectId?: number;
         name: string;
         description: string;
         deadline: string;
         courseName: string;
-        teamMembers: string[];
-        supervisorId: string;
+        teamMembers: number[];
+        supervisorId: number | null;
         tasks: Array<{
             title: string;
             description: string;
@@ -130,13 +188,13 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }>;
     }): Project => {
         const defaultSupervisorId =
-            mockUsers.find((user) => user.role === 'supervisor')?.id ??
+            users.find((user) => user.role === 'supervisor')?.id ??
             currentUser?.id ??
             projectData.teamMembers[0] ??
-            '';
+            null;
 
         // Generate unique ID
-        const projectId = projectData.projectId || `p${Date.now()}`;
+        const projectId = projectData.projectId ?? Date.now();
 
         // Create the project
         const newProject: Project = {
@@ -159,22 +217,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
         const chatMembers = Array.from(
             new Set(
-                [currentUser?.id, ...projectData.teamMembers].filter((id): id is string => Boolean(id))
+                [currentUser?.id, ...projectData.teamMembers].filter(
+                    (id): id is number => typeof id === 'number' && Number.isFinite(id)
+                )
             )
         );
 
         const chatCreatedAt = new Date();
         const initialMessage: ChatMessage = {
-            id: `msg-${projectId}-welcome`,
+            id: Date.now(),
             projectId,
-            senderId: currentUser?.id ?? chatMembers[0] ?? 'system',
+            senderId: currentUser?.id ?? chatMembers[0] ?? 0,
             content: `Group chat created for "${projectData.name}".`,
             createdAt: chatCreatedAt,
             type: 'system',
         };
 
         const newProjectChat: ProjectChat = {
-            id: `chat-${projectId}`,
+            id: Date.now() + 1,
             projectId,
             memberIds: chatMembers,
             createdAt: chatCreatedAt,
@@ -185,15 +245,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
         // Create tasks if any
         if (projectData.tasks && projectData.tasks.length > 0) {
+            const baseTaskId = Date.now();
             const newTasks: Task[] = projectData.tasks.map((taskData, index) => ({
-                id: `t${Date.now()}-${index}`,
+                id: baseTaskId + index,
                 projectId: projectId,
                 title: taskData.title,
                 description: taskData.description,
                 status: 'todo' as const,
                 priority: taskData.priority,
                 assignedTo: [],
-                createdBy: currentUser?.id || projectData.teamMembers[0], // Use current user or first team member
+                createdBy: currentUser?.id ?? projectData.teamMembers[0] ?? 0, // Use current user or first team member
                 estimatedHours: taskData.estimatedHours,
                 actualHours: 0,
                 createdAt: new Date(),
@@ -207,7 +268,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         // Add activity
         if (currentUser) {
             const activity: Activity = {
-                id: `a${Date.now()}`,
+                id: Date.now(),
                 type: 'project_created',
                 userId: currentUser.id,
                 projectId: projectId,
@@ -273,7 +334,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
 
     // Task Actions
-    const updateTaskStatus = (taskId: string, status: Task['status']) => {
+    const updateTaskStatus = (taskId: number, status: Task['status']) => {
         setTasks((prevTasks) =>
             prevTasks.map((task) =>
                 task.id === taskId
@@ -286,7 +347,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const task = tasks.find((t) => t.id === taskId);
         if (task && currentUser) {
             const activity: Activity = {
-                id: `a${Date.now()}`,
+                id: Date.now(),
                 type: status === 'done' ? 'task_completed' : 'task_assigned',
                 userId: currentUser.id,
                 projectId: task.projectId,
@@ -300,7 +361,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         updateDashboardStats();
     };
 
-    const updateTask = (taskId: string, patch: Partial<Task>) => {
+    const updateTask = (taskId: number, patch: Partial<Task>) => {
         setTasks((prevTasks) =>
             prevTasks.map((task) =>
                 task.id === taskId
@@ -311,10 +372,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         updateDashboardStats();
     };
 
-    const addTaskComment = (taskId: string, content: string) => {
+    const addTaskComment = (taskId: number, content: string) => {
         if (!currentUser) return;
         const newComment = {
-            id: `c${Date.now()}`,
+            id: Date.now(),
             userId: currentUser.id,
             content,
             createdAt: new Date(),
@@ -333,7 +394,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const task = tasks.find((t) => t.id === taskId);
         if (task) {
             const activity: Activity = {
-                id: `a${Date.now()}`,
+                id: Date.now(),
                 type: 'comment_added',
                 userId: currentUser.id,
                 projectId: task.projectId,
@@ -351,7 +412,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         // Add activity
         if (currentUser) {
             const activity: Activity = {
-                id: `a${Date.now()}`,
+                id: Date.now(),
                 type: 'task_created',
                 userId: currentUser.id,
                 projectId: task.projectId,
@@ -365,17 +426,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         updateDashboardStats();
     };
 
-    const deleteTask = (taskId: string) => {
+    const deleteTask = (taskId: number) => {
         setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
         updateDashboardStats();
     };
 
     // Project Actions
-    const updateProject = (id: string, patch: Partial<Project>) => {
+    const updateProject = (id: number, patch: Partial<Project>) => {
         setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, ...patch } : p)));
     };
 
-    const deleteProject = (id: string) => {
+    const deleteProject = (id: number) => {
         setProjects((prev) => prev.filter((p) => p.id !== id));
         setTasks((prev) => prev.filter((t) => t.projectId !== id));
         setMeetings((prev) => prev.filter((m) => m.projectId !== id));
@@ -383,17 +444,17 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
 
     // Chat Actions
-    const getProjectChat = (projectId: string): ProjectChat | undefined => {
+    const getProjectChat = (projectId: number): ProjectChat | undefined => {
         return projectChats.find((chat) => chat.projectId === projectId);
     };
 
-    const sendProjectMessage = (projectId: string, content: string) => {
+    const sendProjectMessage = (projectId: number, content: string) => {
         if (!currentUser) return;
         const trimmed = content.trim();
         if (!trimmed) return;
 
         const newMessage: ChatMessage = {
-            id: `msg-${Date.now()}`,
+            id: Date.now(),
             projectId,
             senderId: currentUser.id,
             content: trimmed,
@@ -417,7 +478,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         // Add activity
         if (currentUser) {
             const activity: Activity = {
-                id: `a${Date.now()}`,
+                id: Date.now(),
                 type: 'meeting_scheduled',
                 userId: currentUser.id,
                 projectId: meeting.projectId,
@@ -461,7 +522,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         weeklyOverrides,
         toggleHourAvailability,
         clearDayOverride,
-        users: mockUsers,
+        users,
         projects,
         activeProject,
         setActiveProject,

@@ -1,5 +1,6 @@
 // Skill Types
 export type SkillLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert';
+export type EntityId = number;
 export interface Skill {
     name: string;
     level: SkillLevel;
@@ -14,7 +15,7 @@ export interface DayAvailability {
 
 // User & Authentication Types
 export interface User {
-    id: string;
+    id: EntityId;
     name: string;
     email: string;
     studentId?: string;
@@ -26,13 +27,13 @@ export interface User {
 
 // Project Types
 export interface Project {
-    id: string;
+    id: EntityId;
     name: string;
     module: string;
     tag: string;
     description: string;
-    supervisorId: string;
-    teamMembers: string[]; // User IDs
+    supervisorId: EntityId | null;
+    teamMembers: EntityId[]; // User IDs
     createdAt: Date;
     deadline?: Date;
     courseName?: string; // Optional course name
@@ -45,9 +46,9 @@ export type TaskStatus = 'todo' | 'in-progress' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high';
 
 export interface Task {
-    id: string;
-    projectId: string;
-    milestoneId?: string;
+    id: EntityId;
+    projectId: EntityId;
+    milestoneId?: EntityId;
     milestoneTitle?: string;
     milestoneDescription?: string;
     milestoneDueDate?: Date;
@@ -55,8 +56,8 @@ export interface Task {
     description: string;
     status: TaskStatus;
     priority: TaskPriority;
-    assignedTo: string[]; // User IDs
-    createdBy: string; // User ID
+    assignedTo: EntityId[]; // User IDs
+    createdBy: EntityId; // User ID
     aiAssignmentReason?: string; // Explainable AI feature
     dueDate?: Date;
     estimatedHours?: number;
@@ -66,19 +67,19 @@ export interface Task {
     tags?: string[];
     comments?: Comment[];
     skill_gap?: boolean;
-    assignee?: string;
+    assignee?: EntityId;
 }
 
 export interface Comment {
-    id: string;
-    userId: string;
+    id: EntityId;
+    userId: EntityId;
     content: string;
     createdAt: Date;
 }
 
 // Milestone Types (AI Task Distribution groupings)
 export interface Milestone {
-    id: string;
+    id: EntityId;
     title: string;
     description: string;
     tasks: Task[];
@@ -88,20 +89,20 @@ export interface Milestone {
 
 // Meeting Types
 export interface Meeting {
-    id: string;
-    projectId: string;
+    id: EntityId;
+    projectId: EntityId;
     title: string;
     description?: string;
     startTime: Date;
     endTime: Date;
-    attendees: string[]; // User IDs
-    createdBy: string; // User ID
+    attendees: EntityId[]; // User IDs
+    createdBy: EntityId; // User ID
     location?: string;
     status: 'scheduled' | 'completed' | 'cancelled';
 }
 
 export interface AvailabilitySlot {
-    userId: string;
+    userId: EntityId;
     dayOfWeek: number; // 0-6 (Sunday-Saturday)
     startHour: number; // 0-23
     endHour: number; // 0-23;
@@ -110,14 +111,14 @@ export interface AvailabilitySlot {
 export interface MeetingSuggestion {
     startTime: Date;
     endTime: Date;
-    availableMembers: string[]; // User IDs
-    unavailableMembers: string[]; // User IDs
+    availableMembers: EntityId[]; // User IDs
+    unavailableMembers: EntityId[]; // User IDs
     score: number; // 0-1, higher is better
 }
 
 // Fairness & Analytics Types
 export interface ContributionData {
-    userId: string;
+    userId: EntityId;
     tasksCompleted: number;
     tasksInProgress: number;
     totalTasks: number;
@@ -133,9 +134,9 @@ export interface FairnessMetrics {
 
 // Bus Factor Alert
 export interface BusFactorAlert {
-    taskId: string;
+    taskId: EntityId;
     taskTitle: string;
-    assignedUserId: string;
+    assignedUserId: EntityId;
     severity: 'low' | 'medium' | 'high';
     recommendation: string;
 }
@@ -152,19 +153,19 @@ export interface DashboardStats {
 
 // Activity Feed
 export interface Activity {
-    id: string;
+    id: EntityId;
     type: 'task_created' | 'task_completed' | 'task_assigned' | 'meeting_scheduled' | 'comment_added' | 'project_created';
-    userId: string;
-    projectId: string;
-    taskId?: string;
-    meetingId?: string;
+    userId: EntityId;
+    projectId: EntityId;
+    taskId?: EntityId;
+    meetingId?: EntityId;
     timestamp: Date;
     description: string;
 }
 
 // Supervisor Portal Types
 export interface GroupOverview {
-    projectId: string;
+    projectId: EntityId;
     projectName: string;
     teamSize: number;
     fairnessScore: number;
@@ -178,10 +179,10 @@ export interface GroupOverview {
 }
 
 export interface InterventionAction {
-    id: string;
-    groupId: string;
+    id: EntityId;
+    groupId: EntityId;
     type: 'message' | 'task_reassignment' | 'flag_for_review' | 'report_generated';
-    performedBy: string; // Supervisor ID
+    performedBy: EntityId; // Supervisor ID
     timestamp: Date;
     details: string;
 }
@@ -189,18 +190,18 @@ export interface InterventionAction {
 
 // chatbox types
 export interface ChatMessage {
-    id: string;
-    projectId: string;
-    senderId: string;
+    id: EntityId;
+    projectId: EntityId;
+    senderId: EntityId;
     content: string;
     createdAt: Date;
     type: 'text' | 'system';
 }
 
 export interface ProjectChat {
-    id: string;
-    projectId: string;
-    memberIds: string[]; // User IDs in the project group chat
+    id: EntityId;
+    projectId: EntityId;
+    memberIds: EntityId[]; // User IDs in the project group chat
     createdAt: Date;
     messages: ChatMessage[];
 }

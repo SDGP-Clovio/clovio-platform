@@ -106,6 +106,8 @@ class ProjectCreate(ProjectBase):
 class ProjectResponse(ProjectBase):
     id: int
     created_at: datetime
+    member_ids: List[int] = Field(default_factory=list)
+    supervisor_id: Optional[int] = None
 
     class Config:
         from_attributes = True

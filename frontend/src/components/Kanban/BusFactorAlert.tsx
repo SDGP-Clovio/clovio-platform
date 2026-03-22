@@ -2,11 +2,10 @@ import React from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { mockBusFactorAlerts } from '../../data/mockData';
-import { getUserById } from '../../data/mockData';
 import Avatar from '../UI/Avatar';
 
 const BusFactorAlert: React.FC = () => {
-    const { tasks } = useApp();
+    const { tasks, users } = useApp();
 
     // Filter alerts for tasks that exist
     const activeAlerts = mockBusFactorAlerts.filter((alert) =>
@@ -18,7 +17,7 @@ const BusFactorAlert: React.FC = () => {
     return (
         <div className="space-y-3">
             {activeAlerts.map((alert) => {
-                const user = getUserById(alert.assignedUserId);
+                const user = users.find((candidate) => candidate.id === alert.assignedUserId);
                 const severityColors = {
                     low: 'border-yellow-200 bg-yellow-50',
                     medium: 'border-orange-200 bg-orange-50',

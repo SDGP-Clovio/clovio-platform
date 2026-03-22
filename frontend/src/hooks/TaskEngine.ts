@@ -35,7 +35,7 @@ export const useTaskEngine = () => {
 
 
             const milestoneData: Milestone[] = plan.milestones.map((m: any, index: number) => ({
-                id: (index + 1).toString(),
+                id: index + 1,
                 title: m.title,
                 description: m.description || "Auto-generated milestone",
                 effort: m.effort_points,
@@ -64,8 +64,8 @@ export const useTaskEngine = () => {
                 });
 
                 const tasks: Task[] = rawTasks.map((t: any, index: number) => ({
-                    id: `${m.id}-${index}`,
-                    projectId: "temp", // Will be set by the calling component
+                    id: m.id * 100 + index + 1,
+                    projectId: 0, // Will be set by the calling component
                     milestoneId: m.id,
                     milestoneTitle: m.title,
                     milestoneDescription: m.description,
@@ -74,13 +74,19 @@ export const useTaskEngine = () => {
                     description: t.description || "Auto-generated task",
                     status: normalizeTaskStatus(t.status),
                     priority: "medium" as "low" | "medium" | "high",
-                    assignedTo: t.assigned_to ? [t.assigned_to] : [],
-                    createdBy: "system",
+                    assignedTo: (() => {
+                        const numericAssignee = Number(t.assigned_to);
+                        return Number.isFinite(numericAssignee) ? [numericAssignee] : [];
+                    })(),
+                    createdBy: 0,
                     aiAssignmentReason: t.assignment_reason || "AI-generated assignment",
                     createdAt: new Date(),
                     updatedAt: new Date(),
                     skill_gap: t.is_skill_gap || false,
-                    assignee: t.assigned_to
+                    assignee: (() => {
+                        const numericAssignee = Number(t.assigned_to);
+                        return Number.isFinite(numericAssignee) ? numericAssignee : undefined;
+                    })()
                 }));
 
                 milestonesWithTasks.push({ ...m, tasks });

@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../../context/AppContext';
 import type { Project } from '../../types/types';
 import Avatar from '../UI/Avatar';
-import { getUserById } from '../../data/mockData';
 import { Calendar } from 'lucide-react';
 
 interface ProjectCardProps {
@@ -11,7 +11,10 @@ interface ProjectCardProps {
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
     const navigate = useNavigate();
-    const teamMembers = project.teamMembers.map((id) => getUserById(id)).filter((u) => u !== undefined);
+    const { users } = useApp();
+    const teamMembers = project.teamMembers
+        .map((id) => users.find((user) => user.id === id))
+        .filter((member): member is NonNullable<typeof member> => Boolean(member));
 
     // Calculate progress based on status
     const getProgress = () => {
@@ -82,8 +85,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
                     <div className="flex -space-x-2">
                         {teamMembers.slice(0, 3).map((member) => (
                             <Avatar
-                                key={member!.id}
-                                name={member!.name}
+                                key={member.id}
+                                name={member.name}
                                 size="sm"
                                 className="ring-2 ring-white"
                             />

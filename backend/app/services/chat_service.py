@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
 from app.models.chat import (
     Conversation, ConversationParticipant,
     Message
 )
+
 
 def create_conversation_for_project(
     db: Session,
@@ -25,7 +25,7 @@ def create_conversation_for_project(
 
 
 def add_participant(db: Session, project_id: int, user_id: int):
-    conversation = _get_conversation_by_project(db, project_id)
+    conversation = get_conversation_by_project(db, project_id)
     already_in = db.query(ConversationParticipant).filter_by(
         conversation_id=conversation.id,
         user_id=user_id,
@@ -36,7 +36,7 @@ def add_participant(db: Session, project_id: int, user_id: int):
 
 
 def remove_participant(db: Session, project_id: int, user_id: int):
-    conversation = _get_conversation_by_project(db, project_id)
+    conversation = get_conversation_by_project(db, project_id)
     db.query(ConversationParticipant).filter_by(
         conversation_id=conversation.id,
         user_id=user_id,
@@ -52,6 +52,7 @@ def is_participant(db: Session, conversation_id: int, user_id: int) -> bool:
 
 
 def get_recent_messages(db: Session, conversation_id: int, limit: int = 50) -> list[Message]:
+    limit = max(1, min(limit, 200))
     return (
         db.query(Message)
         .filter(Message.conversation_id == conversation_id)
@@ -60,13 +61,8 @@ def get_recent_messages(db: Session, conversation_id: int, limit: int = 50) -> l
         .all()
     )
 
-
 def get_conversation_by_project(db: Session, project_id: int) -> Conversation:
-    return _get_conversation_by_project(db, project_id)
-
-
-def _get_conversation_by_project(db: Session, project_id: int) -> Conversation:
     conv = db.query(Conversation).filter(Conversation.project_id == project_id).first()
     if not conv:
-        raise HTTPException(status_code=404, detail="Conversation not found for this project")
+        raise ValueError(f"No conversation found for project_id={project_id}")
     return conv

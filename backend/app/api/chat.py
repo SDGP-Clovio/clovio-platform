@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.orm import Session
 from collections import defaultdict
@@ -16,6 +17,8 @@ from app.schemas.chat import (
     MessageOut,
     SendMessageRequest
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/chat", tags=["Chat"])
 
@@ -83,7 +86,11 @@ def list_project_messages(
     current_user: User = Depends(get_current_user),
 ):
     current = _current_db_user(db, current_user)
-    conv = get_conversation_by_project(db, project_id)
+
+    try:
+        conv = get_conversation_by_project(db, project_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="No chat found for this project")
 
     if not is_participant(db, conv.id, current.id):
         raise HTTPException(status_code=403, detail="Not a participant in this project chat")
@@ -111,19 +118,24 @@ def send_project_message(
     current_user: User = Depends(get_current_user),
 ):
     current = _current_db_user(db, current_user)
-    conv = get_conversation_by_project(db, project_id)
+
+    try:
+        conv = get_conversation_by_project(db, project_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail="No chat found for this project")
 
     if not is_participant(db, conv.id, current.id):
         raise HTTPException(status_code=403, detail="Not a participant in this project chat")
 
+    content = payload.content.strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+
     msg = Message(
         conversation_id=conv.id,
         sender_id=current.id,
-        content=payload.content.strip(),
+        content=content,
     )
-    if not msg.content:
-        raise HTTPException(status_code=400, detail="Message cannot be empty")
-
     db.add(msg)
     db.commit()
     db.refresh(msg)
@@ -144,7 +156,13 @@ async def ws_project_chat(project_id: int, websocket: WebSocket, token: str = Qu
     user = None
     try:
         user = _user_from_token(db, token)
-        conv = get_conversation_by_project(db, project_id)
+
+        try:
+            conv = get_conversation_by_project(db, project_id)
+        except ValueError:
+            await websocket.close(code=4404, reason="Project chat not found")
+            return
+
         conversation_id = conv.id
 
         if not is_participant(db, conversation_id, user.id):
@@ -183,11 +201,12 @@ async def ws_project_chat(project_id: int, websocket: WebSocket, token: str = Qu
     except WebSocketDisconnect:
         if conversation_id is not None:
             await manager.disconnect_group(conversation_id, websocket)
-    except Exception:
+
+    except Exception as e:
+        logger.exception("Unexpected WebSocket error for project %s: %s", project_id, e)
         try:
             await websocket.close(code=1011, reason="Server error")
         except Exception:
             pass
     finally:
         db.close()
-

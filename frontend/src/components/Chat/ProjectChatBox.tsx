@@ -23,7 +23,7 @@ type UiMessage = {
 };
 
 const mapApiMessage = (m: ApiMessage): UiMessage => ({
-    id: String(m.id),
+    id: m.id > 0 ? String(m.id) : `ws-${Date.now()}-${Math.random()}`,
     senderId: m.sender_id,
     senderName: m.sender_username,
     content: m.content,
@@ -31,7 +31,7 @@ const mapApiMessage = (m: ApiMessage): UiMessage => ({
 });
 
 const mapWsMessage = (m: WsGroupMessage): UiMessage => ({
-    id: String(m.id),
+    id: m.id > 0 ? String(m.id) : `ws-${Date.now()}-${Math.random()}`,
     senderId: m.sender_id,
     senderName: m.sender_username,
     content: m.content,
@@ -41,14 +41,13 @@ const mapWsMessage = (m: WsGroupMessage): UiMessage => ({
 const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone = true }) => {
     const { currentUser } = useApp();
     const [messages, setMessages] = useState<UiMessage[]>([]);
-    const [draft, setDraft] = useState("");
     const [draft, setDraft] = useState('');
     const [isSending, setIsSending] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement | null>(null);
     const wsRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {
-        if (!projectId) return;
+        if (typeof projectId !== "number" || projectId <= 0) return;
 
         let mounted = true;
 
@@ -62,8 +61,16 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
                 setMessages([]);
             });
 
-        const ws = openProjectChatSocket(projectId, (incoming) => {
-            setMessages((prev) => [...prev, mapWsMessage(incoming)]);
+        const ws = openProjectChatSocket(projectId, {
+            onMessage: (incoming) => {
+                setMessages((prev) => [...prev, mapWsMessage(incoming)]);
+            },
+            onError: (e) => {
+                console.error("Chat socket error:", e);
+            },
+            onClose: (e) => {
+                if (!e.wasClean) console.warn("Chat socket closed unexpectedly:", e.code);
+            },
         });
 
         wsRef.current = ws;
@@ -81,7 +88,7 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
 
     const handleSend = async () => {
         const trimmed = draft.trim();
-        if (!trimmed || !projectId) return;
+        if (!trimmed || projectId <= 0 || isSending) return;
 
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify({ content: trimmed }));
@@ -95,8 +102,9 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
             const created = await sendProjectMessage(projectId, trimmed);
             setMessages((prev) => [...prev, mapApiMessage(created)]);
             setDraft("");
-        } catch {
-            // Optional: show toast
+        } catch (err) {
+            console.error("Failed to send message:", err);
+            setDraft(trimmed); // give the message back to the user
         } finally {
             setIsSending(false);
         }

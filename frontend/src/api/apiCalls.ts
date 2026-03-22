@@ -1,7 +1,8 @@
 import axios from "axios";
 
 // Send API requests to the backend
-const API_BASE = "http://localhost:8000";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, "")
+    ?? "http://localhost:8000";
 
 export const apiClient = axios.create({
     baseURL: API_BASE,

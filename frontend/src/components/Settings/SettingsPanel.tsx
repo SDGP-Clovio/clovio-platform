@@ -50,7 +50,14 @@ const DEFAULT_SLOTS: DayAvailability[] = DAY_NAMES.map((_, i) => ({
 
 /* ══════════════════════════════════════════════════════════════════════════ */
 const SettingsPanel: React.FC = () => {
-    const { currentUser, setCurrentUser, addSkill, removeSkill, updateSkillLevel, updateDefaultAvailability } = useApp();
+    const {
+        currentUser,
+        updateCurrentUserName,
+        addSkill,
+        removeSkill,
+        updateSkillLevel,
+        updateDefaultAvailability,
+    } = useApp();
 
     const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [editForm, setEditForm] = useState({ name: '' });
@@ -103,9 +110,12 @@ const SettingsPanel: React.FC = () => {
         (s) => !userSkills.some((us) => us.name === s)
     );
 
-    const handleSaveProfile = () => {
-        if (currentUser && editForm.name.trim()) {
-            setCurrentUser({ ...currentUser, name: editForm.name.trim() });
+    const handleSaveProfile = async () => {
+        const nextName = editForm.name.trim();
+        if (!nextName) return;
+
+        const saved = await updateCurrentUserName(nextName);
+        if (saved) {
             setIsEditingProfile(false);
         }
     };

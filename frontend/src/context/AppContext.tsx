@@ -17,7 +17,12 @@ import {
     mockActivities,
     mockDashboardStats,
 } from '../data/mockData';
-import { fetchCurrentUserAsAppUser, fetchUsers } from '../services/users';
+import {
+    fetchCurrentUserAsAppUser,
+    fetchCurrentUserSettingsAsAppUser,
+    fetchUsers,
+    updateCurrentUserSettings,
+} from '../services/users';
 import {
     deleteProjectRecord,
     fetchProjects,
@@ -45,6 +50,7 @@ interface AppContextState {
     // Current User
     currentUser: User | null;
     setCurrentUser: (user: User | null) => void;
+    updateCurrentUserName: (name: string) => Promise<boolean>;
     addSkill: (skill: Skill) => void;
     removeSkill: (skillName: string) => void;
     updateSkillLevel: (skillName: string, level: Skill['level']) => void;
@@ -305,13 +311,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 setActiveProject((previous) => previous ?? apiProjects[0] ?? null);
                 if (hasToken) {
                     try {
-                        const me = await fetchCurrentUserAsAppUser();
+                        const me = await fetchCurrentUserSettingsAsAppUser();
                         if (isMounted) {
                             setCurrentUser(me);
                         }
                     } catch {
-                        if (isMounted) {
-                            setCurrentUser(null);
+                        try {
+                            const fallbackMe = await fetchCurrentUserAsAppUser();
+                            if (isMounted) {
+                                setCurrentUser(fallbackMe);
+                            }
+                        } catch {
+                            if (isMounted) {
+                                setCurrentUser(null);
+                            }
                         }
                     }
                 } else {
@@ -488,34 +501,103 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
 
     // Skill Management Actions
+    const updateCurrentUserName = async (name: string): Promise<boolean> => {
+        if (!currentUser) {
+            return false;
+        }
+
+        const trimmed = name.trim();
+        if (!trimmed) {
+            return false;
+        }
+
+        const previousUser = currentUser;
+        setCurrentUser({ ...currentUser, name: trimmed });
+
+        try {
+            const persisted = await updateCurrentUserSettings({ fullName: trimmed });
+            setCurrentUser(persisted);
+            return true;
+        } catch (error) {
+            console.error('Failed to persist current user name', error);
+            setCurrentUser(previousUser);
+            return false;
+        }
+    };
+
     const addSkill = (skill: Skill) => {
         if (!currentUser) return;
         // avoid duplicates
         if ((currentUser.skills || []).some((s) => s.name === skill.name)) return;
-        setCurrentUser({ ...currentUser, skills: [...(currentUser.skills || []), skill] });
+
+        const previousUser = currentUser;
+        const nextSkills = [...(currentUser.skills || []), skill];
+        setCurrentUser({ ...currentUser, skills: nextSkills });
+
+        void (async () => {
+            try {
+                const persisted = await updateCurrentUserSettings({ skills: nextSkills });
+                setCurrentUser(persisted);
+            } catch (error) {
+                console.error('Failed to persist user skills', error);
+                setCurrentUser(previousUser);
+            }
+        })();
     };
 
     const removeSkill = (skillName: string) => {
         if (!currentUser) return;
-        setCurrentUser({
-            ...currentUser,
-            skills: (currentUser.skills || []).filter((s) => s.name !== skillName),
-        });
+
+        const previousUser = currentUser;
+        const nextSkills = (currentUser.skills || []).filter((s) => s.name !== skillName);
+        setCurrentUser({ ...currentUser, skills: nextSkills });
+
+        void (async () => {
+            try {
+                const persisted = await updateCurrentUserSettings({ skills: nextSkills });
+                setCurrentUser(persisted);
+            } catch (error) {
+                console.error('Failed to persist user skills', error);
+                setCurrentUser(previousUser);
+            }
+        })();
     };
 
     const updateSkillLevel = (skillName: string, level: Skill['level']) => {
         if (!currentUser) return;
-        setCurrentUser({
-            ...currentUser,
-            skills: (currentUser.skills || []).map((s) =>
-                s.name === skillName ? { ...s, level } : s
-            ),
-        });
+
+        const previousUser = currentUser;
+        const nextSkills = (currentUser.skills || []).map((s) =>
+            s.name === skillName ? { ...s, level } : s
+        );
+        setCurrentUser({ ...currentUser, skills: nextSkills });
+
+        void (async () => {
+            try {
+                const persisted = await updateCurrentUserSettings({ skills: nextSkills });
+                setCurrentUser(persisted);
+            } catch (error) {
+                console.error('Failed to persist user skills', error);
+                setCurrentUser(previousUser);
+            }
+        })();
     };
 
     const updateDefaultAvailability = (slots: DayAvailability[]) => {
         if (!currentUser) return;
+
+        const previousUser = currentUser;
         setCurrentUser({ ...currentUser, defaultAvailability: slots });
+
+        void (async () => {
+            try {
+                const persisted = await updateCurrentUserSettings({ defaultAvailability: slots });
+                setCurrentUser(persisted);
+            } catch (error) {
+                console.error('Failed to persist default availability', error);
+                setCurrentUser(previousUser);
+            }
+        })();
     };
 
     // Weekly overrides: date-string -> set of free hours
@@ -938,6 +1020,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const value: AppContextState = {
         currentUser,
         setCurrentUser,
+        updateCurrentUserName,
         addSkill,
         removeSkill,
         updateSkillLevel,

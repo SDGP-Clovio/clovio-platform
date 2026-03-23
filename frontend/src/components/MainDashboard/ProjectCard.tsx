@@ -7,10 +7,10 @@ interface ProjectCardProps {
 
 function FairnessBar({ value }: { value: number }) {
   const color =
-    value >= 80 ? "#85D5C8" : value >= 60 ? "#F59E0B" : "#EF4444";
+    value >= 80 ? "#10B981" : value >= 60 ? "#F59E0B" : "#EF4444";
   const textColor =
     value >= 80
-      ? "text-[#85D5C8]"
+      ? "text-[#10B981]"
       : value >= 60
         ? "text-[#F59E0B]"
         : "text-[#EF4444]";
@@ -33,19 +33,19 @@ function FairnessBar({ value }: { value: number }) {
 function getStatusColor(status: string) {
   switch (status) {
     case "On Track":
-      return { color: "#85D5C8", bg: "#D4F0EC" };
+      return { color: "#10B981", bg: "#ECFDF5" };
 
     case "At Risk":
       return { color: "#F59E0B", bg: "#FEF3C7" };
 
     case "Completed":
-      return { color: "#B179DF", bg: "#E8D5F5" };
+      return { color: "#4F46E5", bg: "#EEF2FF" };
 
     case "Overdue":
       return { color: "#EF4444", bg: "#FEE2E2" };
 
     default:
-      return { color: "#6B7280", bg: "#F3F4F6" };
+      return { color: "#64748B", bg: "#F3F4F6" };
   }
 }
 
@@ -61,7 +61,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       {/* Circular progress ring */}
       <div className="relative flex-shrink-0">
         <CircularProgress value={project.progress} />
-        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold text-[#1A1A1A]">
+        <div className="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold text-[#0F172A]">
           {project.progress}%
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       <div className="flex-1 min-w-0">
         {/* Name + status badge */}
         <div className="flex items-center gap-2.5 mb-1">
-          <h3 className="m-0 text-[15px] font-bold text-[#1A1A1A] truncate">
+          <h3 className="m-0 text-[15px] font-bold text-[#0F172A] truncate">
             {project.name}
           </h3>
           <span
@@ -131,7 +131,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
       </div>
       {/* Due date */}
       <div className="text-center flex-shrink-0">
-        <p className="text-[12px] font-bold text-[#1A1A1A] m-0">{project.dueDate}</p>
+        <p className="text-[12px] font-bold text-[#0F172A] m-0">{project.dueDate}</p>
         <p className="text-[10px] text-gray-400 m-0">Due date</p>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
@@ -11,6 +11,7 @@ import SettingsPanel from '../components/Settings/SettingsPanel';
 import ScheduleView from '../components/Schedule/ScheduleView';
 import type { Project } from '../types/types';
 import GlobalChatView from '../components/Chat/GlobalChatView';
+import ClovioMark from '../components/common/ClovioMark';
 
 /* ─── Circular progress ring ────────────────────────────────────────────── */
 const ProgressRing: React.FC<{ progress: number; status: string }> = ({ progress, status }) => {
@@ -19,8 +20,8 @@ const ProgressRing: React.FC<{ progress: number; status: string }> = ({ progress
     const offset = circ - (progress / 100) * circ;
     const color =
         status === 'completed' ? '#10b981' :
-        progress >= 75          ? '#8b5cf6' :
-        progress >= 50          ? '#3b82f6' :
+        progress >= 75          ? '#4F46E5' :
+        progress >= 50          ? '#4F46E5' :
                                   '#f59e0b';
     return (
         <div className="relative w-20 h-20 flex-shrink-0 flex items-center justify-center">
@@ -92,13 +93,13 @@ const ProjectRowCard: React.FC<{ project: Project }> = ({ project }) => {
     return (
         <div
             onClick={() => navigate(`/project/${project.id}`)}
-            className="flex items-center gap-5 bg-white border border-slate-100 rounded-2xl px-6 py-5 hover:shadow-md hover:border-purple-200 transition-all duration-200 cursor-pointer group"
+            className="flex items-center gap-5 bg-white border border-slate-100 rounded-2xl px-6 py-5 hover:shadow-md hover:border-indigo-200 transition-all duration-200 cursor-pointer group"
         >
             <ProgressRing progress={progress} status={project.status} />
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2.5 mb-1 flex-wrap">
-                    <h3 className="text-sm font-bold text-slate-800 group-hover:text-purple-600 transition-colors truncate">
+                    <h3 className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors truncate">
                         {project.name}
                     </h3>
                     <StatusBadge status={project.status} />
@@ -126,7 +127,7 @@ const ProjectRowCard: React.FC<{ project: Project }> = ({ project }) => {
                         <Avatar key={m.id} name={m.name} size="sm" className="ring-2 ring-white" />
                     ))}
                     {teamMembers.length > 4 && (
-                        <div className="w-7 h-7 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
+                        <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold flex items-center justify-center ring-2 ring-white">
                             +{teamMembers.length - 4}
                         </div>
                     )}
@@ -147,17 +148,24 @@ const ProjectRowCard: React.FC<{ project: Project }> = ({ project }) => {
 };
 
 /* ─── Mini Calendar ─────────────────────────────────────────────────────── */
-const MiniCalendar: React.FC = () => {
+const MiniCalendar: React.FC<{ onOpenSchedule: () => void }> = ({ onOpenSchedule }) => {
+    const { meetings } = useApp();
     const todayReal = new Date();
     const [viewDate, setViewDate] = useState(new Date(todayReal.getFullYear(), todayReal.getMonth(), 1));
+    const [selectedDate, setSelectedDate] = useState<Date | null>(
+        new Date(todayReal.getFullYear(), todayReal.getMonth(), todayReal.getDate())
+    );
 
-    const year  = viewDate.getFullYear();
+    const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
     const monthLabel = viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-    const firstDay    = new Date(year, month, 1).getDay();
+    const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+    const cells: (number | null)[] = [
+        ...Array(firstDay).fill(null),
+        ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    ];
 
     const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
@@ -167,17 +175,63 @@ const MiniCalendar: React.FC = () => {
         month === todayReal.getMonth() &&
         year === todayReal.getFullYear();
 
-    const meetingDays = new Set([2, 4, 7]);
+    const monthMeetings = useMemo(() => {
+        const byDay = new Map<number, typeof meetings>();
+
+        meetings.forEach((meeting) => {
+            const start = new Date(meeting.startTime);
+            if (start.getFullYear() !== year || start.getMonth() !== month) {
+                return;
+            }
+
+            const day = start.getDate();
+            const existing = byDay.get(day) ?? [];
+            byDay.set(day, [...existing, meeting]);
+        });
+
+        byDay.forEach((dayMeetings, day) => {
+            byDay.set(
+                day,
+                [...dayMeetings].sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+            );
+        });
+
+        return byDay;
+    }, [meetings, month, year]);
+
+    const selectedDayInView =
+        selectedDate &&
+        selectedDate.getFullYear() === year &&
+        selectedDate.getMonth() === month
+            ? selectedDate.getDate()
+            : null;
+
+    const selectedDayMeetings = selectedDayInView !== null
+        ? monthMeetings.get(selectedDayInView) ?? []
+        : [];
+
+    const formatMeetingTime = (value: Date) =>
+        new Date(value).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
     return (
         <div>
             <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-bold text-slate-700">{monthLabel}</span>
                 <div className="flex gap-1">
-                    <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="p-1 hover:bg-slate-100 rounded transition-colors">
+                    <button
+                        onClick={() => setViewDate(new Date(year, month - 1, 1))}
+                        className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        aria-label="View previous month"
+                        title="View previous month"
+                    >
                         <ChevronLeft className="w-4 h-4 text-slate-400" />
                     </button>
-                    <button onClick={() => setViewDate(new Date(year, month + 1, 1))} className="p-1 hover:bg-slate-100 rounded transition-colors">
+                    <button
+                        onClick={() => setViewDate(new Date(year, month + 1, 1))}
+                        className="p-1 hover:bg-slate-100 rounded transition-colors"
+                        aria-label="View next month"
+                        title="View next month"
+                    >
                         <ChevronRight className="w-4 h-4 text-slate-400" />
                     </button>
                 </div>
@@ -193,22 +247,75 @@ const MiniCalendar: React.FC = () => {
                 {cells.map((d, i) => (
                     <div key={i} className="flex items-center justify-center aspect-square">
                         {d !== null && (
-                            <button className={`w-7 h-7 rounded-full text-[11px] font-medium flex items-center justify-center transition-all relative
-                                ${isToday(d)
-                                    ? 'bg-purple-600 text-white font-bold shadow'
-                                    : meetingDays.has(d) && month === todayReal.getMonth()
-                                        ? 'bg-purple-100 text-purple-700 font-semibold'
-                                        : 'text-slate-600 hover:bg-slate-100'
-                                }`}
+                            <button
+                                type="button"
+                                onClick={() => setSelectedDate(new Date(year, month, d))}
+                                className={`w-7 h-7 rounded-full text-[11px] font-medium flex items-center justify-center transition-all relative
+                                    ${selectedDayInView === d
+                                        ? 'bg-indigo-600 text-white font-bold shadow'
+                                        : isToday(d)
+                                            ? 'bg-indigo-100 text-indigo-700 font-bold'
+                                            : monthMeetings.has(d)
+                                                ? 'bg-indigo-50 text-indigo-700 font-semibold hover:bg-indigo-100'
+                                                : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                title={
+                                    (monthMeetings.get(d) ?? []).length > 0
+                                        ? `${(monthMeetings.get(d) ?? []).length} meeting${(monthMeetings.get(d) ?? []).length === 1 ? '' : 's'}`
+                                        : undefined
+                                }
                             >
                                 {d}
-                                {meetingDays.has(d) && !isToday(d) && month === todayReal.getMonth() && (
-                                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-purple-400" />
+                                {monthMeetings.has(d) && selectedDayInView !== d && (
+                                    <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-indigo-400" />
                                 )}
                             </button>
                         )}
                     </div>
                 ))}
+            </div>
+
+            <div className="mt-4 border-t border-slate-100 pt-3">
+                <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-slate-500">
+                        {selectedDayInView !== null
+                            ? new Date(year, month, selectedDayInView).toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                            })
+                            : 'Select a day'}
+                    </p>
+                    {selectedDayMeetings.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={onOpenSchedule}
+                            className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-700"
+                        >
+                            Open schedule
+                        </button>
+                    )}
+                </div>
+
+                {selectedDayInView === null ? (
+                    <p className="text-[11px] text-slate-400">Choose a date to view meetings.</p>
+                ) : selectedDayMeetings.length === 0 ? (
+                    <p className="text-[11px] text-slate-400">No meetings planned.</p>
+                ) : (
+                    <div className="space-y-1.5">
+                        {selectedDayMeetings.slice(0, 3).map((meeting) => (
+                            <div key={meeting.id} className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-2.5 py-1.5">
+                                <span className="text-[11px] font-semibold text-slate-700 truncate">{meeting.title}</span>
+                                <span className="text-[10px] text-slate-500 whitespace-nowrap">
+                                    {formatMeetingTime(meeting.startTime)}
+                                </span>
+                            </div>
+                        ))}
+                        {selectedDayMeetings.length > 3 && (
+                            <p className="text-[10px] text-slate-400">+{selectedDayMeetings.length - 3} more</p>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
@@ -217,8 +324,15 @@ const MiniCalendar: React.FC = () => {
 /* ─── Upcoming meetings widget ──────────────────────────────────────────── */
 const UpcomingMeetingsWidget: React.FC = () => {
     const { meetings } = useApp();
-    const upcoming = meetings.slice(0, 3);
-    const dotColor = (i: number) => ['bg-purple-500', 'bg-green-500', 'bg-blue-500'][i % 3];
+    const upcoming = useMemo(
+        () =>
+            [...meetings]
+                .filter((meeting) => meeting.startTime >= new Date())
+                .sort((a, b) => a.startTime.getTime() - b.startTime.getTime())
+                .slice(0, 3),
+        [meetings]
+    );
+    const dotColor = (i: number) => ['bg-indigo-500', 'bg-green-500', 'bg-blue-500'][i % 3];
 
     return (
         <div>
@@ -227,7 +341,7 @@ const UpcomingMeetingsWidget: React.FC = () => {
                 {upcoming.map((m, i) => (
                     <div key={m.id} className="flex items-center gap-3">
                         <div className="flex flex-col items-center bg-slate-50 border border-slate-100 rounded-lg px-2.5 py-1.5 min-w-[40px] text-center">
-                            <span className="text-[9px] font-bold text-purple-600 uppercase leading-none">
+                            <span className="text-[9px] font-bold text-indigo-600 uppercase leading-none">
                                 {new Date(m.startTime).toLocaleDateString('en-US', { month: 'short' })}
                             </span>
                             <span className="text-base font-extrabold text-slate-800 leading-tight">
@@ -298,11 +412,13 @@ const MainDashboard: React.FC = () => {
             </button>
 
             {/* ── Sidebar ────────────────────────────────────────────── */}
-            <aside className={`fixed left-0 top-0 h-screen w-56 bg-[#1a1b2e] text-white z-40 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+            <aside className={`fixed left-0 top-0 h-screen w-56 bg-[#0F172A] text-white z-40 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
 
                 {/* Logo */}
                 <div className="flex items-center gap-2.5 px-5 pt-6 pb-5">
-                    <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center font-bold text-white text-sm shadow">C</div>
+                    <div className="flex w-8 h-8 bg-gradient-to-br from-indigo-600 to-emerald-500 rounded-lg items-center justify-center text-white shadow">
+                        <ClovioMark className="h-5 w-5 text-white" />
+                    </div>
                     <span className="text-lg font-bold tracking-tight text-white">Clovio</span>
                 </div>
 
@@ -324,7 +440,7 @@ const MainDashboard: React.FC = () => {
                                 }}
                                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all ${
                                     isActive
-                                        ? 'bg-purple-600/20 text-purple-300 font-semibold'
+                                        ? 'bg-gradient-to-r from-indigo-600/20 to-emerald-500/20 text-emerald-200 font-semibold'
                                         : 'text-slate-400 hover:bg-white/5 hover:text-white'
                                 }`}
                             >
@@ -389,7 +505,7 @@ const MainDashboard: React.FC = () => {
                         {activeTab === 'dashboard' && (
                             <button
                                 onClick={() => navigate('/new-project')}
-                                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm"
+                                className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-emerald-500 hover:from-indigo-700 hover:to-emerald-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm"
                             >
                                 <Plus className="w-4 h-4" />
                                 New Project
@@ -410,7 +526,7 @@ const MainDashboard: React.FC = () => {
                                 </button>
                                 <button
                                     onClick={() => setScheduleShowModal(true)}
-                                    className="flex items-center gap-2 bg-purple-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-purple-700 transition-all shadow-md"
+                                    className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-emerald-500 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:from-indigo-700 hover:to-emerald-600 transition-all shadow-md"
                                 >
                                     <Plus className="w-4 h-4" /> New Meeting
                                 </button>
@@ -428,7 +544,7 @@ const MainDashboard: React.FC = () => {
                                     placeholder="Search projects..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 transition-all text-sm"
+                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-all text-sm"
                                 />
                             </div>
                             <div className="flex gap-2">
@@ -438,7 +554,7 @@ const MainDashboard: React.FC = () => {
                                         onClick={() => setFilterStatus(status)}
                                         className={`px-4 py-2.5 rounded-lg font-medium transition-all text-sm ${
                                             filterStatus === status
-                                                ? 'bg-purple-600 text-white shadow-md'
+                                                ? 'bg-indigo-600 text-white shadow-md'
                                                 : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
                                         }`}
                                     >
@@ -494,7 +610,7 @@ const MainDashboard: React.FC = () => {
                                 {/* Right panel */}
                                 <div className="w-72 flex-shrink-0 space-y-5 hidden xl:block">
                                     <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
-                                        <MiniCalendar />
+                                        <MiniCalendar onOpenSchedule={() => setActiveTab('schedule')} />
                                     </div>
                                     <div className="bg-white rounded-2xl border border-slate-100 p-5 shadow-sm">
                                         <UpcomingMeetingsWidget />

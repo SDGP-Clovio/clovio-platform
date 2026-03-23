@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Enum
+from sqlalchemy import Column, Integer, String, Boolean, Enum, JSON
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 import enum
@@ -17,6 +17,7 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     role = Column(Enum(UserRole), default=UserRole.STUDENT)
     is_active = Column(Boolean, default=True)
+    default_availability = Column(JSON, nullable=True)
 
     # relationships
     skills = relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")

@@ -22,7 +22,7 @@ const iconFor = (type: Activity['type']) => {
 const colorFor = (type: Activity['type']) => {
     switch (type) {
         case 'task_completed':    return 'bg-emerald-100 text-emerald-600';
-        case 'meeting_scheduled': return 'bg-purple-100 text-purple-600';
+        case 'meeting_scheduled': return 'bg-indigo-100 text-indigo-600';
         case 'comment_added':     return 'bg-blue-100 text-blue-600';
         case 'project_created':   return 'bg-orange-100 text-orange-600';
         default:                  return 'bg-slate-100 text-slate-500';
@@ -77,7 +77,7 @@ const NotificationDropdown: React.FC<Props> = ({ projectId }) => {
             >
                 <Bell className="w-5 h-5 text-slate-600" />
                 {unreadCount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-purple-500 rounded-full ring-2 ring-white" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-indigo-500 rounded-full ring-2 ring-white" />
                 )}
             </button>
 

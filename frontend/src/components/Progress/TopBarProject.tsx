@@ -14,7 +14,7 @@ export default function TopBar({ project }: TopBarProps) {
                     Project Dashboard
                 </div>
 
-                <h1 className="m-0 text-[22px] font-extrabold text-[#1A1A1A] tracking-tight mb-2">
+                <h1 className="m-0 text-[22px] font-extrabold text-[#0F172A] tracking-tight mb-2">
                     {project.name}
                 </h1>
 

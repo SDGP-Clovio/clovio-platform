@@ -72,7 +72,7 @@ export default function NotificationsPanel({ plan, nextMeetingTime = "Today at 3
       icon: "📞",
       title: "Next Meeting",
       message: nextMeetingTime,
-      color: "#3B82F6",
+      color: "#4F46E5",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
     },
@@ -81,9 +81,9 @@ export default function NotificationsPanel({ plan, nextMeetingTime = "Today at 3
       icon: "💬",
       title: "Team Chat",
       message: "4 unread messages from your team",
-      color: "#8B5CF6",
-      bgColor: "bg-purple-50",
-      borderColor: "border-purple-200",
+      color: "#4F46E5",
+      bgColor: "bg-indigo-50",
+      borderColor: "border-indigo-200",
     },
   ];
 

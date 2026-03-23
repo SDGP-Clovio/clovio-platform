@@ -12,15 +12,32 @@ import type { ProjectPlan } from "../../types";
 
 interface TeamPerformanceProps {
   plan: ProjectPlan;
+  memberNames?: string[];
 }
 
-export default function TeamPerformance({ plan }: TeamPerformanceProps) {
+export default function TeamPerformance({ plan, memberNames = [] }: TeamPerformanceProps) {
   const workload = calcTeamWorkload(plan.milestones);
-  const mostProductive = findMostProductiveMember(workload);
 
-  const members = Object.entries(workload)
+  const mergedWorkload: Record<string, { assigned: number; completed: number }> = {
+    ...workload,
+  };
+
+  Array.from(new Set(memberNames)).forEach((memberName) => {
+    if (!mergedWorkload[memberName]) {
+      mergedWorkload[memberName] = { assigned: 0, completed: 0 };
+    }
+  });
+
+  const mostProductive = findMostProductiveMember(mergedWorkload);
+
+  const members = Object.entries(mergedWorkload)
     .map(([name, data]) => ({ name, ...data }))
-    .sort((a, b) => b.assigned - a.assigned);
+    .sort((a, b) => {
+      if (b.assigned !== a.assigned) {
+        return b.assigned - a.assigned;
+      }
+      return a.name.localeCompare(b.name);
+    });
 
   if (members.length === 0) {
     return (
@@ -41,27 +58,27 @@ export default function TeamPerformance({ plan }: TeamPerformanceProps) {
       return { badge: "Overloaded", badgeBg: "bg-red-50", badgeText: "text-red-600", barColor: "linear-gradient(90deg,#ef4444,#dc2626)" };
     }
     if (workloadPercent < 30) {
-      return { badge: "Underutilized", badgeBg: "bg-blue-50", badgeText: "text-blue-600", barColor: "linear-gradient(90deg,#60a5fa,#3b82f6)" };
+      return { badge: "Underutilized", badgeBg: "bg-blue-50", badgeText: "text-blue-600", barColor: "linear-gradient(90deg,#4F46E5,#10B981)" };
     }
-    return { badge: "", badgeBg: "", badgeText: "", barColor: "linear-gradient(90deg,#7c3aed,#6d28d9)" };
+    return { badge: "", badgeBg: "", badgeText: "", barColor: "linear-gradient(90deg,#4F46E5,#10B981)" };
   };
 
   // Initials avatar palette — cycles through pleasant colors
   const avatarColors = [
-    "from-purple-400 to-purple-600",
+    "from-indigo-500 to-emerald-500",
     "from-blue-400 to-blue-600",
     "from-emerald-400 to-emerald-600",
     "from-amber-400 to-amber-600",
     "from-pink-400 to-pink-600",
-    "from-indigo-400 to-indigo-600",
+    "from-indigo-500 to-emerald-500",
   ];
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 p-5 h-full flex flex-col hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-8 h-8 bg-gradient-to-br from-indigo-100 to-emerald-100 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-indigo-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         </div>

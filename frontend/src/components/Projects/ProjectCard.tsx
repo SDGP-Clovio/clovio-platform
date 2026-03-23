@@ -32,7 +32,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
     // Progress bar color based on status
     const getProgressColor = () => {
         if (project.status === 'completed') return 'bg-green-500';
-        if (progress >= 75) return 'bg-purple-500';
+        if (progress >= 75) return 'bg-indigo-500';
         if (progress >= 50) return 'bg-blue-500';
         return 'bg-orange-500';
     };
@@ -40,7 +40,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
     return (
         <div
             onClick={() => navigate(`/project/${project.id}`)}
-            className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-purple-200 transition-all duration-200 cursor-pointer group"
+            className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md hover:border-indigo-200 transition-all duration-200 cursor-pointer group"
         >
             {/* Header with Date */}
             <div className="flex items-start justify-between mb-3">
@@ -55,7 +55,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
             </div>
 
             {/* Project Title */}
-            <h3 className="text-base font-bold text-slate-800 mb-2 line-clamp-1 group-hover:text-purple-600 transition-colors">
+            <h3 className="text-base font-bold text-slate-800 mb-2 line-clamp-1 group-hover:text-indigo-600 transition-colors">
                 {project.name}
             </h3>
 
@@ -92,7 +92,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
                             />
                         ))}
                         {teamMembers.length > 3 && (
-                            <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-xs font-semibold text-purple-700 ring-2 ring-white">
+                            <div className="w-7 h-7 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-semibold text-indigo-700 ring-2 ring-white">
                                 +{teamMembers.length - 3}
                             </div>
                         )}

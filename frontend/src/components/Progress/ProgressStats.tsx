@@ -74,21 +74,21 @@ export default function ProgressStats({ plan, dueDate }: ProgressStatsProps) {
   ];
 
   return (
-    <div className="h-full grid grid-cols-2 gap-6">
+    <div className="h-full grid grid-cols-2 gap-3">
       {stats.map((stat, idx) => (
-        <div key={idx} className="flex flex-col bg-white rounded-3xl border border-slate-100 p-6 shadow-sm transition-shadow hover:shadow-md flex-grow">
-          <div className="flex items-center gap-3 mb-5 text-slate-500">
-            <div className={`w-10 h-10 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center flex-shrink-0 [&>svg]:w-5 [&>svg]:h-5`}>
+        <div key={idx} className="flex flex-col bg-white rounded-2xl border border-slate-100 p-4 shadow-sm transition-shadow hover:shadow-md flex-grow min-h-[140px]">
+          <div className="flex items-center gap-2.5 mb-3 text-slate-500">
+            <div className={`w-8 h-8 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center flex-shrink-0 [&>svg]:w-4 [&>svg]:h-4`}>
                 {stat.icon}
               </div>
-              <p className="text-[11px] font-bold uppercase tracking-wider">{stat.label}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider">{stat.label}</p>
             </div>
 
             {/* Value */}
             <div className="flex items-baseline gap-1.5 mt-auto">
-              <p className={`text-3xl font-extrabold text-slate-800`}>{stat.value}</p>
+              <p className={`text-2xl font-extrabold text-slate-800`}>{stat.value}</p>
               {(stat.total || stat.unit) && (
-                <p className="text-sm font-semibold text-slate-400">
+                <p className="text-xs font-semibold text-slate-400">
                   {stat.total ? `/ ${stat.total}` : ''} {stat.unit || ''}
                 </p>
               )}

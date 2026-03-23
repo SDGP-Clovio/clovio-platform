@@ -16,13 +16,13 @@ export default function ProgressBanner({
   };
 
   const status = getStatus(overallProgress);
-  const color = status === "on-track" ? "#7C3AED" : status === "at-risk" ? "#F59E0B" : "#EF4444";
+  const color = status === "on-track" ? "#4F46E5" : status === "at-risk" ? "#F59E0B" : "#EF4444";
 
   return (
     <div className={`bg-white border border-slate-100 rounded-2xl p-5 shadow-sm flex flex-col h-full ${className}`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <Target className="w-5 h-5 text-purple-600" />
+          <Target className="w-5 h-5 text-indigo-600" />
           <h3 className="text-base font-bold text-slate-800">Project Progress</h3>
         </div>
         <StatusIndicator status={status} />

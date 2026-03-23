@@ -56,11 +56,11 @@ export default function AIInsights({ overallProgress }: AIInsightsProps) {
       icon: "🧠",
       title: "Knowledge Sharing",
       message: "Pair junior devs with senior leads for growth",
-      color: "#7C3AED",
-      bg: "bg-purple-50",
-      border: "border-purple-200",
-      text: "text-purple-700",
-      subtext: "text-purple-500",
+      color: "#4F46E5",
+      bg: "bg-indigo-50",
+      border: "border-indigo-200",
+      text: "text-indigo-700",
+      subtext: "text-indigo-500",
     });
 
     return insights;
@@ -72,8 +72,8 @@ export default function AIInsights({ overallProgress }: AIInsightsProps) {
     <div className="bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-          <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+          <svg className="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
           </svg>
         </div>
@@ -97,7 +97,7 @@ export default function AIInsights({ overallProgress }: AIInsightsProps) {
         ))}
       </div>
 
-      <button className="w-full mt-3 pt-3 border-t border-slate-100 text-center text-xs font-semibold text-purple-600 hover:text-purple-700 transition-colors">
+      <button className="w-full mt-3 pt-3 border-t border-slate-100 text-center text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
         View Full Report →
       </button>
     </div>

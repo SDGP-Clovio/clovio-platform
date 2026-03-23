@@ -117,7 +117,7 @@ export default function SupervisorProjectDetailsPage() {
 							{/* Top KPI Row */}
 							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 								<article className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm flex items-center gap-4">
-									<div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0 text-purple-600">
+									<div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0 text-indigo-600">
 										<Activity className="w-6 h-6" />
 									</div>
 									<div>

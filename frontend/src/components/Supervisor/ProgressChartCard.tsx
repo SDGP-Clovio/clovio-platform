@@ -31,7 +31,7 @@ export default function ProgressChartCard({ project }: ProgressChartCardProps) {
 				datasets: [
 					{
 						data: chartData,
-						backgroundColor: ["#B179DF", "#E5E7EB"],
+						backgroundColor: ["#4F46E5", "#E5E7EB"],
 						borderWidth: 0,
 						hoverOffset: 2,
 					},
@@ -45,7 +45,7 @@ export default function ProgressChartCard({ project }: ProgressChartCardProps) {
 						position: "bottom",
 						labels: {
 							boxWidth: 10,
-							color: "#6B7280",
+							color: "#64748B",
 						},
 					},
 				},
@@ -77,7 +77,7 @@ export default function ProgressChartCard({ project }: ProgressChartCardProps) {
 				<ul className="space-y-3">
 					{project.timeline.map((item) => (
 						<li key={`${item.date}-${item.title}`} className="flex items-start gap-3">
-							<span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-purple-500 flex-shrink-0 shadow-sm shadow-purple-200" />
+							<span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0 shadow-sm shadow-indigo-200" />
 							<div>
 								<p className="text-sm font-medium text-slate-800">{item.title}</p>
 								<p className="text-xs text-slate-500 mt-0.5">{item.date} &middot; {item.status}</p>

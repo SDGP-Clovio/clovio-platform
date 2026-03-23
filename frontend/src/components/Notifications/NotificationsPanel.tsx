@@ -18,7 +18,7 @@ const iconFor = (type: Activity['type']) => {
 const colorFor = (type: Activity['type']) => {
     switch (type) {
         case 'task_completed':    return 'bg-emerald-100 text-emerald-600';
-        case 'meeting_scheduled': return 'bg-purple-100 text-purple-600';
+        case 'meeting_scheduled': return 'bg-indigo-100 text-indigo-600';
         case 'comment_added':     return 'bg-blue-100 text-blue-600';
         case 'project_created':   return 'bg-orange-100 text-orange-600';
         default:                  return 'bg-slate-100 text-slate-500';
@@ -79,9 +79,9 @@ const NotificationsPanel: React.FC = () => {
             {/* Header */}
             <div className="bg-white rounded-xl border border-slate-100 p-5">
                 <div className="flex items-center gap-2 mb-4">
-                    <Bell className="w-5 h-5 text-purple-600" />
+                    <Bell className="w-5 h-5 text-indigo-600" />
                     <h2 className="text-base font-bold text-slate-800">All Notifications</h2>
-                    <span className="ml-auto text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full">
+                    <span className="ml-auto text-xs bg-indigo-100 text-indigo-700 font-semibold px-2 py-0.5 rounded-full">
                         {allActivities.length}
                     </span>
                 </div>
@@ -98,7 +98,7 @@ const NotificationsPanel: React.FC = () => {
                                 onClick={() => setFilter(f.value)}
                                 className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${
                                     filter === f.value
-                                        ? 'bg-purple-600 text-white shadow-sm'
+                                        ? 'bg-indigo-600 text-white shadow-sm'
                                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                                 }`}
                             >
@@ -118,7 +118,7 @@ const NotificationsPanel: React.FC = () => {
                             const parsed = Number(e.target.value);
                             setProjectFilter(Number.isFinite(parsed) ? parsed : 'all');
                         }}
-                        className="ml-auto text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-200"
+                        className="ml-auto text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-200"
                     >
                         <option value="all">All Projects</option>
                         {projects.map((p) => (

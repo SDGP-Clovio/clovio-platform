@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Trash2, ChevronRight, Sparkles, Save,
+    Trash2, Sparkles, Save,
     AlertTriangle, CheckCircle2,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
@@ -26,7 +26,7 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
         {children}
     </label>
 );
-const inputCls = 'w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 transition-all';
+const inputCls = 'w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all';
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
 const ProjectSettings: React.FC<Props> = ({ project }) => {
@@ -106,7 +106,7 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                                     ? 'bg-slate-200 text-slate-600 cursor-not-allowed'
                                     : saved
                                     ? 'bg-emerald-100 text-emerald-700'
-                                    : 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:brightness-110 shadow-md'
+                                    : 'bg-gradient-to-r from-indigo-600 to-emerald-500 text-white hover:brightness-110 shadow-md'
                             }`}
                         >
                             {isSaving
@@ -272,7 +272,7 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                         <p className="text-xs text-slate-400 mt-0.5">AI-powered task generation</p>
                     </div>
                     <div className="p-6 flex items-start gap-5">
-                        <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+                        <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-indigo-200">
                             <Sparkles className="w-7 h-7 text-white" />
                         </div>
                         <div className="flex-1">
@@ -281,17 +281,9 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                                 Describe your project goals and the wizard generates a structured task list —
                                 priorities, time estimates, and smart assignments based on team skills.
                             </p>
-                            <div className="mt-4 flex items-center gap-3">
-                                <button
-                                    onClick={() => {/* wizard TBD */}}
-                                    className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:brightness-110 transition-all shadow-md shadow-indigo-200 group"
-                                >
-                                    <Sparkles className="w-4 h-4" />
-                                    Start Wizard
-                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                                </button>
-                                <span className="text-[10px] text-slate-400">Results reviewed before saving</span>
-                            </div>
+                            <p className="mt-4 text-[11px] text-slate-500">
+                                Use the Tasks tab and open AI Task Distribution to generate and review milestones and tasks.
+                            </p>
                         </div>
                     </div>
                 </div>

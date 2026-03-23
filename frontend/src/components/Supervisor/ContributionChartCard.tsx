@@ -44,11 +44,11 @@ export default function ContributionChartCard({ contributions }: ContributionCha
 					y: {
 						beginAtZero: true,
 						max: 100,
-						ticks: { color: "#6B7280", callback: (value: string | number) => `${value}%` },
+						ticks: { color: "#64748B", callback: (value: string | number) => `${value}%` },
 						grid: { color: "#F3F4F6" },
 					},
 					x: {
-						ticks: { color: "#6B7280" },
+						ticks: { color: "#64748B" },
 						grid: { display: false },
 					},
 				},
@@ -78,12 +78,12 @@ export default function ContributionChartCard({ contributions }: ContributionCha
 					<article key={member.user_id} className="rounded-xl border border-slate-100 p-4 transition-colors hover:bg-slate-50/50">
 						<div className="flex items-center justify-between gap-2">
 							<p className="text-sm font-semibold text-slate-800">{member.name}</p>
-							<p className="text-sm font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-md">{member.contribution_percent.toFixed(1)}%</p>
+							<p className="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{member.contribution_percent.toFixed(1)}%</p>
 						</div>
 
 						<div className="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
 							<div
-								className="h-full rounded-full bg-gradient-to-r from-[#B179DF] to-[#85D5C8]"
+								className="h-full rounded-full bg-gradient-to-r from-[#4F46E5] to-[#10B981]"
 								style={{ width: `${member.contribution_percent}%` }}
 							/>
 						</div>

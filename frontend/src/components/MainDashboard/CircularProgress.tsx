@@ -23,8 +23,8 @@ export default function CircularProgress({
     >
       <defs>
         <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor="#B179DF" />
-          <stop offset="100%" stopColor="#85D5C8" />
+          <stop offset="0%" stopColor="#4F46E5" />
+          <stop offset="100%" stopColor="#10B981" />
         </linearGradient>
       </defs>
       <circle

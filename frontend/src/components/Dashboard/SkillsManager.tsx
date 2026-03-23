@@ -44,7 +44,7 @@ const SkillsManager: React.FC = () => {
                     <h4 className="text-sm font-semibold text-slate-600">Current Skills</h4>
                     <button
                         onClick={() => setShowSkillInput(!showSkillInput)}
-                        className="text-xs text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
+                        className="text-xs text-indigo-600 hover:text-indigo-700 font-medium flex items-center gap-1"
                     >
                         <Plus className="w-3 h-3" />
                         Add Skill
@@ -61,13 +61,13 @@ const SkillsManager: React.FC = () => {
                                 onChange={(e) => setNewSkill(e.target.value)}
                                 onKeyPress={(e) => e.key === 'Enter' && handleAddSkill()}
                                 placeholder="Enter skill name..."
-                                className="flex-1 px-3 py-2 text-sm border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                                className="flex-1 px-3 py-2 text-sm border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
                                 autoFocus
                             />
                             <select
                                 value={newSkillLevel}
                                 onChange={(e) => setNewSkillLevel(e.target.value as any)}
-                                className="px-3 py-2 text-sm border border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-300"
+                                className="px-3 py-2 text-sm border border-indigo-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
                             >
                                 <option value="beginner">Beginner</option>
                                 <option value="intermediate">Intermediate</option>
@@ -78,7 +78,7 @@ const SkillsManager: React.FC = () => {
                         <div className="flex gap-2">
                             <button
                                 onClick={handleAddSkill}
-                                className="px-4 py-2 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 transition-colors"
+                                className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors"
                             >
                                 Add
                             </button>
@@ -100,13 +100,13 @@ const SkillsManager: React.FC = () => {
                         userSkills.map((skill) => (
                             <div
                                 key={skill.name}
-                                className="group flex items-center gap-1 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full text-sm font-medium hover:bg-purple-200 transition-colors"
+                                className="group flex items-center gap-1 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium hover:bg-indigo-200 transition-colors"
                             >
                                 <span>{skill.name}</span>
                                 <span className="text-xs opacity-75">({skill.level})</span>
                                 <button
                                     onClick={() => removeSkill(skill.name)}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 hover:text-purple-900"
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 hover:text-indigo-900"
                                     title="Remove skill"
                                 >
                                     <X className="w-3 h-3" />
@@ -128,7 +128,7 @@ const SkillsManager: React.FC = () => {
                             <button
                                 key={skillName}
                                 onClick={() => handleQuickAddSkill(skillName)}
-                                className="group px-3 py-1.5 bg-slate-50 text-slate-600 rounded-full text-sm hover:bg-purple-50 hover:text-purple-600 border border-slate-200 hover:border-purple-300 transition-all"
+                                className="group px-3 py-1.5 bg-slate-50 text-slate-600 rounded-full text-sm hover:bg-indigo-50 hover:text-indigo-600 border border-slate-200 hover:border-indigo-300 transition-all"
                                 title="Add as skill"
                             >
                                 <span className="flex items-center gap-1">
@@ -145,8 +145,8 @@ const SkillsManager: React.FC = () => {
             )}
 
             {/* Info */}
-            <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                <p className="text-xs text-purple-700">
+            <div className="mt-4 p-3 bg-indigo-50 rounded-lg">
+                <p className="text-xs text-indigo-700">
                     <strong>Tip:</strong> Skills help AI assign tasks that match your expertise. Add your skill level to get more accurate assignments.
                 </p>
             </div>

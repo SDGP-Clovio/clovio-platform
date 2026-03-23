@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Eye, EyeOff } from 'lucide-react';
+import { CheckCircle2, Clock3, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import ClovioMark from '../components/common/ClovioMark';
 
 type LoginFormValues = {
 	email: string;
@@ -104,24 +105,26 @@ const Login: React.FC = () => {
 	};
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-[#f3f4f9] p-4">
+		<div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] p-4">
 			{/* 1. Parent Container: Must have overflow-hidden and relative position */}
 			<div className="relative flex w-full max-w-5xl overflow-hidden rounded-[40px] bg-white shadow-2xl min-h-[600px]">
 
 				{/* 2. THE PURPLE BACKGROUND LAYER */}
 				{/* We use an absolute div that spans the right half but extends behind the curve */}
-				<div className="absolute right-0 top-0 h-full w-1/2 bg-[#7c3aed]">
+				<div className="absolute right-0 top-0 h-full w-1/2 bg-gradient-to-b from-indigo-600 via-blue-600 to-emerald-500">
 					{/* 3. THE CURVE: This white div creates the "cut-out" look */}
 					<div className="absolute inset-y-0 -left-20 w-40 rounded-r-[100px] bg-white" />
+					<div className="pointer-events-none absolute -top-10 right-8 h-36 w-36 rounded-full bg-white/20 blur-2xl" />
+					<div className="pointer-events-none absolute bottom-6 right-20 h-28 w-28 rounded-full bg-emerald-200/20 blur-2xl" />
 				</div>
 
 				{/* 4. CONTENT LAYERS (Must be z-10 to sit above the background) */}
 				<div className="z-10 flex w-full flex-col justify-center p-12 md:w-1/2 lg:p-20">
-					<div className="mb-12 flex items-center gap-2">
-						<div className="h-10 w-10 rounded-xl bg-[#7c3aed] flex items-center justify-center shadow-lg shadow-purple-200">
-							<span className="text-white font-bold">C</span>
+					<div className="mb-12 flex items-center gap-2.5">
+						<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#4F46E5] to-[#10B981] shadow-lg shadow-indigo-200">
+							<ClovioMark className="h-6 w-6 text-white" />
 						</div>
-						<span className="text-xs font-bold tracking-widest text-slate-500 uppercase">System logo</span>
+						<span className="text-xs font-bold tracking-widest text-slate-500 uppercase">Clovio</span>
 					</div>
 
 					<h1 className="text-4xl font-bold text-slate-800 leading-tight">Log in</h1>
@@ -129,7 +132,7 @@ const Login: React.FC = () => {
 						Don&apos;t have an account?{' '}
 						<Link
 							to="/signup"
-							className="font-semibold text-[#7c3aed] transition-colors hover:text-[#6d28d9]"
+							className="font-semibold text-[#4F46E5] transition-colors hover:text-[#4338CA]"
 						>
 							Create an account
 						</Link>
@@ -159,7 +162,7 @@ const Login: React.FC = () => {
 								onChange={(e) => handleChange('email', e.target.value)}
 								onBlur={() => handleBlur('email')}
 								aria-invalid={Boolean(errors.email)}
-								className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
+								className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
 							/>
 							{errors.email && touchedFields.email && (
 								<p className="text-sm text-red-500">{errors.email}</p>
@@ -183,7 +186,7 @@ const Login: React.FC = () => {
 									onChange={(e) => handleChange('password', e.target.value)}
 									onBlur={() => handleBlur('password')}
 									aria-invalid={Boolean(errors.password)}
-									className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#7c3aed]/20"
+									className="w-full rounded-2xl border border-slate-100 bg-slate-50 p-4 pr-12 outline-none transition-all focus:ring-2 focus:ring-[#4F46E5]/20"
 								/>
 								<button
 									type="button"
@@ -201,7 +204,7 @@ const Login: React.FC = () => {
 							<div className="flex justify-end">
 								<button
 									type="button"
-									className="text-sm font-medium text-[#7c3aed] transition-colors hover:text-[#6d28d9]"
+									className="text-sm font-medium text-[#4F46E5] transition-colors hover:text-[#4338CA]"
 								>
 									Forgot password?
 								</button>
@@ -210,7 +213,7 @@ const Login: React.FC = () => {
 
 						<button
 							type="submit"
-							className="mt-4 w-full rounded-2xl bg-[#7c3aed] py-4 text-base font-bold text-white shadow-xl shadow-purple-400/30 transition-all hover:brightness-110"
+							className="mt-4 w-full rounded-2xl bg-[#4F46E5] py-4 text-base font-bold text-white shadow-xl shadow-indigo-400/30 transition-all hover:brightness-110"
 						>
 							Log in
 						</button>
@@ -219,10 +222,52 @@ const Login: React.FC = () => {
 
 				{/* Right Side Illustration Layer */}
 				<div className="relative z-10 hidden w-1/2 md:flex items-center justify-center p-12">
-					<div className="w-full h-64 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 transform -rotate-6 shadow-2xl flex items-center justify-center">
-						<span className="text-white/40 italic text-sm text-center px-4">
-							[Place your layered laptop image here]
-						</span>
+					<div className="relative h-[24rem] w-full max-w-[23rem]">
+						<div className="absolute left-1 top-3 z-20 w-40 rounded-2xl border border-white/25 bg-white/15 p-4 backdrop-blur-md shadow-xl -rotate-[7deg]">
+							<p className="text-[11px] uppercase tracking-[0.12em] text-white/80">Team Health</p>
+							<p className="mt-1 text-xl font-bold text-white">82%</p>
+							<p className="text-xs text-emerald-100">On track this week</p>
+						</div>
+
+						<div className="absolute right-2 top-5 z-20 w-44 rounded-2xl border border-white/25 bg-slate-900/20 p-4 backdrop-blur-md shadow-xl rotate-[8deg]">
+							<p className="text-xs font-semibold text-white/85">Next Meeting</p>
+							<p className="mt-1 flex items-center gap-2 text-sm text-white">
+								<Clock3 size={14} className="text-emerald-200" />
+								10:00 AM tomorrow
+							</p>
+						</div>
+
+						<div className="absolute left-0 top-[8.5rem] z-30 w-44 rounded-2xl border border-white/25 bg-white/12 p-4 backdrop-blur-md shadow-xl -rotate-[3deg]">
+							<p className="text-[11px] uppercase tracking-[0.12em] text-white/80">Bus Factor</p>
+							<p className="mt-1 text-sm font-semibold text-white">Low Risk</p>
+							<p className="mt-1 text-xs text-emerald-100">3 owners on critical tasks</p>
+						</div>
+
+						<div className="absolute right-1 top-40 z-20 w-44 rounded-2xl border border-white/25 bg-slate-900/20 p-4 backdrop-blur-md shadow-xl rotate-[4deg]">
+							<p className="text-[11px] uppercase tracking-[0.12em] text-white/80">Sprint Velocity</p>
+							<p className="mt-1 text-sm font-semibold text-white">+6% this week</p>
+							<p className="mt-1 text-xs text-indigo-100">Ahead of baseline</p>
+						</div>
+
+						<div className="absolute bottom-2 left-1/2 z-30 w-52 -translate-x-1/2 rounded-2xl border border-white/30 bg-slate-950/25 p-4 backdrop-blur-md shadow-2xl -rotate-[1deg]">
+							<p className="text-[11px] uppercase tracking-[0.14em] text-indigo-100">Today Snapshot</p>
+							<div className="mt-3 space-y-2">
+								<div className="flex items-center justify-between rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs text-white">
+									<span className="flex items-center gap-2">
+										<CheckCircle2 size={13} className="text-emerald-200" />
+										Tasks done
+									</span>
+									<strong>18/22</strong>
+								</div>
+								<div className="flex items-center justify-between rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs text-white">
+									<span className="flex items-center gap-2">
+										<ShieldCheck size={13} className="text-indigo-200" />
+										Fairness
+									</span>
+									<strong>88%</strong>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 

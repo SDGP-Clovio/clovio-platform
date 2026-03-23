@@ -26,7 +26,7 @@ const Button: React.FC<ButtonProps> = ({
 
     // Variant styles
     const variantStyles: Record<ButtonVariant, string> = {
-        primary: 'bg-clovio-purple text-white hover:brightness-110 focus:ring-clovio-purple shadow-lg shadow-purple-200',
+        primary: 'bg-clovio-purple text-white hover:brightness-110 focus:ring-clovio-purple shadow-lg shadow-indigo-200',
         secondary: 'bg-slate-100 text-slate-700 hover:bg-slate-200 focus:ring-slate-300',
         danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-400 shadow-lg shadow-red-200',
         ghost: 'bg-transparent text-slate-600 hover:bg-slate-50 focus:ring-slate-300',

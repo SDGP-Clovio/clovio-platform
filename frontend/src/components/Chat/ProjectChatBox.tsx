@@ -137,8 +137,8 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
                                     </p>
                                 )}
                                 <p className="text-sm leading-relaxed break-words">{message.content}</p>
-                                <p className={`text-[10px] mt-1 ${isMine ? "text-purple-100" : "text-slate-400"}`}>
-                                    {new Date(message.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                                <p className={`text-[10px] mt-1 ${isMine ? 'text-indigo-100' : 'text-slate-400'}`}>
+                                    {new Date(message.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                                 </p>
                             </div>
                         </div>
@@ -154,7 +154,7 @@ const ProjectChatBox: React.FC<ProjectChatBoxProps> = ({ projectId, standalone =
                         value={draft}
                         onChange={(e) => setDraft(e.target.value)}
                         placeholder="Type a message..."
-                        className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 text-sm"
+                        className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 text-sm"
                     />
                     <button
                         type="submit"

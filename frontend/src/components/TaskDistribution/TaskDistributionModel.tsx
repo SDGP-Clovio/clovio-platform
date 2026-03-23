@@ -27,7 +27,7 @@ export default function TaskDistributionModal({ milestones, onClose, onConfirm }
                 <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <span className="text-xl bg-purple-100 rounded-lg w-8 h-8 flex items-center justify-center text-purple-600 shadow-sm border border-purple-200">📋</span>
+                            <span className="text-xl bg-gradient-to-br from-indigo-100 to-emerald-100 rounded-lg w-8 h-8 flex items-center justify-center text-indigo-700 shadow-sm border border-indigo-200">📋</span>
                             <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">Project Breakdown</h2>
                         </div>
                         <p className="text-slate-500 text-sm ml-11">Review {milestones.length} generated milestones securely.</p>
@@ -55,7 +55,7 @@ export default function TaskDistributionModal({ milestones, onClose, onConfirm }
                                     onClick={() => setSelectedMilestoneId(m.id)}
                                     className={`text-left p-4 rounded-2xl border-2 transition-all duration-200 ${
                                         isSelected 
-                                            ? "border-purple-600 bg-purple-50/50 shadow-sm"
+                                            ? "border-emerald-400 bg-gradient-to-r from-indigo-50 to-emerald-50 shadow-sm"
                                             : "border-transparent bg-white shadow-sm hover:border-slate-200"
                                     }`}
                                 >
@@ -63,7 +63,7 @@ export default function TaskDistributionModal({ milestones, onClose, onConfirm }
                                         <div className="flex gap-3">
                                             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-sm ${
                                                 isSelected 
-                                                    ? "bg-purple-600 text-white" 
+                                                    ? "bg-gradient-to-r from-indigo-600 to-emerald-500 text-white" 
                                                     : "bg-slate-100 text-slate-500 border border-slate-200"
                                             }`}>
                                                 {idx + 1}
@@ -102,7 +102,7 @@ export default function TaskDistributionModal({ milestones, onClose, onConfirm }
                                         selectedMilestone.tasks.map((t: Task, taskIdx: number) => (
                                             <div
                                                 key={t.id || taskIdx}
-                                                className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-purple-200 hover:shadow-md transition-all flex items-center justify-between group"
+                                                className="p-5 bg-white rounded-xl border border-slate-200 shadow-sm hover:border-emerald-200 hover:shadow-md transition-all flex items-center justify-between group"
                                             >
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-3 mb-1">
@@ -123,7 +123,7 @@ export default function TaskDistributionModal({ milestones, onClose, onConfirm }
                                                         </span>
                                                         
                                                         {t.assignee && (
-                                                            <div className="flex items-center gap-1.5 bg-purple-50 border border-purple-100 px-2.5 py-0.5 rounded-md text-purple-700 text-xs font-semibold">
+                                                            <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-100 px-2.5 py-0.5 rounded-md text-indigo-700 text-xs font-semibold">
                                                                 <span>👤</span> {t.assignee}
                                                             </div>
                                                         )}
@@ -157,7 +157,7 @@ export default function TaskDistributionModal({ milestones, onClose, onConfirm }
                     </button>
                     <button 
                         onClick={onConfirm}
-                        className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold shadow-md shadow-purple-200 transition-all hover:-translate-y-0.5"
+                        className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-emerald-500 hover:from-indigo-700 hover:to-emerald-600 text-white font-bold shadow-md shadow-indigo-200 transition-all hover:-translate-y-0.5"
                     >
                         Confirm & Start Tasks
                     </button>

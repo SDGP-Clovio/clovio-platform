@@ -144,6 +144,7 @@ const ProjectWizard: React.FC = () => {
                 description: formData.description.trim(),
                 status: 'planned',
                 created_by: currentUser.id,
+                course_name: formData.courseName.trim() || undefined,
                 member_ids: Array.from(new Set(formData.teamMembers)),
                 supervisor_id: formData.supervisorId ?? undefined,
                 deadline: formData.deadline ? new Date(formData.deadline).toISOString() : undefined,
@@ -245,7 +246,7 @@ const ProjectWizard: React.FC = () => {
                             onClick={handleNext}
                             disabled={!isStepValid()}
                             className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all ${isStepValid()
-                                    ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:brightness-110 shadow-md'
+                                    ? 'bg-gradient-to-r from-indigo-600 to-emerald-500 text-white hover:from-indigo-700 hover:to-emerald-600 shadow-md'
                                     : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                                 }`}
                         >
@@ -259,7 +260,7 @@ const ProjectWizard: React.FC = () => {
                             className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition-all ${
                                 !isStepValid() || isSubmitting
                                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:brightness-110 shadow-md'
+                                    : 'bg-gradient-to-r from-indigo-600 to-emerald-500 text-white hover:from-indigo-700 hover:to-emerald-600 shadow-md'
                             }`}
                         >
                             <Check className="w-4 h-4" />
@@ -293,7 +294,7 @@ const Step1ProjectDetails: React.FC<{
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g., Mobile App Development"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-all"
                 />
             </div>
 
@@ -306,7 +307,7 @@ const Step1ProjectDetails: React.FC<{
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Describe your project goals and objectives..."
                     rows={4}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 transition-all resize-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-all resize-none"
                 />
             </div>
 
@@ -318,7 +319,7 @@ const Step1ProjectDetails: React.FC<{
                         value={formData.courseName}
                         onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
                         placeholder="e.g., Software Engineering"
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 transition-all"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-all"
                     />
                 </div>
 
@@ -329,7 +330,7 @@ const Step1ProjectDetails: React.FC<{
                         title="Project deadline"
                         value={formData.deadline}
                         onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 transition-all"
+                        className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-all"
                     />
                 </div>
             </div>
@@ -392,7 +393,7 @@ const Step2TeamSelection: React.FC<{
                                 onFocus={() => setShowSupervisorResults(true)}
                                 onBlur={() => window.setTimeout(() => setShowSupervisorResults(false), 120)}
                                 placeholder="Search supervisor by name or email..."
-                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-300 transition-all"
+                                className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-300 transition-all"
                             />
 
                             {showSupervisorResults && (
@@ -407,7 +408,7 @@ const Step2TeamSelection: React.FC<{
                                                     setSupervisorQuery('');
                                                     setShowSupervisorResults(false);
                                                 }}
-                                                className="w-full px-4 py-2.5 text-left hover:bg-purple-50 transition-colors"
+                                                className="w-full px-4 py-2.5 text-left hover:bg-indigo-50 transition-colors"
                                             >
                                                 <p className="text-sm font-medium text-slate-800">{supervisor.name}</p>
                                                 <p className="text-xs text-slate-500">{supervisor.email}</p>
@@ -421,15 +422,15 @@ const Step2TeamSelection: React.FC<{
                         </div>
 
                         {selectedSupervisor ? (
-                            <div className="inline-flex items-center gap-2 rounded-lg border border-purple-200 bg-purple-50 px-3 py-2">
-                                <span className="text-sm font-medium text-purple-800">{selectedSupervisor.name}</span>
-                                <span className="text-xs text-purple-600">{selectedSupervisor.email}</span>
+                            <div className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2">
+                                <span className="text-sm font-medium text-indigo-800">{selectedSupervisor.name}</span>
+                                <span className="text-xs text-indigo-600">{selectedSupervisor.email}</span>
                                 <button
                                     type="button"
                                     onClick={() => setFormData({ ...formData, supervisorId: null })}
                                     title="Clear selected supervisor"
                                     aria-label="Clear selected supervisor"
-                                    className="ml-1 text-purple-600 hover:text-purple-800"
+                                    className="ml-1 text-indigo-600 hover:text-indigo-800"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
@@ -514,7 +515,7 @@ const Step3Review: React.FC<{
                         <div className="flex flex-wrap gap-2">
                             {selectedUsers.map(user => (
                                 <div key={user.id} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border border-slate-200">
-                                    <div className="w-6 h-6 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                    <div className="w-6 h-6 bg-gradient-to-br from-indigo-400 to-emerald-500 rounded-full flex items-center justify-center text-white text-xs font-semibold">
                                         {user.name.charAt(0)}
                                     </div>
                                     <span className="text-sm text-slate-700">{user.name}</span>

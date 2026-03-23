@@ -32,13 +32,13 @@ export default function ProjectsTable({ projects, onOpenProject }: ProjectsTable
 					<tbody>
 						{projects.map((project) => (
 							<tr key={project.id} className="border-b border-gray-50 hover:bg-gray-50/70 transition-colors">
-								<td className="py-3 pr-3 font-semibold text-[#1A1A1A]">{project.name}</td>
+								<td className="py-3 pr-3 font-semibold text-[#0F172A]">{project.name}</td>
 								<td className="py-3 pr-3 text-gray-600">{project.status}</td>
 								<td className="py-3 pr-3">
 									<div className="w-44 max-w-full">
 										<div className="h-2 rounded-full bg-gray-100 overflow-hidden">
 											<div
-												className="h-full rounded-full bg-gradient-to-r from-[#B179DF] to-[#85D5C8]"
+												className="h-full rounded-full bg-gradient-to-r from-[#4F46E5] to-[#10B981]"
 												style={{ width: `${project.completion_percent}%` }}
 											/>
 										</div>
@@ -56,7 +56,7 @@ export default function ProjectsTable({ projects, onOpenProject }: ProjectsTable
 									<button
 										onClick={() => onOpenProject(project.id)}
 										className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
-										style={{ background: "linear-gradient(135deg,#B179DF,#85D5C8)" }}
+										style={{ background: "linear-gradient(135deg,#4F46E5,#10B981)" }}
 									>
 										View Details
 									</button>

@@ -16,7 +16,12 @@ import {
     mockActivities,
     mockDashboardStats,
 } from '../data/mockData';
-import { fetchCurrentUserAsAppUser, fetchUsers } from '../services/users';
+import {
+    fetchCurrentUserAsAppUser,
+    fetchCurrentUserSettingsAsAppUser,
+    fetchUsers,
+    updateCurrentUserSettings,
+} from '../services/users';
 import {
     deleteProjectRecord,
     fetchProjects,
@@ -44,10 +49,11 @@ interface AppContextState {
     // Current User
     currentUser: User | null;
     setCurrentUser: (user: User | null) => void;
-    addSkill: (skill: Skill) => void;
-    removeSkill: (skillName: string) => void;
-    updateSkillLevel: (skillName: string, level: Skill['level']) => void;
-    updateDefaultAvailability: (slots: DayAvailability[]) => void;
+    updateCurrentUserName: (name: string) => Promise<boolean>;
+    addSkill: (skill: Skill) => Promise<boolean>;
+    removeSkill: (skillName: string) => Promise<boolean>;
+    updateSkillLevel: (skillName: string, level: Skill['level']) => Promise<boolean>;
+    updateDefaultAvailability: (slots: DayAvailability[]) => Promise<boolean>;
     // weeklyOverrides: date-string -> free hours array
     weeklyOverrides: Record<string, number[]>;
     toggleHourAvailability: (dateStr: string, hour: number) => void;
@@ -88,7 +94,7 @@ interface AppContextState {
 
     // Meetings
     meetings: Meeting[];
-    addMeeting: (meeting: Meeting) => Promise<void>;
+    addMeeting: (meeting: Meeting) => Promise<boolean>;
 
     // Fairness Metrics
     fairnessMetrics: FairnessMetrics;
@@ -300,13 +306,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 setActiveProject((previous) => previous ?? apiProjects[0] ?? null);
                 if (hasToken) {
                     try {
-                        const me = await fetchCurrentUserAsAppUser();
+                        const me = await fetchCurrentUserSettingsAsAppUser();
                         if (isMounted) {
                             setCurrentUser(me);
                         }
                     } catch {
-                        if (isMounted) {
-                            setCurrentUser(null);
+                        try {
+                            const fallbackMe = await fetchCurrentUserAsAppUser();
+                            if (isMounted) {
+                                setCurrentUser(fallbackMe);
+                            }
+                        } catch {
+                            if (isMounted) {
+                                setCurrentUser(null);
+                            }
                         }
                     }
                 } else {
@@ -483,34 +496,103 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
 
     // Skill Management Actions
-    const addSkill = (skill: Skill) => {
-        if (!currentUser) return;
+    const updateCurrentUserName = async (name: string): Promise<boolean> => {
+        if (!currentUser) {
+            return false;
+        }
+
+        const trimmed = name.trim();
+        if (!trimmed) {
+            return false;
+        }
+
+        const previousUser = currentUser;
+        setCurrentUser({ ...currentUser, name: trimmed });
+
+        try {
+            const persisted = await updateCurrentUserSettings({ fullName: trimmed });
+            setCurrentUser(persisted);
+            return true;
+        } catch (error) {
+            console.error('Failed to persist current user name', error);
+            setCurrentUser(previousUser);
+            return false;
+        }
+    };
+
+    const addSkill = async (skill: Skill): Promise<boolean> => {
+        if (!currentUser) return false;
         // avoid duplicates
-        if ((currentUser.skills || []).some((s) => s.name === skill.name)) return;
-        setCurrentUser({ ...currentUser, skills: [...(currentUser.skills || []), skill] });
+        if ((currentUser.skills || []).some((s) => s.name === skill.name)) return false;
+
+        const previousUser = currentUser;
+        const nextSkills = [...(currentUser.skills || []), skill];
+        setCurrentUser({ ...currentUser, skills: nextSkills });
+
+        try {
+            const persisted = await updateCurrentUserSettings({ skills: nextSkills });
+            setCurrentUser(persisted);
+            return true;
+        } catch (error) {
+            console.error('Failed to persist user skills', error);
+            setCurrentUser(previousUser);
+            return false;
+        }
     };
 
-    const removeSkill = (skillName: string) => {
-        if (!currentUser) return;
-        setCurrentUser({
-            ...currentUser,
-            skills: (currentUser.skills || []).filter((s) => s.name !== skillName),
-        });
+    const removeSkill = async (skillName: string): Promise<boolean> => {
+        if (!currentUser) return false;
+
+        const previousUser = currentUser;
+        const nextSkills = (currentUser.skills || []).filter((s) => s.name !== skillName);
+        setCurrentUser({ ...currentUser, skills: nextSkills });
+
+        try {
+            const persisted = await updateCurrentUserSettings({ skills: nextSkills });
+            setCurrentUser(persisted);
+            return true;
+        } catch (error) {
+            console.error('Failed to persist user skills', error);
+            setCurrentUser(previousUser);
+            return false;
+        }
     };
 
-    const updateSkillLevel = (skillName: string, level: Skill['level']) => {
-        if (!currentUser) return;
-        setCurrentUser({
-            ...currentUser,
-            skills: (currentUser.skills || []).map((s) =>
-                s.name === skillName ? { ...s, level } : s
-            ),
-        });
+    const updateSkillLevel = async (skillName: string, level: Skill['level']): Promise<boolean> => {
+        if (!currentUser) return false;
+
+        const previousUser = currentUser;
+        const nextSkills = (currentUser.skills || []).map((s) =>
+            s.name === skillName ? { ...s, level } : s
+        );
+        setCurrentUser({ ...currentUser, skills: nextSkills });
+
+        try {
+            const persisted = await updateCurrentUserSettings({ skills: nextSkills });
+            setCurrentUser(persisted);
+            return true;
+        } catch (error) {
+            console.error('Failed to persist user skills', error);
+            setCurrentUser(previousUser);
+            return false;
+        }
     };
 
-    const updateDefaultAvailability = (slots: DayAvailability[]) => {
-        if (!currentUser) return;
+    const updateDefaultAvailability = async (slots: DayAvailability[]): Promise<boolean> => {
+        if (!currentUser) return false;
+
+        const previousUser = currentUser;
         setCurrentUser({ ...currentUser, defaultAvailability: slots });
+
+        try {
+            const persisted = await updateCurrentUserSettings({ defaultAvailability: slots });
+            setCurrentUser(persisted);
+            return true;
+        } catch (error) {
+            console.error('Failed to persist default availability', error);
+            setCurrentUser(previousUser);
+            return false;
+        }
     };
 
     // Weekly overrides: date-string -> set of free hours
@@ -717,20 +799,33 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             return false;
         }
 
-        const optimisticProject: Project = { ...previousProject, ...patch };
+        const normalizedCourseName =
+            typeof patch.courseName === 'string' ? patch.courseName.trim() : undefined;
+
+        const optimisticProject: Project = {
+            ...previousProject,
+            ...patch,
+            ...(patch.courseName !== undefined
+                ? {
+                    courseName: normalizedCourseName || undefined,
+                    module: normalizedCourseName || 'General',
+                }
+                : {}),
+        };
 
         setProjects((prev) => prev.map((project) => (project.id === id ? optimisticProject : project)));
         setActiveProject((prev) => {
             if (!prev || prev.id !== id) {
                 return prev;
             }
-            return { ...prev, ...patch };
+            return optimisticProject;
         });
 
         const payload: {
             name?: string;
             description?: string;
             status?: 'planned' | 'active' | 'completed';
+            course_name?: string | null;
             deadline?: string | null;
             member_ids?: number[];
             supervisor_id?: number | null;
@@ -744,6 +839,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         }
         if (patch.status !== undefined) {
             payload.status = mapProjectStatusForApi(patch.status);
+        }
+        if (patch.courseName !== undefined) {
+            payload.course_name = normalizedCourseName ? normalizedCourseName : null;
         }
         if (patch.deadline !== undefined) {
             payload.deadline = patch.deadline ? new Date(patch.deadline).toISOString() : null;
@@ -761,11 +859,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
         try {
             const persistedProject = await updateProjectRecord(id, payload);
-            const mergedPersistedProject: Project = {
-                ...persistedProject,
-                module: optimisticProject.module,
-                courseName: optimisticProject.courseName,
-            };
+            const mergedPersistedProject: Project = persistedProject;
 
             const chatMemberIds = Array.from(
                 new Set(
@@ -875,7 +969,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
 
     // Meeting Actions
-    const addMeeting = async (meeting: Meeting) => {
+    const addMeeting = async (meeting: Meeting): Promise<boolean> => {
         try {
             const createdMeeting = await createMeetingRecord({
                 project_id: meeting.projectId,
@@ -903,8 +997,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 };
                 addActivity(activity);
             }
+            return true;
         } catch (error) {
             console.error('Failed to create meeting', error);
+            return false;
         }
     };
 
@@ -933,6 +1029,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const value: AppContextState = {
         currentUser,
         setCurrentUser,
+        updateCurrentUserName,
         addSkill,
         removeSkill,
         updateSkillLevel,

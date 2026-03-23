@@ -31,7 +31,7 @@ export default function RiskAssessment({ riskScore = 35, busFactorScore = 65 }: 
 
   const getBusFactorColor = (score: number): string => {
     if (score >= 70) return "#10B981";
-    if (score >= 50) return "#7C3AED";
+    if (score >= 50) return "#4F46E5";
     if (score >= 30) return "#F59E0B";
     return "#EF4444";
   };

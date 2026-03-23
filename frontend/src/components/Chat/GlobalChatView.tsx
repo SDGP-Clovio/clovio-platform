@@ -42,7 +42,7 @@ export default function GlobalChatView() {
                             <button
                                 key={project.id}
                                 onClick={() => setSelectedProjectId(toId(project.id))}
-                                className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-3 ${isSelected ? 'bg-purple-600 text-white shadow-md' : 'hover:bg-slate-200/50 text-slate-700'}`}
+                                className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-3 ${isSelected ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-slate-200/50 text-slate-700'}`}
                             >
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-white/20' : 'bg-slate-200'}`}>
                                     <Hash className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-500'}`} />
@@ -54,8 +54,8 @@ export default function GlobalChatView() {
                                         </h3>
                                     </div>
                                     <div className="flex items-center gap-1.5 opacity-80">
-                                        <Users className={`w-3 h-3 ${isSelected ? 'text-purple-200' : 'text-slate-400'}`} />
-                                        <p className={`text-[11px] font-medium truncate ${isSelected ? 'text-purple-100' : 'text-slate-500'}`}>
+                                        <Users className={`w-3 h-3 ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`} />
+                                        <p className={`text-[11px] font-medium truncate ${isSelected ? 'text-indigo-100' : 'text-slate-500'}`}>
                                             {project.teamMembers.length} members
                                         </p>
                                     </div>

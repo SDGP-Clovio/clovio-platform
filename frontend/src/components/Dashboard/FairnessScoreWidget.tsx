@@ -114,8 +114,8 @@ const FairnessScoreWidget: React.FC = () => {
             </div>
 
             {/* Info */}
-            <div className="mt-6 p-3 bg-purple-50 rounded-lg">
-                <p className="text-xs text-purple-700">
+            <div className="mt-6 p-3 bg-indigo-50 rounded-lg">
+                <p className="text-xs text-indigo-700">
                     <strong>Target:</strong> Gini coefficient below 0.25 indicates excellent fairness.
                     Lower values mean more equal workload distribution.
                 </p>

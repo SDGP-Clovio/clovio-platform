@@ -108,7 +108,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                             onClick={() => setViewMode('milestones')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                 viewMode === 'milestones'
-                                    ? 'bg-white text-purple-700 shadow-sm'
+                                    ? 'bg-white text-indigo-700 shadow-sm'
                                     : 'text-slate-500 hover:text-slate-700'
                             }`}
                         >
@@ -119,7 +119,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                             onClick={() => setViewMode('kanban')}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                 viewMode === 'kanban'
-                                    ? 'bg-white text-purple-700 shadow-sm'
+                                    ? 'bg-white text-indigo-700 shadow-sm'
                                     : 'text-slate-500 hover:text-slate-700'
                             }`}
                         >
@@ -131,7 +131,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                     {/* Task Distribution Wizard Button */}
                     <button
                         onClick={() => setIsWizardOpen(true)}
-                        className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-purple-200 transition-all hover:-translate-y-0.5"
+                        className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-emerald-500 hover:from-indigo-700 hover:to-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold text-sm shadow-md shadow-indigo-200 transition-all hover:-translate-y-0.5"
                     >
                         <Wand2 className="w-4 h-4" />
                         Task Distribution Wizard
@@ -179,7 +179,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                                             <div
                                                 key={task.id}
                                                 onClick={() => handleTaskClick(task)}
-                                                className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-100 hover:border-purple-200 hover:shadow-md transition-all group cursor-pointer"
+                                                className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-100 hover:border-indigo-200 hover:shadow-md transition-all group cursor-pointer"
                                             >
                                                 <div className="flex items-center gap-4 flex-1 min-w-0">
                                                     {/* Status Icon */}
@@ -189,7 +189,7 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
 
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-2 mb-1">
-                                                            <h4 className="text-sm font-bold text-slate-800 truncate group-hover:text-purple-600 transition-colors">
+                                                            <h4 className="text-sm font-bold text-slate-800 truncate group-hover:text-indigo-600 transition-colors">
                                                                 {task.title}
                                                             </h4>
                                                             {/* Status Badge */}

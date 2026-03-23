@@ -27,7 +27,7 @@ def upgrade():
             sa.Integer(),
             sa.ForeignKey("projects.id", ondelete="CASCADE"),
             nullable=False,
-            unique=True,   # one chat per project, enforced at DB level
+            unique=True,
         ),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now()),
     )

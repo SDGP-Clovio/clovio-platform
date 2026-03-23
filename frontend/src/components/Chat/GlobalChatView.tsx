@@ -3,29 +3,29 @@ import { useApp } from '../../context/AppContext';
 import ProjectChatBox from './ProjectChatBox';
 import { MessageSquareOff, Hash, Users } from 'lucide-react';
 
+const toId = (id: number | string) => Number(id);
+
 export default function GlobalChatView() {
-    const { projects, getProjectChat } = useApp();
-    
-    // Filter projects that actually have initialize chats
-    const activeProjects = projects.filter(p => getProjectChat(p.id));
-    const [selectedProjectId, setSelectedProjectId] = useState<number | null>(activeProjects.length > 0 ? activeProjects[0].id : null);
+    const { projects } = useApp();
+
+    const availableProjects = projects;
+
+    const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+        availableProjects.length > 0 ? toId(availableProjects[0].id) : null
+    );
 
     useEffect(() => {
-        if (activeProjects.length === 0) {
+        if (availableProjects.length === 0) {
             setSelectedProjectId(null);
             return;
         }
 
-        if (selectedProjectId == null) {
-            setSelectedProjectId(activeProjects[0].id);
-            return;
-        }
-
-        const stillExists = activeProjects.some((project) => project.id === selectedProjectId);
-        if (!stillExists) {
-            setSelectedProjectId(activeProjects[0].id);
-        }
-    }, [activeProjects, selectedProjectId]);
+        setSelectedProjectId((current) => {
+            if (current == null) return toId(availableProjects[0].id);
+            const stillExists = availableProjects.some((p) => toId(p.id) === current);
+            return stillExists ? current : toId(availableProjects[0].id);
+        });
+    }, [availableProjects]);
 
     return (
         <div className="flex h-[calc(100vh-140px)] bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-[500px]">
@@ -36,12 +36,12 @@ export default function GlobalChatView() {
                     <p className="text-xs text-slate-500 font-medium mt-0.5">Project channels</p>
                 </div>
                 <div className="overflow-y-auto flex-1 p-2 space-y-1">
-                    {activeProjects.map(project => {
-                        const isSelected = selectedProjectId === project.id;
+                    {availableProjects.map(project => {
+                        const isSelected = selectedProjectId === toId(project.id);
                         return (
                             <button
                                 key={project.id}
-                                onClick={() => setSelectedProjectId(project.id)}
+                                onClick={() => setSelectedProjectId(toId(project.id))}
                                 className={`w-full text-left p-3 rounded-xl transition-all flex items-start gap-3 ${isSelected ? 'bg-indigo-600 text-white shadow-md' : 'hover:bg-slate-200/50 text-slate-700'}`}
                             >
                                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-white/20' : 'bg-slate-200'}`}>
@@ -56,16 +56,16 @@ export default function GlobalChatView() {
                                     <div className="flex items-center gap-1.5 opacity-80">
                                         <Users className={`w-3 h-3 ${isSelected ? 'text-indigo-200' : 'text-slate-400'}`} />
                                         <p className={`text-[11px] font-medium truncate ${isSelected ? 'text-indigo-100' : 'text-slate-500'}`}>
-                                            {project.teamMembers.length + 1} members
+                                            {project.teamMembers.length} members
                                         </p>
                                     </div>
                                 </div>
                             </button>
                         );
                     })}
-                    {activeProjects.length === 0 && (
+                    {availableProjects.length === 0 && (
                         <div className="text-center p-6 text-slate-400">
-                            <p className="text-sm font-medium">No active project chats available.</p>
+                            <p className="text-sm font-medium">No project chats available.</p>
                         </div>
                     )}
                 </div>
@@ -73,7 +73,7 @@ export default function GlobalChatView() {
 
             {/* Main Chat Area */}
             <div className="flex-1 bg-white relative">
-                {selectedProjectId ? (
+                {selectedProjectId != null ? (
                     <ProjectChatBox projectId={selectedProjectId} standalone={false} />
                 ) : (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-50/50">

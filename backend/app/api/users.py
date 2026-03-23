@@ -157,17 +157,18 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     Register a new user in the Clovio platform.
     """
     # 1. Check if a user with this email already exists
-    db_user = db.query(User).filter(User.email == user.email).first()
+    normalized_email = user.email.strip().lower()
+    db_user = db.query(User).filter(User.email == normalized_email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
     # 2. Map the validated Pydantic data to your SQLAlchemy model
     
     new_user = User(
-        email=user.email,
-        username=user.username,
+        email=normalized_email,
+        username=normalized_email,
         full_name=user.full_name,
-        hashed_password=user.password  # Storing raw temporarily for testing
+        hashed_password=user.password
     )
     
     # 3. Save to the PostgreSQL database

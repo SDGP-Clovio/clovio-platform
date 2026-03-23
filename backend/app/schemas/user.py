@@ -5,7 +5,6 @@ from app.models.user import UserRole
 # 1. Base properties shared across all user interactions
 class UserBase(BaseModel):
     email: EmailStr
-    username: str
     full_name: Optional[str] = None
 
 # 2. Properties required when a user registers (Create)

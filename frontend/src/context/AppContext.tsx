@@ -9,7 +9,6 @@ import type {
     DashboardStats,
     Skill,
     DayAvailability,
-    ProjectChat,
 } from '../types/types';
 
 import {
@@ -108,10 +107,6 @@ interface AppContextState {
     dashboardStats: DashboardStats;
     updateDashboardStats: () => void;
 
-    // Project Chats
-    projectChats: ProjectChat[];
-    getProjectChat: (projectId: number) => ProjectChat | undefined;
-    sendProjectMessage: (projectId: number, content: string) => Promise<void>;
 }
 
 // Create Context
@@ -1062,9 +1057,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         addActivity,
         dashboardStats,
         updateDashboardStats,
-        projectChats,
-        getProjectChat,
-        sendProjectMessage,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

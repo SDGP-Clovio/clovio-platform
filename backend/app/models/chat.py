@@ -32,20 +32,6 @@ class ConversationParticipant(Base):
     user = relationship("User")
 
 
-class DirectConversation(Base):
-    """1-on-1 private chat between two users."""
-    __tablename__ = "direct_conversations"
-
-    id = Column(Integer, primary_key=True, index=True)
-    user_a_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    user_b_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    user_a = relationship("User", foreign_keys=[user_a_id])
-    user_b = relationship("User", foreign_keys=[user_b_id])
-    messages = relationship("DirectMessage", back_populates="direct_conversation", cascade="all, delete")
-
-
 class Message(Base):
     """A message inside a project group chat."""
     __tablename__ = "messages"
@@ -57,18 +43,4 @@ class Message(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     conversation = relationship("Conversation", back_populates="messages")
-    sender = relationship("User")
-
-
-class DirectMessage(Base):
-    """A message inside a 1-on-1 DM conversation."""
-    __tablename__ = "direct_messages"
-
-    id = Column(Integer, primary_key=True, index=True)
-    direct_conversation_id = Column(Integer, ForeignKey("direct_conversations.id", ondelete="CASCADE"), nullable=False)
-    sender_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    content = Column(Text, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    direct_conversation = relationship("DirectConversation", back_populates="messages")
     sender = relationship("User")

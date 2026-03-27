@@ -7,6 +7,7 @@ from app.core.database import get_db
 from app.models.task import Task
 from app.models.milestone import Milestone
 from app.models.project import Project
+from app.models.user import User
 from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
 
 router = APIRouter()
@@ -77,12 +78,27 @@ def _resolve_milestone_for_task(task: TaskCreate, db: Session) -> Milestone:
     db.flush()
     return milestone
 
+
+def _normalize_assignee_id(assigned_to: Optional[int], db: Session) -> Optional[int]:
+    if assigned_to is None:
+        return None
+
+    if assigned_to <= 0:
+        return None
+
+    user_exists = db.query(User.id).filter(User.id == assigned_to).first()
+    if user_exists is None:
+        raise HTTPException(status_code=400, detail=f"Assigned user {assigned_to} was not found")
+
+    return assigned_to
+
 @router.post("/", response_model=TaskResponse, status_code=201)
 def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     """
     Create a new task and assign it to a milestone.
     """
     milestone = _resolve_milestone_for_task(task, db)
+    assignee_id = _normalize_assignee_id(task.assigned_to, db)
 
     new_task = Task(
         name=task.name,
@@ -91,7 +107,7 @@ def create_task(task: TaskCreate, db: Session = Depends(get_db)):
         milestone_id=milestone.id,
         complexity=task.complexity,
         required_skills=task.required_skills,
-        assigned_to=task.assigned_to,
+        assigned_to=assignee_id,
         assignment_reason=task.assignment_reason,
         is_skill_gap=task.is_skill_gap
     )
@@ -133,6 +149,9 @@ def update_task(task_id: int, task_update: TaskUpdate, db: Session = Depends(get
         raise HTTPException(status_code=404, detail="Task not found")
 
     updates = task_update.model_dump(exclude_unset=True)
+    if "assigned_to" in updates:
+        updates["assigned_to"] = _normalize_assignee_id(updates["assigned_to"], db)
+
     for field, value in updates.items():
         setattr(db_task, field, value)
 

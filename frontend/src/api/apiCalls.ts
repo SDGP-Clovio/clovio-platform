@@ -92,6 +92,16 @@ export interface BackendProjectResponse {
     deadline?: string;
 }
 
+export interface AiSkillInput {
+    name: string;
+    level: number;
+}
+
+export interface AiTeamMemberInput {
+    name: string;
+    skills: AiSkillInput[];
+}
+
 // Authentication endpoints
 export const register = async (userData: RegisterRequest): Promise<User> => {
     const response = await apiClient.post("/api/v1/auth/register", userData);
@@ -129,18 +139,10 @@ export const createProjectInDatabase = async (
 };
 
 // AI endpoints (existing)
-export const generateMilestones = async (projectDescription: string, teamMembers: string[]) => {
+export const generateMilestones = async (projectDescription: string, teamMembers: AiTeamMemberInput[]) => {
     const response = await apiClient.post("/breakdown", {
         description: projectDescription,
-        team_members: teamMembers.map(name => ({
-            name,
-            skills: [
-                {
-                    name: "general",   // or "unknown" / "none"
-                    level: 1
-                }
-            ]
-        }))
+        team_members: teamMembers
     });
     return response.data;
 };

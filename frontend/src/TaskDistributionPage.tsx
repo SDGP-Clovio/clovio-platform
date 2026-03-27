@@ -71,6 +71,8 @@ export default function TaskEnginePage() {
             {showModal && (
                 <TaskDistributionModal
                     milestones={milestones}
+                    isGenerating={loading}
+                    loadingMemberNames={["Alice", "Bob", "Charlie"]}
                     onClose={() => setShowModal(false)}
                     onConfirm={() => setShowModal(false)}
                 />

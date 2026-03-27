@@ -63,6 +63,20 @@ def _serialize_user_settings(user: User) -> dict:
     }
 
 
+def _serialize_user(user: User) -> dict:
+    serialized = _serialize_user_settings(user)
+    return {
+        "id": serialized["id"],
+        "email": serialized["email"],
+        "username": serialized["username"],
+        "full_name": serialized["full_name"],
+        "role": serialized["role"],
+        "is_active": serialized["is_active"],
+        "skills": serialized["skills"],
+        "default_availability": serialized["default_availability"],
+    }
+
+
 @router.get("/me/settings", response_model=UserSettingsResponse)
 def get_my_settings(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     user = (
@@ -182,5 +196,11 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
     Fetch a list of all registered users.
     """
-    users = db.query(User).offset(skip).limit(limit).all()
-    return users
+    users = (
+        db.query(User)
+        .options(selectinload(User.skills).selectinload(UserSkill.skill))
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+    return [_serialize_user(user) for user in users]

@@ -411,12 +411,6 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             estimatedHours: number;
         }>;
     }): Project => {
-        const defaultSupervisorId =
-            users.find((user) => user.role === 'supervisor')?.id ??
-            currentUser?.id ??
-            projectData.teamMembers[0] ??
-            null;
-
         // Generate unique ID
         const projectId = projectData.projectId ?? Date.now();
 
@@ -433,7 +427,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             createdAt: new Date(),
             deadline: projectData.deadline ? new Date(projectData.deadline) : undefined,
             courseName: projectData.courseName || undefined,
-            supervisorId: projectData.supervisorId || defaultSupervisorId,
+            supervisorId: projectData.supervisorId ?? null,
         };
 
         // Add project to state

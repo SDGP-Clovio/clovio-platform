@@ -256,6 +256,12 @@ def generate_tasks_for_milestone(
     Do not include any other text.
     """ 
 
+    # --- LOG REQUEST ---
+    print("\n" + "="*80)
+    print("SENDING TO LLM (tasks):")
+    print(prompt)                 # this is the entire system prompt
+    print("="*80)
+
     try:
         # Call AI
         raw_content = _call_llm(
@@ -265,7 +271,13 @@ def generate_tasks_for_milestone(
             max_tokens=settings.MAX_TOKENS,
             temperature=settings.AI_TEMPERATURE
         )  
-              
+
+        # --- LOG RESPONSE ---
+        print("\n" + "="*80)
+        print("RAW AI RESPONSE (tasks):")    # change label from "milestones" to "tasks"
+        print(raw_content)
+        print("="*80 + "\n")
+                      
         # Clean JSON (same as before)
         if "```json" in raw_content:
             raw_content = raw_content.split("```json")[1].split("```")[0].strip()

@@ -99,12 +99,6 @@ const ProjectWizard: React.FC = () => {
         };
     }, []);
 
-    useEffect(() => {
-        if (formData.supervisorId == null && supervisors.length > 0) {
-            setFormData((prev) => ({ ...prev, supervisorId: supervisors[0].id }));
-        }
-    }, [formData.supervisorId, supervisors]);
-
     const steps = [
         { label: 'Details', description: 'Project info' },
         { label: 'Team',    description: 'Add members' },
@@ -178,7 +172,7 @@ const ProjectWizard: React.FC = () => {
                 if (loadingUsers || availableUsers.length === 0) {
                     return false;
                 }
-                return formData.teamMembers.length > 0 && formData.supervisorId != null;
+                return formData.teamMembers.length > 0;
             case 3: return true;
             default: return false;
         }
@@ -368,7 +362,7 @@ const Step2TeamSelection: React.FC<{
         <div className="space-y-6">
             <div>
                 <h2 className="text-xl font-bold text-slate-800 mb-1">Select Team Members</h2>
-                <p className="text-sm text-slate-500">Search users from your database and assign a supervisor</p>
+                <p className="text-sm text-slate-500">Search users from your database and optionally assign a supervisor</p>
             </div>
 
             {loadingUsers && <p className="text-sm text-slate-500">Loading users from database...</p>}
@@ -378,7 +372,7 @@ const Step2TeamSelection: React.FC<{
                 <>
                     <div className="space-y-2">
                         <label className="block text-sm font-medium text-slate-700">
-                            Supervisor <span className="text-red-500">*</span>
+                            Supervisor (optional)
                         </label>
 
                         <div className="relative">

@@ -19,20 +19,21 @@ class DayAvailabilitySlot(BaseModel):
     enabled: bool = True
 
 
+class UserSkillSetting(BaseModel):
+    name: str
+    level: Literal["beginner", "intermediate", "advanced", "expert"]
+
+
 # 3. Properties returned to the frontend (Read)
 class UserResponse(UserBase):
     id: int
     role: UserRole
     is_active: bool
+    skills: List[UserSkillSetting] = Field(default_factory=list)
     default_availability: Optional[List[DayAvailabilitySlot]] = Field(default_factory=list)
 
     class Config:
         from_attributes = True
-
-
-class UserSkillSetting(BaseModel):
-    name: str
-    level: Literal["beginner", "intermediate", "advanced", "expert"]
 
 
 class UserSettingsResponse(BaseModel):

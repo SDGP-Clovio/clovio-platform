@@ -8,6 +8,7 @@ interface BackendUserRecord {
     full_name: string | null;
     role: "student" | "supervisor";
     is_active: boolean;
+    skills?: BackendUserSkill[] | null;
     default_availability?: BackendDayAvailability[] | null;
 }
 
@@ -43,6 +44,7 @@ function toAppUser(record: BackendUserRecord): User {
         email: record.email,
         role: record.role,
         studentId: record.role === "student" ? record.username : undefined,
+        skills: Array.isArray(record.skills) ? record.skills.map(toAppSkill) : [],
         defaultAvailability: Array.isArray(record.default_availability)
             ? record.default_availability.map(toAppAvailability)
             : [],

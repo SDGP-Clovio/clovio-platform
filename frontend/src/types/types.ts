@@ -68,6 +68,7 @@ export interface Task {
     comments?: Comment[];
     skill_gap?: boolean;
     assignee?: EntityId;
+    assigneeName?: string;
 }
 
 export interface Comment {

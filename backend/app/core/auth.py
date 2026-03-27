@@ -11,6 +11,7 @@ Handles:
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from passlib.exc import UnknownHashError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -19,15 +20,17 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.models.user import User
 
-# Password hashing context using bcrypt algorithm
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing context.
+# Use pbkdf2_sha256 as the default to avoid bcrypt runtime incompatibilities,
+# while still accepting existing bcrypt hashes during verification.
+pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 
 # OAuth2 scheme for extracting tokens from requests
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 def hash_password(password: str) -> str:
     """
-    Hash a plain text password using bcrypt.
+    Hash a plain text password.
 
     This ensures that passwords are never stored or transmitted
     in plain text format.
@@ -39,7 +42,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     Verify that a plain password matches the hashed password.
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except (ValueError, UnknownHashError):
+        # Treat malformed/unsupported hashes as non-matches instead of 500 errors.
+        return False
 
 def create_access_token(data: dict):
     """

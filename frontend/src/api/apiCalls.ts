@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Send API requests to the backend
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://clovio-platform-production.up.railway.app";
 
 export const apiClient = axios.create({
     baseURL: API_BASE,

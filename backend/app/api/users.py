@@ -6,7 +6,7 @@ from typing import List
 
 # Importing your database connection and the Pydantic "bouncers" you just made
 from app.core.database import get_db
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, hash_password
 from app.schemas.user import (
     UserCreate,
     UserResponse,
@@ -167,7 +167,7 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
         email=user.email,
         username=user.username,
         full_name=user.full_name,
-        hashed_password=user.password  # Storing raw temporarily for testing
+        hashed_password=hash_password(user.password)
     )
     
     # 3. Save to the PostgreSQL database

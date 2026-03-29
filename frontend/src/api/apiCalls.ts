@@ -2,10 +2,14 @@ import axios from "axios";
 
 // Send API requests to the backend
 const configuredApiBase = import.meta.env.VITE_API_BASE_URL;
-const API_BASE = (configuredApiBase || "http://localhost:8000").replace(/\/+$/, "");
+const PRODUCTION_API_FALLBACK = "https://clovio-platform-production-90aa.up.railway.app";
+const API_BASE = (
+    configuredApiBase
+    || (import.meta.env.PROD ? PRODUCTION_API_FALLBACK : "http://localhost:8000")
+).replace(/\/+$/, "");
 
 if (import.meta.env.PROD && !configuredApiBase) {
-    console.error("Missing VITE_API_BASE_URL in production. Frontend is falling back to localhost and cannot reach Railway.");
+    console.warn("Missing VITE_API_BASE_URL in production. Using hardcoded Railway fallback.");
 }
 
 export const apiClient = axios.create({

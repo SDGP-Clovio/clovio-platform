@@ -14,11 +14,16 @@ export default function TaskEnginePage() {
     // We'll set the active index to 2 (Tasks) for this page, or maybe 1 (My Projects).
     // The user image shows Dashboard is 0, let's keep it at 2 (Tasks array index is 2 in mockData)
     const [activeIndex, setActiveIndex] = useState(2);
+    const sampleTeamMembers = [
+        { id: 1, name: "Alice" },
+        { id: 2, name: "Bob" },
+        { id: 3, name: "Charlie" },
+    ];
 
     const { projectDescription, setProjectDescription, file, setFile, milestones, loading, distributeTasks } = useTaskEngine();
 
     const handleDistribute = async () => {
-        await distributeTasks(["Alice", "Bob", "Charlie"]); // example team members
+        await distributeTasks(sampleTeamMembers); // example team members
         setShowModal(true);
     };
 
@@ -72,7 +77,7 @@ export default function TaskEnginePage() {
                 <TaskDistributionModal
                     milestones={milestones}
                     isGenerating={loading}
-                    loadingMemberNames={["Alice", "Bob", "Charlie"]}
+                    loadingMemberNames={sampleTeamMembers.map((member) => member.name)}
                     onClose={() => setShowModal(false)}
                     onConfirm={() => setShowModal(false)}
                 />

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Users, Calendar, Clock, CheckCircle2, AlertTriangle, Plus, X, MapPin } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import Avatar from '../UI/Avatar';
@@ -109,8 +109,25 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
         [memberAvailabilityByDay, selectedIds]
     );
 
+    useEffect(() => {
+        const allowed = members.map((member) => member.id);
+        if (allowed.length === 0) {
+            setSelectedIds([]);
+            return;
+        }
+
+        setSelectedIds((prev) => {
+            const allowedSet = new Set(allowed);
+            const filtered = prev.filter((uid) => allowedSet.has(uid));
+            if (filtered.length > 0) {
+                return filtered;
+            }
+            return [...allowed];
+        });
+    }, [members]);
+
     // ── Selection helpers ────────────────────────────────────────────────────
-    const allSelected = selectedIds.length === members.length;
+    const allSelected = members.length > 0 && selectedIds.length === members.length;
     const toggleAll = () => setSelectedIds(allSelected ? [] : members.map((m) => m.id));
     const toggleMember = (id: number) =>
         setSelectedIds((prev) =>
@@ -137,7 +154,8 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
                     else missingIds.push(uid);
                 }
 
-                if (availableIds.length >= 2) {
+                const requiredOverlap = Math.min(2, selectedIds.length);
+                if (availableIds.length >= requiredOverlap) {
                     // Try to merge consecutive hours
                     const last = slots[slots.length - 1];
                     const sameGroup =
@@ -171,7 +189,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
     }, [memberAvailabilityByDay, selectedIds]);
 
     const noOverlap =
-        selectedIds.length > 0 && freeSlots.filter((s) => s.allPresent).length === 0;
+        selectedIds.length >= 2 && freeSlots.filter((s) => s.allPresent).length === 0;
 
     // ── Project meetings ──────────────────────────────────────────────────────
     const projectMeetings = meetings
@@ -198,9 +216,19 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
         setSubmitError(null);
         setSuccess(false);
 
+        if (selectedIds.length === 0) {
+            setSubmitError('Select at least one member before scheduling.');
+            return;
+        }
+
         const [yr, mo, dy] = form.date.split('-').map(Number);
         const start = new Date(yr, mo - 1, dy, form.startHour, 0);
         const end = new Date(yr, mo - 1, dy, form.endHour, 0);
+
+        if (!(start < end)) {
+            setSubmitError('End time must be after start time.');
+            return;
+        }
 
         const newMeeting: Meeting = {
             id: Date.now(),
@@ -369,8 +397,8 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
                     })}
                 </div>
 
-                {selectedIds.length < 2 && (
-                    <p className="text-xs text-slate-400 mt-3 italic">Select at least 2 members to find overlapping free slots.</p>
+                {selectedIds.length < 1 && (
+                    <p className="text-xs text-slate-400 mt-3 italic">Select at least 1 member to continue scheduling.</p>
                 )}
                 {selectedWithoutAvailability.length > 0 && (
                     <p className="text-xs text-amber-600 mt-3">
@@ -394,7 +422,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
             )}
 
             {/* ── Free Slots ─────────────────────────────────────────────── */}
-            {selectedIds.length >= 2 && freeSlots.length > 0 && (
+            {selectedIds.length >= 1 && freeSlots.length > 0 && (
                 <div className="bg-white rounded-xl border border-slate-100 p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
@@ -613,7 +641,7 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
             )}
 
             {/* Manual schedule button when form is closed */}
-            {!showForm && selectedIds.length >= 2 && (
+            {!showForm && selectedIds.length >= 1 && (
                 <button
                     onClick={() => { setPrefillSlot(null); setSubmitError(null); setShowForm(true); }}
                     className="flex items-center gap-2 text-sm font-semibold text-emerald-600 hover:text-emerald-700 transition-colors"

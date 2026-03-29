@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import Avatar from '../UI/Avatar';
 import {
@@ -66,18 +66,76 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
     const [attendees, setAttendees] = useState<number[]>(currentUser?.id != null ? [currentUser.id] : []);
     const [submitError, setSubmitError] = useState<string>('');
 
+    const projectMembers = useMemo(
+        () => projects.find((p) => p.id === projectId)?.teamMembers ?? [],
+        [projects, projectId]
+    );
+
+    useEffect(() => {
+        if (projects.length === 0) {
+            if (projectId !== 0) {
+                setProjectId(0);
+            }
+            setAttendees((prev) => (prev.length === 0 ? prev : []));
+            return;
+        }
+
+        const selectedProjectExists = projects.some((project) => project.id === projectId);
+        const nextProjectId = selectedProjectExists ? projectId : projects[0].id;
+        if (!selectedProjectExists) {
+            setProjectId(nextProjectId);
+        }
+
+        const memberIds = projects.find((project) => project.id === nextProjectId)?.teamMembers ?? [];
+        const allowed = new Set(memberIds);
+        const fallbackAttendee =
+            currentUser?.id != null && allowed.has(currentUser.id)
+                ? currentUser.id
+                : memberIds[0];
+
+        setAttendees((prev) => {
+            const filtered = prev.filter((uid) => allowed.has(uid));
+            if (filtered.length > 0) {
+                return filtered;
+            }
+            if (fallbackAttendee != null) {
+                return [fallbackAttendee];
+            }
+            return [];
+        });
+    }, [currentUser?.id, projectId, projects]);
+
     const toggleAttendee = (uid: number) =>
         setAttendees((prev) => prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]);
 
     const handleSubmit = async () => {
         if (!title || !date) return;
         setSubmitError('');
+
+        const hasProject = projects.some((project) => project.id === projectId);
+        if (!hasProject) {
+            setSubmitError('Select a valid project first.');
+            return;
+        }
+
+        if (attendees.length === 0) {
+            setSubmitError('Select at least one attendee.');
+            return;
+        }
+
+        const start = new Date(`${date}T${startH}:${startM}`);
+        const end = new Date(`${date}T${endH}:${endM}`);
+        if (!(start < end)) {
+            setSubmitError('End time must be after start time.');
+            return;
+        }
+
         const meeting: Meeting = {
             id: Date.now(),
             projectId,
             title,
-            startTime: new Date(`${date}T${startH}:${startM}`),
-            endTime:   new Date(`${date}T${endH}:${endM}`),
+            startTime: start,
+            endTime: end,
             attendees,
             createdBy: currentUser?.id ?? 0,
             location: location || undefined,
@@ -91,9 +149,6 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
 
         onClose();
     };
-
-    const projectMembers = projects.find((p) => p.id === projectId)?.teamMembers ?? [];
-
     return (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden">
@@ -156,6 +211,9 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                     <div>
                         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Attendees</label>
                         <div className="flex flex-wrap gap-2">
+                            {projectMembers.length === 0 && (
+                                <p className="text-xs text-slate-400">No project members found for this project.</p>
+                            )}
                             {projectMembers.map((uid) => {
                                 const u = users.find((candidate) => candidate.id === uid);
                                 if (!u) return null;
@@ -174,7 +232,9 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 </div>
                 <div className="flex gap-3 px-6 py-4 border-t border-slate-100 bg-slate-50/60">
                     <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors">Cancel</button>
-                    <button onClick={handleSubmit} disabled={!title || !date}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={!title || !date || attendees.length === 0 || projectId === 0}
                         className="flex-1 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-emerald-500 text-white rounded-xl text-sm font-semibold hover:brightness-110 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
                         Schedule Meeting
                     </button>

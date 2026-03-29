@@ -495,7 +495,7 @@ const MainDashboard: React.FC = () => {
                                     : activeTab === 'settings' ? 'Settings'
                                     : activeTab === 'schedule' ? 'Schedule'
                                     : activeTab === 'chat'     ? 'Global Chat'
-                                    : `Hi, ${currentUser?.name} 👋`}
+                                    : `Hi, ${currentUser?.name ?? 'there'} 👋`}
                             </h1>
                             <p className="text-sm text-slate-500 mt-0.5">
                                 {activeTab === 'notifications' ? 'All activity across your projects'

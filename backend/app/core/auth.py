@@ -48,6 +48,19 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         # Treat malformed/unsupported hashes as non-matches instead of 500 errors.
         return False
 
+
+def is_recognized_password_hash(hashed_password: str) -> bool:
+    """
+    Return True when passlib can identify the stored hash scheme.
+    """
+    if not hashed_password:
+        return False
+
+    try:
+        return pwd_context.identify(hashed_password) is not None
+    except (UnknownHashError, ValueError, TypeError):
+        return False
+
 def create_access_token(data: dict):
     """
     Generate a JWT access token.

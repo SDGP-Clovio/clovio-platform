@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle2, Clock3, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import ClovioMark from '../components/common/ClovioMark';
+import { login as loginRequest } from '../api/apiCalls';
+import { fetchCurrentUserAsAppUser, fetchCurrentUserSettingsAsAppUser } from '../services/users';
+import { useApp } from '../context/AppContext';
 
 type LoginFormValues = {
 	email: string;
@@ -31,6 +34,7 @@ const validateLoginForm = (values: LoginFormValues): LoginFormErrors => {
 const Login: React.FC = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { setCurrentUser } = useApp();
 	const [showPassword, setShowPassword] = useState(false);
 	const [successMessage, setSuccessMessage] = useState<string | null>(null);
 	const [formValues, setFormValues] = useState<LoginFormValues>({
@@ -79,9 +83,7 @@ const Login: React.FC = () => {
 		}
 
 		try {
-			// Use the existing login API
-			const { login, getCurrentUser } = await import('../api/apiCalls');
-			const response = await login({
+			const response = await loginRequest({
 				username: formValues.email, // Backend accepts email as username
 				password: formValues.password
 			});
@@ -89,8 +91,15 @@ const Login: React.FC = () => {
 			// Store token
 			localStorage.setItem('access_token', response.access_token);
 
-			// Resolve role and route to the correct dashboard
-			const user = await getCurrentUser();
+			// Resolve app user and route to the correct dashboard
+			let user;
+			try {
+				user = await fetchCurrentUserSettingsAsAppUser();
+			} catch {
+				user = await fetchCurrentUserAsAppUser();
+			}
+
+			setCurrentUser(user);
 			const destination = user.role === 'supervisor' ? '/supervisor' : '/dashboard';
 
 			navigate(destination);

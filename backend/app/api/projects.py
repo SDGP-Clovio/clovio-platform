@@ -4,6 +4,7 @@ from typing import Any, List
 
 # Import Database tools
 from app.core.database import get_db
+from app.core.auth import get_current_user
 from app.models.project import Project
 from app.models.user import User, UserRole
 from app.models.project_member import ProjectMember
@@ -140,9 +141,22 @@ def create_project(project: ProjectCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=List[ProjectResponse])
-def get_projects(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Retrieve all projects from the database."""
-    projects = db.query(Project).offset(skip).limit(limit).all()
+def get_projects(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Retrieve projects where the authenticated user is a project member."""
+    projects = (
+        db.query(Project)
+        .join(ProjectMember, ProjectMember.project_id == Project.id)
+        .filter(ProjectMember.user_id == current_user.id)
+        .order_by(Project.created_at.desc())
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
     return [_serialize_project(db, project) for project in projects]
 
 

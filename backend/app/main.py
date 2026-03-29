@@ -48,7 +48,14 @@ app.include_router(user_skills.router, prefix="/api/user-skills", tags=["User Sk
 # CORS – allow the React frontend to call the API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173", "https://clovio.app", "https://www.clovio.app"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://clovio.app",
+        "https://www.clovio.app",
+        "https://clovio-platform.vercel.app/",
+    ],
+    allow_origin_regex=r"https://([a-zA-Z0-9-]+\.)*(vercel\.app|clovio\.app)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

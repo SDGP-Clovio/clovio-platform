@@ -88,7 +88,9 @@ def _normalize_assignee_id(assigned_to: Optional[int], db: Session) -> Optional[
 
     user_exists = db.query(User.id).filter(User.id == assigned_to).first()
     if user_exists is None:
-        raise HTTPException(status_code=400, detail=f"Assigned user {assigned_to} was not found")
+        # Keep task creation resilient when stale/invalid assignee IDs are sent.
+        # The task is still persisted, but as unassigned.
+        return None
 
     return assigned_to
 

@@ -268,25 +268,33 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         return payload;
     };
 
-    const buildTaskCreatePayload = (task: Task): CreateTaskApiRequest => ({
-        name: task.title,
-        description: task.description,
-        status: mapTaskStatusForApi(task.status),
-        complexity: Math.max(
-            1,
-            Math.round(task.estimatedHours ?? priorityToComplexity(task.priority))
-        ),
-        required_skills: task.tags ?? [],
-        assigned_to: task.assignedTo[0] ?? task.assignee ?? null,
-        assignment_reason: task.aiAssignmentReason ?? null,
-        is_skill_gap: task.skill_gap ?? false,
-        milestone_id: task.milestoneId,
-        project_id: task.projectId,
-        milestone_title: task.milestoneTitle,
-        milestone_effort_points: task.estimatedHours
-            ? Math.max(1, Math.round(task.estimatedHours))
-            : undefined,
-    });
+    const buildTaskCreatePayload = (task: Task): CreateTaskApiRequest => {
+        const rawAssignee = task.assignedTo[0] ?? task.assignee ?? null;
+        const normalizedAssignee =
+            rawAssignee != null && users.some((user) => user.id === rawAssignee)
+                ? rawAssignee
+                : null;
+
+        return {
+            name: task.title,
+            description: task.description,
+            status: mapTaskStatusForApi(task.status),
+            complexity: Math.max(
+                1,
+                Math.round(task.estimatedHours ?? priorityToComplexity(task.priority))
+            ),
+            required_skills: task.tags ?? [],
+            assigned_to: normalizedAssignee,
+            assignment_reason: task.aiAssignmentReason ?? null,
+            is_skill_gap: task.skill_gap ?? false,
+            milestone_id: task.milestoneId,
+            project_id: task.projectId,
+            milestone_title: task.milestoneTitle,
+            milestone_effort_points: task.estimatedHours
+                ? Math.max(1, Math.round(task.estimatedHours))
+                : undefined,
+        };
+    };
 
     useEffect(() => {
         let isMounted = true;

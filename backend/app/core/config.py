@@ -4,6 +4,19 @@ from dotenv import load_dotenv
 # This looks for the .env file in the root folder loads it
 load_dotenv()
 
+
+def _parse_allowed_origins() -> list[str]:
+    raw = os.getenv("ALLOWED_ORIGINS", "")
+    if not raw.strip():
+        return [
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://127.0.0.1:3000",
+            "http://127.0.0.1:5173",
+        ]
+
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
 class Settings:
 
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./clovio.db")
@@ -27,7 +40,7 @@ class Settings:
     AI_TEMPERATURE: float = float(os.getenv("AI_TEMPERATURE", 0.3)) # A lower temperature means more focused and deterministic output.
 
     # CORS settings
-    ALLOWED_ORIGINS: list[str] = ["*"]
+    ALLOWED_ORIGINS: list[str] = _parse_allowed_origins()
 
     def __init__(self):
         if not self.DEEPSEEK_API_KEY and not self.GROQ_API_KEY:

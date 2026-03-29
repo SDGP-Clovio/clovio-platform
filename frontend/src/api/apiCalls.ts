@@ -5,7 +5,6 @@ const API_BASE = "https://clovio-platform-production.up.railway.app";
 
 export const apiClient = axios.create({
     baseURL: API_BASE,
-    withCredentials: true,
     headers: {
         "Content-Type": "application/json",
     },
@@ -95,7 +94,7 @@ export interface BackendProjectResponse {
 
 // Authentication endpoints
 export const register = async (userData: RegisterRequest): Promise<User> => {
-    const response = await apiClient.post("/api/v1/auth/register/", userData);
+    const response = await apiClient.post("/api/v1/auth/register", userData);
     return response.data;
 };
 
@@ -104,7 +103,7 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
     formData.append('username', credentials.username);
     formData.append('password', credentials.password);
 
-    const response = await apiClient.post("/api/v1/auth/login/", formData.toString(), {
+    const response = await apiClient.post("/api/v1/auth/login", formData.toString(), {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -113,7 +112,7 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
 };
 
 export const getCurrentUser = async (): Promise<User> => {
-    const response = await apiClient.get("/api/v1/auth/me/");
+    const response = await apiClient.get("/api/v1/auth/me");
     return response.data;
 };
 

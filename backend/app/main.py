@@ -53,7 +53,7 @@ app.add_middleware(
         "http://localhost:5173",
         "https://clovio.app",
         "https://www.clovio.app",
-        "https://clovio-platform.vercel.app/",
+        "https://clovio-platform.vercel.app",
     ],
     allow_origin_regex=r"https://([a-zA-Z0-9-]+\.)*(vercel\.app|clovio\.app)$",
     allow_credentials=True,

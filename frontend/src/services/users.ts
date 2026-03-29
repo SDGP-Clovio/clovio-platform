@@ -83,7 +83,7 @@ function toAppCurrentUser(record: BackendCurrentUserSettings): User {
 }
 
 export async function fetchUsers(): Promise<User[]> {
-    const response = await apiClient.get<BackendUserRecord[]>("/api/users");
+    const response = await apiClient.get<BackendUserRecord[]>("/api/users/");
     return response.data
         .filter((record) => record.is_active)
         .map(toAppUser);

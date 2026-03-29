@@ -136,14 +136,14 @@ export const getCurrentUser = async (): Promise<User> => {
 };
 
 export const getUsers = async (): Promise<BackendUserRecord[]> => {
-    const response = await apiClient.get("/api/users");
+    const response = await apiClient.get("/api/users/");
     return response.data;
 };
 
 export const createProjectInDatabase = async (
     payload: BackendProjectCreateRequest,
 ): Promise<BackendProjectResponse> => {
-    const response = await apiClient.post("/api/projects", payload);
+    const response = await apiClient.post("/api/projects/", payload);
     return response.data;
 };
 

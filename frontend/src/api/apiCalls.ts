@@ -5,6 +5,7 @@ const API_BASE = "https://clovio-platform-production.up.railway.app";
 
 export const apiClient = axios.create({
     baseURL: API_BASE,
+    withCredentials: true,
     headers: {
         "Content-Type": "application/json",
     },
@@ -94,7 +95,7 @@ export interface BackendProjectResponse {
 
 // Authentication endpoints
 export const register = async (userData: RegisterRequest): Promise<User> => {
-    const response = await apiClient.post("/api/v1/auth/register", userData);
+    const response = await apiClient.post("/api/v1/auth/register/", userData);
     return response.data;
 };
 
@@ -103,7 +104,7 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
     formData.append('username', credentials.username);
     formData.append('password', credentials.password);
 
-    const response = await apiClient.post("/api/v1/auth/login", formData.toString(), {
+    const response = await apiClient.post("/api/v1/auth/login/", formData.toString(), {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -112,25 +113,25 @@ export const login = async (credentials: LoginRequest): Promise<AuthResponse> =>
 };
 
 export const getCurrentUser = async (): Promise<User> => {
-    const response = await apiClient.get("/api/v1/auth/me");
+    const response = await apiClient.get("/api/v1/auth/me/");
     return response.data;
 };
 
 export const getUsers = async (): Promise<BackendUserRecord[]> => {
-    const response = await apiClient.get("/api/users");
+    const response = await apiClient.get("/api/v1/users/");
     return response.data;
 };
 
 export const createProjectInDatabase = async (
     payload: BackendProjectCreateRequest,
 ): Promise<BackendProjectResponse> => {
-    const response = await apiClient.post("/api/projects", payload);
+    const response = await apiClient.post("/api/v1/projects/", payload);
     return response.data;
 };
 
 // AI endpoints (existing)
 export const generateMilestones = async (projectDescription: string, teamMembers: string[]) => {
-    const response = await apiClient.post("/breakdown", {
+    const response = await apiClient.post("/api/v1/breakdown/", {
         description: projectDescription,
         team_members: teamMembers.map(name => ({
             name,
@@ -146,16 +147,16 @@ export const generateMilestones = async (projectDescription: string, teamMembers
 };
 
 export const generateTasks = async (milestoneId: number | string, milestoneData: any) => {
-    const response = await apiClient.post(`/milestones/${milestoneId}/generate-tasks`, milestoneData);
+    const response = await apiClient.post(`/api/v1/milestones/${milestoneId}/generate-tasks/`, milestoneData);
     return response.data;
 };
 
 export const computeFairness = async (tasksData: any) => {
-    const response = await apiClient.post("/fairness/compute", tasksData);
+    const response = await apiClient.post("/api/v1/fairness/compute/", tasksData);
     return response.data;
 };
 
 export const computeProgress = async (projectData: any) => {
-    const response = await apiClient.post("/progress/compute", projectData);
+    const response = await apiClient.post("/api/v1/progress/compute/", projectData);
     return response.data;
 };

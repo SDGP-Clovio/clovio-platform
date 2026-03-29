@@ -1,3 +1,4 @@
+import axios from "axios";
 import { apiClient } from "../api/apiCalls";
 import type { Meeting } from "../types/types";
 
@@ -41,6 +42,32 @@ function toAppMeeting(record: BackendMeetingRecord): Meeting {
     };
 }
 
+function getApiErrorMessage(error: unknown): string {
+    if (axios.isAxiosError(error)) {
+        const detail = error.response?.data?.detail;
+        if (typeof detail === "string" && detail.trim().length > 0) {
+            return detail;
+        }
+
+        if (Array.isArray(detail) && detail.length > 0) {
+            const first = detail[0] as { msg?: unknown };
+            if (typeof first?.msg === "string" && first.msg.trim().length > 0) {
+                return first.msg;
+            }
+        }
+
+        if (error.message) {
+            return error.message;
+        }
+    }
+
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+
+    return "Failed to schedule meeting. Please retry.";
+}
+
 export async function fetchMeetings(projectId?: number): Promise<Meeting[]> {
     const response = await apiClient.get<BackendMeetingRecord[]>("/api/meetings", {
         params: projectId != null ? { project_id: projectId } : undefined,
@@ -50,6 +77,10 @@ export async function fetchMeetings(projectId?: number): Promise<Meeting[]> {
 }
 
 export async function createMeetingRecord(payload: CreateMeetingApiRequest): Promise<Meeting> {
-    const response = await apiClient.post<BackendMeetingRecord>("/api/meetings", payload);
-    return toAppMeeting(response.data);
+    try {
+        const response = await apiClient.post<BackendMeetingRecord>("/api/meetings", payload);
+        return toAppMeeting(response.data);
+    } catch (error) {
+        throw new Error(getApiErrorMessage(error));
+    }
 }

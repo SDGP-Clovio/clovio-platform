@@ -141,9 +141,9 @@ const NewMeetingModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             location: location || undefined,
             status: 'scheduled',
         };
-        const created = await addMeeting(meeting);
-        if (!created) {
-            setSubmitError('Failed to schedule meeting. Please retry.');
+        const meetingError = await addMeeting(meeting);
+        if (meetingError) {
+            setSubmitError(meetingError);
             return;
         }
 

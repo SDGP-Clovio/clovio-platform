@@ -247,9 +247,9 @@ const MeetingScheduler: React.FC<Props> = ({ projectId, projectMemberIds }) => {
             status: 'scheduled',
         };
 
-        const created = await addMeeting(newMeeting);
-        if (!created) {
-            setSubmitError('Failed to schedule meeting. Please try again.');
+        const meetingError = await addMeeting(newMeeting);
+        if (meetingError) {
+            setSubmitError(meetingError);
             return;
         }
 

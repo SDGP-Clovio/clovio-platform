@@ -296,11 +296,25 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
             let resolvedCurrentUser: User | null = null;
 
             try {
-                const [apiUsers, apiProjects, apiTasks] = await Promise.all([
+                const [usersResult, projectsResult, tasksResult] = await Promise.allSettled([
                     fetchUsers(),
                     fetchProjects(),
                     fetchTasks(),
                 ]);
+
+                const apiUsers = usersResult.status === 'fulfilled' ? usersResult.value : [];
+                const apiProjects = projectsResult.status === 'fulfilled' ? projectsResult.value : [];
+                const apiTasks = tasksResult.status === 'fulfilled' ? tasksResult.value : [];
+
+                if (usersResult.status === 'rejected') {
+                    console.error('Failed to bootstrap users from API', usersResult.reason);
+                }
+                if (projectsResult.status === 'rejected') {
+                    console.error('Failed to bootstrap projects from API', projectsResult.reason);
+                }
+                if (tasksResult.status === 'rejected') {
+                    console.error('Failed to bootstrap tasks from API', tasksResult.reason);
+                }
 
                 if (!isMounted) {
                     return;
@@ -365,7 +379,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                     setMeetings([]);
                 }
             } catch (error) {
-                console.error('Failed to bootstrap users/projects/tasks from API', error);
+                console.error('Failed to bootstrap app state from API', error);
                 if (!isMounted) {
                     return;
                 }

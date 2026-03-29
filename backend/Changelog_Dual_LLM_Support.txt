@@ -1,0 +1,212 @@
+================================================================================
+  CHANGELOG — Dual LLM Provider Support (Groq + DeepSeek)
+  Date: 2026-03-01
+================================================================================
+
+OVERVIEW
+────────
+Added the ability to use either Groq or DeepSeek as the AI provider.
+Groq remains the default. Switching to DeepSeek is a one-line change
+in the .env file. Several bugs were also fixed during this refactor.
+
+
+================================================================================
+FILES CHANGED (4 files)
+================================================================================
+
+──────────────────────────────────────────────────────────────────────────────
+1.  .env
+──────────────────────────────────────────────────────────────────────────────
+WHAT CHANGED:
+  - Added DEEPSEEK_API_KEY variable (empty by default; fill it in when needed).
+  - Added AI_PROVIDER variable (defaults to "groq").
+
+NEW CONTENTS:
+  GROQ_API_KEY="gsk_..."
+  DEEPSEEK_API_KEY=""            ← paste your DeepSeek key here
+  AI_PROVIDER="groq"            ← change to "deepseek" to switch
+
+──────────────────────────────────────────────────────────────────────────────
+2.  app/core/config.py
+──────────────────────────────────────────────────────────────────────────────
+WHAT CHANGED:
+  - Added a PROVIDER_DEFAULTS dictionary that stores the default model name,
+    max_tokens, temperature, and base_url for each provider:
+      • groq    → model "llama-3.3-70b-versatile", base_url None
+      • deepseek → model "deepseek-chat", base_url "https://api.deepseek.com"
+
+  - Settings class now reads AI_PROVIDER from .env and auto-loads the
+    correct defaults from PROVIDER_DEFAULTS.
+
+  - New fields on Settings:
+      AI_PROVIDER     – "groq" or "deepseek"
+      DEEPSEEK_API_KEY – loaded from .env
+      AI_TEMPERATURE   – 0.3 (was previously commented out, now active)
+      BASE_URL         – used only for DeepSeek's OpenAI-compatible endpoint
+
+  - Startup validation: only the API key for the *active* provider is required.
+    If you set AI_PROVIDER="deepseek" but leave DEEPSEEK_API_KEY empty, the
+    app will crash with a clear error message on startup.
+
+  - You can override any default with env vars:
+      AI_MODEL=deepseek-reasoner   → uses a different model
+      MAX_TOKENS=8192              → override tokens
+      AI_TEMPERATURE=0.5           → override temperature
+
+──────────────────────────────────────────────────────────────────────────────
+3.  app/services/ai_service.py
+──────────────────────────────────────────────────────────────────────────────
+WHAT CHANGED:
+
+  a) Provider-agnostic client initialisation
+     - Instead of always importing `from groq import Groq`, the file now
+       conditionally imports based on settings.AI_PROVIDER:
+         • "groq"     → uses the `groq` Python SDK (Groq class)
+         • "deepseek" → uses the `openai` Python SDK (OpenAI class) pointed
+                         at DeepSeek's base_url
+     - Both expose the same `client.chat.completions.create()` interface,
+       so the rest of the code is identical for both providers.
+     - RETRYABLE_EXCEPTIONS is set dynamically from whichever SDK is loaded.
+
+  b) Renamed _call_groq_with_retry → _call_llm_with_retry
+     - The function is no longer Groq-specific.
+     - Now accepts an explicit `temperature` parameter and passes
+       settings.AI_TEMPERATURE by default.
+
+  c) Extracted _clean_json_response() helper
+     - The markdown-fence stripping logic (```json...```) that was duplicated
+       in both generate_milestones_only() and generate_tasks_for_milestone()
+       is now in a single reusable function.
+
+  d) BUG FIX: Removed hardcoded milestone context
+     - Line ~154 had: milestone_context = "Planning and Design, Frontend..."
+       which overwrote the dynamically built milestones_context variable.
+     - The hardcoded line has been removed. The AI now correctly receives
+       the real milestone list when all_milestones is provided.
+
+  e) Added error handling to generate_tasks_for_milestone()
+     - The function body is now wrapped in try/except, matching the pattern
+       already used by generate_milestones_only().
+     - On failure it raises RuntimeError("Task generation failed: ...")
+       instead of letting raw exceptions propagate.
+
+  f) Temperature now passed to all AI calls
+     - Both generate_milestones_only() and generate_tasks_for_milestone()
+       now pass temperature=settings.AI_TEMPERATURE (default 0.3) to the
+       LLM, producing more consistent and structured JSON output.
+
+──────────────────────────────────────────────────────────────────────────────
+4.  requirements.txt — NO CHANGES
+──────────────────────────────────────────────────────────────────────────────
+  The `openai` package (needed for DeepSeek) was already listed:
+    openai==2.21.0
+  No new dependencies required.
+
+
+================================================================================
+HOW TO USE
+================================================================================
+
+USING GROQ (current default — no changes needed)
+─────────────────────────────────────────────────
+  Your .env already has:
+    GROQ_API_KEY="gsk_..."
+    AI_PROVIDER="groq"
+
+  Just run the app as usual:
+    cd backend
+    uvicorn app.main:app --reload
+
+  Console will print:
+    [Config] Provider: GROQ  |  Model: llama-3.3-70b-versatile
+    [AI Service] Using GROQ client
+
+
+SWITCHING TO DEEPSEEK
+─────────────────────
+  1. Get a DeepSeek API key from: https://platform.deepseek.com/api_keys
+
+  2. Open your .env file and update two lines:
+       DEEPSEEK_API_KEY="sk-your-deepseek-key-here"
+       AI_PROVIDER="deepseek"
+
+  3. Restart the server:
+       uvicorn app.main:app --reload
+
+  Console will print:
+    [Config] Provider: DEEPSEEK  |  Model: deepseek-chat
+    [AI Service] Using DEEPSEEK client
+
+  That's it — all AI calls now go through DeepSeek automatically.
+
+
+SWITCHING BACK TO GROQ
+──────────────────────
+  Just change .env:
+    AI_PROVIDER="groq"
+  And restart the server.
+
+
+USING A DIFFERENT MODEL
+───────────────────────
+  Add to .env:
+    AI_MODEL="deepseek-reasoner"    (or any model the provider supports)
+  This overrides the default model for whichever provider is active.
+
+
+OVERRIDING TEMPERATURE / MAX TOKENS
+────────────────────────────────────
+  Add to .env:
+    AI_TEMPERATURE=0.5
+    MAX_TOKENS=8192
+  These override the defaults for any provider.
+
+
+================================================================================
+BUGS FIXED IN THIS UPDATE
+================================================================================
+
+  1. Hardcoded milestone context (ai_service.py)
+     The AI was always receiving a hardcoded list of milestones instead of the
+     real project milestones. This has been fixed — the dynamic milestones_context
+     variable is now used correctly.
+
+  2. Missing error handling in generate_tasks_for_milestone()
+     If the AI returned invalid JSON or the API call failed, the raw exception
+     would propagate with no useful message. Now wrapped in try/except with a
+     clear RuntimeError.
+
+  3. Temperature not passed to AI
+     The AI_TEMPERATURE setting was commented out and never sent to the API.
+     Now active (default 0.3) and passed on every call, improving JSON consistency.
+
+  4. Duplicated JSON cleaning code
+     The markdown-fence stripping was copy-pasted in two places. Extracted into
+     _clean_json_response() for maintainability.
+
+
+================================================================================
+AVAILABLE DEEPSEEK MODELS (for reference)
+================================================================================
+
+  deepseek-chat       — DeepSeek-V3, general-purpose (recommended default)
+  deepseek-reasoner   — DeepSeek-R1, stronger reasoning, slower
+
+  Set via: AI_MODEL="deepseek-reasoner" in .env
+
+
+================================================================================
+AVAILABLE GROQ MODELS (for reference)
+================================================================================
+
+  llama-3.3-70b-versatile    — Current default, good all-rounder
+  llama-3.1-8b-instant       — Faster, less capable
+  mixtral-8x7b-32768         — Mixtral, 32k context window
+  gemma2-9b-it               — Google Gemma 2
+
+  Set via: AI_MODEL="mixtral-8x7b-32768" in .env
+
+
+================================================================================
+END OF CHANGELOG
+================================================================================

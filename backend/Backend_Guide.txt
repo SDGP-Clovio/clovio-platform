@@ -1,0 +1,528 @@
+================================================================================
+  CLOVIO AI BACKEND — COMPLETE GUIDE
+  Member 1 (AI & Integration Lead)
+  Last Updated: March 2026
+================================================================================
+
+This document covers everything you (Member 1) need to know about this backend,
+plus everything the other teams (Frontend, Database, Auth) need to know to
+connect their parts.
+
+
+================================================================================
+PART 1: WHAT THIS APP DOES
+================================================================================
+
+Clovio is an AI-powered academic collaboration platform. The backend handles:
+
+  1. AI-powered project planning (milestones + tasks)
+  2. Workload fairness scoring (Gini coefficient)
+  3. Effort-point-based progress tracking
+
+The core flow is a TWO-STEP process:
+  Step 1: User submits a project description + team → AI returns milestones
+  Step 2: For each milestone, AI generates tasks assigned to team members
+
+The AI considers each member's skills, proficiency levels, and current workload
+when assigning tasks, aiming for balanced distribution across the team.
+
+
+================================================================================
+PART 2: HOW TO SET UP & RUN
+================================================================================
+
+PREREQUISITES:
+  - Python 3.10+ installed
+  - A Groq API key (free at https://console.groq.com/keys)
+    OR a DeepSeek API key (https://platform.deepseek.com/api_keys)
+
+SETUP STEPS:
+
+  1. Navigate to the backend folder:
+     cd backend
+
+  2. Create a virtual environment (if not already done):
+     python -m venv venv
+
+  3. Activate the virtual environment:
+     Windows:  venv\Scripts\activate
+     Mac/Linux: source venv/bin/activate
+
+  4. Install dependencies:
+     pip install -r requirements.txt
+
+  5. Create your .env file:
+     copy .env.example .env          (Windows)
+     cp .env.example .env            (Mac/Linux)
+
+  6. Edit .env and add your API key:
+     GROQ_API_KEY="your_key_here"    (if using Groq)
+     AI_PROVIDER="groq"
+
+     OR
+
+     DEEPSEEK_API_KEY="your_key_here" (if using DeepSeek)
+     AI_PROVIDER="deepseek"
+
+  7. Start the server:
+     python -m uvicorn app.main:app --reload --port 8000
+
+  8. Verify it's running:
+     Open http://localhost:8000       → should show {"status": "Active", ...}
+     Open http://localhost:8000/docs  → Swagger UI with all endpoints
+
+SWITCHING AI PROVIDERS:
+  Just change AI_PROVIDER in .env from "groq" to "deepseek" (or vice versa).
+  The rest of the code stays the same. Restart the server after changing.
+
+
+================================================================================
+PART 3: FILE STRUCTURE
+================================================================================
+
+backend/
+├── .env                        # Your API keys (git-ignored, never commit this)
+├── .env.example                # Template for .env (safe to commit)
+├── .gitignore                  # Ignores .env, venv/, __pycache__/
+├── requirements.txt            # All Python dependencies (pip freeze output)
+│
+├── app/
+│   ├── main.py                 # FastAPI app — all 5 endpoints defined here
+│   │
+│   ├── core/
+│   │   └── config.py           # Settings loaded from .env (provider, model, keys)
+│   │
+│   ├── schemas/
+│   │   └── project.py          # All Pydantic request/response models
+│   │
+│   └── services/
+│       ├── ai_service.py       # Core AI logic (LLM calls, prompt engineering)
+│       ├── fairness.py         # Gini coefficient calculation
+│       ├── progress.py         # Effort-point-based progress tracking
+│       └── workload.py         # Workload summary builder for AI prompts
+│
+├── test_milestone_gen.py       # Standalone test script for milestone generation
+└── generate_tasks_for_milestone.py  # Standalone test script for task generation
+
+
+================================================================================
+PART 4: ALL ENDPOINTS (API REFERENCE)
+================================================================================
+
+Base URL: http://localhost:8000
+Swagger Docs: http://localhost:8000/docs
+
+All requests/responses use JSON. Content-Type: application/json.
+
+────────────────────────────────────────────────────────────────────────────────
+ENDPOINT 1: Health Check
+────────────────────────────────────────────────────────────────────────────────
+GET /
+
+Response (200):
+{
+    "status": "Active",
+    "message": "Clovio Backend is running"
+}
+
+────────────────────────────────────────────────────────────────────────────────
+ENDPOINT 2: Generate Milestones (Step 1)
+────────────────────────────────────────────────────────────────────────────────
+POST /api/v1/generate-milestones
+
+Request Body:
+{
+    "description": "Build a habit tracker app with social features",   // 10-2000 chars
+    "team_members": [
+        {
+            "name": "Alice",
+            "skills": [
+                {"name": "Python", "level": 4},   // level: 1=Beginner, 2=Intermediate, 3=Advanced, 4=Expert
+                {"name": "Django", "level": 3}
+            ]
+        },
+        {
+            "name": "Bob",
+            "skills": [
+                {"name": "React", "level": 3},
+                {"name": "UI/UX", "level": 2}
+            ]
+        }
+    ]
+}
+
+Response (200):
+{
+    "project_name": "Habit Tracker App",
+    "milestones": [
+        {"title": "Planning and Design", "effort_points": 20},
+        {"title": "Backend Development", "effort_points": 40},
+        {"title": "Frontend Development", "effort_points": 30}
+    ],
+    "overall_risk_warning": "The team may face challenges due to ...",  // or null
+    "suggested_timeline_weeks": 24  // or null
+}
+
+Notes:
+  - This calls the AI (Groq/DeepSeek) so it takes 2-8 seconds.
+  - effort_points has no upper limit — it represents total expected task complexity.
+  - The user should review/edit milestones before proceeding to Step 2.
+
+────────────────────────────────────────────────────────────────────────────────
+ENDPOINT 3: Generate Tasks for a Milestone (Step 2)
+────────────────────────────────────────────────────────────────────────────────
+POST /api/v1/generate-tasks
+
+Request Body:
+{
+    "project_description": "Build a habit tracker app with social features",  // same desc from Step 1
+    "milestone_title": "Backend Development",     // title from Step 1 response
+    "milestone_effort": 40,                       // effort_points from Step 1 response
+    "team_members": [                             // same team list from Step 1
+        {
+            "name": "Alice",
+            "skills": [{"name": "Python", "level": 4}, {"name": "Django", "level": 3}]
+        },
+        {
+            "name": "Bob",
+            "skills": [{"name": "React", "level": 3}]
+        }
+    ],
+    "all_milestones": [                           // OPTIONAL: all milestones for context
+        {"title": "Planning and Design", "effort_points": 20},
+        {"title": "Backend Development", "effort_points": 40},
+        {"title": "Frontend Development", "effort_points": 30}
+    ],
+    "workload_override": null                     // OPTIONAL: see note below
+}
+
+Response (200):
+[
+    {
+        "name": "Design Database Schema",
+        "description": "Create models for users, habits, and social data",
+        "complexity": 8,                          // 1-10
+        "required_skills": ["Python", "Database"],
+        "assigned_to": "Alice",                   // or null if skill gap
+        "assignment_reason": "Alice has expert Python skills...",  // or null
+        "is_skill_gap": false                     // true if no one has the required skills
+    },
+    {
+        "name": "Implement Auth API",
+        "description": "JWT-based authentication endpoints",
+        "complexity": 6,
+        "required_skills": ["Python", "Django"],
+        "assigned_to": "Alice",
+        "assignment_reason": "Best skill match for Django",
+        "is_skill_gap": false
+    }
+]
+
+Notes:
+  - Call this ONCE PER MILESTONE, in sequence.
+  - The "workload_override" field:
+    * For MVP/testing: leave it null (the backend generates a zero-workload string).
+    * In production: the DB team should build the workload string from stored tasks
+      using build_workload_summary() from app/services/workload.py.
+    * Format: "Alice: completed 12 points, pending 5 points; Bob: completed 0 points, pending 3 points"
+  - complexity is always 1-10 (clamped server-side even if the AI returns higher).
+
+────────────────────────────────────────────────────────────────────────────────
+ENDPOINT 4: Fairness Score
+────────────────────────────────────────────────────────────────────────────────
+POST /api/v1/fairness
+
+Request Body:
+[
+    {"name": "Alice", "total_assigned": 25, "completed": 15, "pending": 10},
+    {"name": "Bob",   "total_assigned": 10, "completed": 10, "pending": 0},
+    {"name": "Charlie", "total_assigned": 20, "completed": 5, "pending": 15}
+]
+
+Response (200):
+{
+    "gini_coefficient": 0.1515,       // 0.0 = perfectly fair, 1.0 = completely unfair
+    "member_workloads": [             // same data echoed back for convenience
+        {"name": "Alice", "total_assigned": 25, "completed": 15, "pending": 10},
+        {"name": "Bob",   "total_assigned": 10, "completed": 10, "pending": 0},
+        {"name": "Charlie", "total_assigned": 20, "completed": 5, "pending": 15}
+    ]
+}
+
+Notes:
+  - "total_assigned" = sum of complexity points from all tasks assigned to that member.
+  - In production, the frontend/DB would calculate total_assigned from stored tasks.
+  - Does NOT call the AI — this is pure math, instant response.
+
+────────────────────────────────────────────────────────────────────────────────
+ENDPOINT 5: Progress Tracking
+────────────────────────────────────────────────────────────────────────────────
+POST /api/v1/progress
+
+Request Body:
+[
+    {
+        "title": "Planning",
+        "effort_points": 10,
+        "status": "completed",                   // "pending" | "active" | "completed"
+        "tasks": [
+            {"complexity": 5, "status": "done"},  // "todo" | "doing" | "done"
+            {"complexity": 5, "status": "done"}
+        ]
+    },
+    {
+        "title": "Backend Development",
+        "effort_points": 30,
+        "status": "active",
+        "tasks": [
+            {"complexity": 5, "status": "done"},
+            {"complexity": 10, "status": "doing"},
+            {"complexity": 15, "status": "todo"}
+        ]
+    },
+    {
+        "title": "Testing",
+        "effort_points": 15,
+        "status": "pending",
+        "tasks": []
+    }
+]
+
+Response (200):
+{
+    "overall_percent": 27.3,          // weighted by effort points, not task count
+    "total_effort": 55,               // sum of all milestone effort_points
+    "completed_effort": 15.0,         // weighted completed effort
+    "milestones": [
+        {"title": "Planning", "effort_points": 10, "completed_points": 10, "progress_percent": 100.0},
+        {"title": "Backend Development", "effort_points": 30, "completed_points": 5, "progress_percent": 16.7},
+        {"title": "Testing", "effort_points": 15, "completed_points": 0, "progress_percent": 0.0}
+    ]
+}
+
+Notes:
+  - Progress is effort-point-weighted (a 50-point milestone counts 5x more than a 10-point one).
+  - "completed" milestones count their full effort_points regardless of tasks.
+  - "active" milestones count the fraction of tasks marked "done".
+  - "pending" milestones count as 0% progress.
+  - Does NOT call the AI — pure math, instant response.
+  - Input is validated: bad status values or negative effort_points → 422 error.
+
+
+================================================================================
+PART 5: KEY DESIGN DECISIONS (FOR YOUR REFERENCE)
+================================================================================
+
+1. TWO-STEP FLOW: Milestones are generated first (Step 1), then tasks are
+   generated per milestone (Step 2). This lets users review and edit milestones
+   before committing to task generation.
+
+2. WORKLOAD BALANCING: When generating tasks for milestone N, the AI receives a
+   summary of all work assigned in milestones 1..N-1. This lets it balance load
+   across the entire project, not just within a single milestone.
+
+3. NOT EVERY MEMBER GETS WORK PER MILESTONE: This is BY DESIGN. If a milestone
+   is "Backend Development" and a member only has frontend skills, they won't get
+   tasks in that milestone. Balancing happens across all milestones.
+
+4. COMPLEXITY CLAMP: The AI occasionally returns complexity > 10 even when told
+   not to. The backend clamps all values to 1-10 before validation to prevent
+   500 errors.
+
+5. DUAL LLM SUPPORT: Switch between Groq (fast, free tier) and DeepSeek
+   (alternative) by changing one line in .env. Both use the same code path.
+
+6. TEMPERATURE = 0.3: Low temperature means more consistent/deterministic JSON
+   output. Higher values produce more creative but less reliable responses.
+
+
+================================================================================
+PART 6: WHAT OTHER TEAMS NEED TO KNOW
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+FOR THE FRONTEND TEAM
+────────────────────────────────────────────────────────────────────────────────
+
+HOW TO CONNECT:
+  - The backend runs on http://localhost:8000
+  - CORS is enabled for all origins (allow_origins=["*"]) so your React app
+    on localhost:3000 can call it directly with fetch() or axios.
+  - All endpoints accept and return JSON.
+  - Full interactive docs are at http://localhost:8000/docs (Swagger UI).
+
+THE USER FLOW YOU NEED TO BUILD:
+  1. User fills out a form: project description + team members with skills.
+  2. Frontend calls POST /api/v1/generate-milestones with that data.
+  3. Show the returned milestones to the user. Let them edit/reorder/delete.
+  4. For each accepted milestone, call POST /api/v1/generate-tasks.
+     - Send the same project_description and team_members.
+     - Send the milestone_title and milestone_effort from the milestone.
+     - Optionally send all_milestones for better AI context.
+  5. Display the returned tasks (assigned member, complexity, skills, reason).
+  6. For dashboards, call POST /api/v1/fairness with workload data to get
+     the Gini coefficient, and POST /api/v1/progress with milestone data
+     to get completion percentages.
+
+IMPORTANT NOTES:
+  - generate-milestones and generate-tasks call the AI, so they take 2-8 seconds.
+    Show a loading spinner.
+  - Handle 422 errors (validation failures) — show the error message to the user.
+  - Handle 500 errors (AI failures) — show a "try again" message.
+  - The project description must be 10-2000 characters.
+  - Skill levels are 1-4 (Beginner to Expert).
+
+EXAMPLE FETCH CALLS:
+
+  // Step 1: Generate milestones
+  const res = await fetch("http://localhost:8000/api/v1/generate-milestones", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+          description: "Build a student collaboration platform",
+          team_members: [
+              { name: "Alice", skills: [{ name: "Python", level: 4 }] },
+              { name: "Bob",   skills: [{ name: "React",  level: 3 }] }
+          ]
+      })
+  });
+  const milestones = await res.json();
+
+  // Step 2: Generate tasks for one milestone
+  const tasksRes = await fetch("http://localhost:8000/api/v1/generate-tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+          project_description: "Build a student collaboration platform",
+          milestone_title: milestones.milestones[0].title,
+          milestone_effort: milestones.milestones[0].effort_points,
+          team_members: [
+              { name: "Alice", skills: [{ name: "Python", level: 4 }] },
+              { name: "Bob",   skills: [{ name: "React",  level: 3 }] }
+          ],
+          all_milestones: milestones.milestones
+      })
+  });
+  const tasks = await tasksRes.json();
+
+────────────────────────────────────────────────────────────────────────────────
+FOR THE DATABASE TEAM
+────────────────────────────────────────────────────────────────────────────────
+
+WHAT YOU NEED TO STORE:
+  The backend currently has NO database. All data is passed in via API requests
+  and returned immediately. Your job is to persist:
+
+  1. PROJECTS — the project description, team members
+  2. MILESTONES — title, effort_points, status ("pending"/"active"/"completed")
+  3. TASKS — name, description, complexity (1-10), required_skills, assigned_to,
+     assignment_reason, is_skill_gap, status ("todo"/"doing"/"done")
+  4. TEAM MEMBERS — name, skills (name + level 1-4)
+
+SUGGESTED DATABASE SCHEMA (adapt to your DB choice):
+
+  projects:       id, description, created_at
+  team_members:   id, project_id, name
+  skills:         id, member_id, name, level
+  milestones:     id, project_id, title, effort_points, status, order
+  tasks:          id, milestone_id, name, description, complexity, assigned_to,
+                  assignment_reason, is_skill_gap, status
+
+HOW TO INTEGRATE:
+  The backend currently works without a DB. When you're ready to integrate:
+
+  1. After calling generate-milestones, SAVE the returned milestones to your DB.
+  2. After calling generate-tasks, SAVE the returned tasks to your DB.
+  3. When the user marks tasks as done/doing or milestones as active/completed,
+     UPDATE those statuses in the DB.
+
+  4. WORKLOAD INTEGRATION (most important):
+     When generating tasks for milestone N, the backend needs to know what work
+     has already been assigned in milestones 1..N-1. Currently, callers pass
+     a "workload_override" string manually.
+
+     In production, you should:
+     a. Query the DB for all tasks in milestones 1..N-1 for this project.
+     b. Call build_workload_summary(team_members, tasks) from
+        app/services/workload.py to generate the summary string.
+     c. Pass that string as workload_override when calling generate-tasks.
+
+     The function is already written and tested:
+       from app.services.workload import build_workload_summary
+       summary = build_workload_summary(team_members, previous_tasks)
+       # → "Alice: completed 12 points, pending 5 points; Bob: ..."
+
+  5. PROGRESS INTEGRATION:
+     The /api/v1/progress endpoint currently accepts milestone data directly.
+     In production, you'd query the DB and pass the data. The expected format:
+     [
+         {
+             "title": "milestone name",
+             "effort_points": 30,
+             "status": "active",
+             "tasks": [{"complexity": 5, "status": "done"}, ...]
+         }
+     ]
+
+  6. FAIRNESS INTEGRATION:
+     Same pattern — query DB for per-member totals and call /api/v1/fairness.
+
+────────────────────────────────────────────────────────────────────────────────
+FOR THE AUTH TEAM
+────────────────────────────────────────────────────────────────────────────────
+
+  The backend currently has NO authentication. All endpoints are open.
+
+  When you add auth:
+  1. Add your auth middleware to app/main.py (JWT, session-based, etc.).
+  2. Protect the endpoints that need it (all except health check).
+  3. The CORS middleware is already in place — if you use cookies/tokens,
+     make sure the frontend sends credentials.
+  4. If using JWT, add the token validation as a FastAPI dependency:
+
+     from fastapi import Depends, Security
+     # your auth dependency here
+     @app.post("/api/v1/generate-milestones", dependencies=[Depends(auth)])
+
+
+================================================================================
+PART 7: THINGS TO BE AWARE OF
+================================================================================
+
+1. API KEY SECURITY:
+   - The .env file contains your real API key. It is git-ignored.
+   - NEVER commit .env to Git. Use .env.example as a template.
+   - If the key leaks, regenerate it at https://console.groq.com/keys
+
+2. RATE LIMITS:
+   - Groq's free tier has rate limits (requests per minute / tokens per minute).
+   - The backend retries up to 3 times with exponential backoff (2s→4s→8s).
+   - If you see frequent 429 errors, you're hitting the rate limit. Wait or
+     upgrade your Groq plan.
+
+3. AI RESPONSE QUALITY:
+   - The AI sometimes assigns all tasks to one person if they're the only one
+     with relevant skills. This is expected — it balances across milestones.
+   - Temperature is set to 0.3 for consistent JSON output. Don't raise it
+     above 0.5 or the AI starts producing malformed JSON.
+   - Complexity values are clamped to 1-10 server-side as a safety net.
+
+4. REQUIREMENTS.TXT:
+   - Generated with pip freeze, so it includes transitive dependencies.
+   - The essential packages are: fastapi, uvicorn, groq, openai, tenacity,
+     pydantic, python-dotenv.
+
+5. THE APP/API/ FOLDER:
+   - Currently empty. If the project grows, endpoints can be refactored into
+     router files under app/api/ (e.g., app/api/generation.py, app/api/analytics.py)
+     using FastAPI's APIRouter. For MVP, everything is in main.py.
+
+6. TESTING:
+   - Standalone test scripts: test_milestone_gen.py, generate_tasks_for_milestone.py
+   - These call the AI directly (no HTTP). Run with: python test_milestone_gen.py
+   - For HTTP testing, use http://localhost:8000/docs (Swagger UI) — it has a
+     "Try it out" button for every endpoint.
+
+================================================================================
+END OF DOCUMENT
+================================================================================

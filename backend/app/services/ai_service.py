@@ -1,46 +1,179 @@
 import json
-from typing import List
-from groq import Groq
-from groq import APIError, APIConnectionError, RateLimitError
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
-from app.core.config import settings
-from app.schemas.project import ProjectPlan, TeamMember, MilestonePlanResponse, Task
+from abc import ABC, abstractmethod
+from typing import List, Optional
 
-# Initializing the Groq client using the key from the config file
-client = Groq(api_key=settings.GROQ_API_KEY)
+from tenacity import Retrying, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+from app.core.config import settings, PROVIDER_DEFAULTS
+from app.schemas.project import TeamMember, MilestonePlanResponse, Task
+
+# ──────────────────────────────────────────────────────────────────────────────
+# LLM PROVIDER ABSTRACTION
+# Both providers expose the same chat.completions.create() interface.
+# Each class wraps its own SDK and handles its own retryable exceptions so the
+# rest of the service code stays completely provider-agnostic.
+# ──────────────────────────────────────────────────────────────────────────────
+
+class LLMProvider(ABC):
+    """Common interface all LLM providers must implement."""
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        pass
+
+    @abstractmethod
+    def complete(self, messages: list, model: str, max_tokens: int, temperature: float) -> str:
+        """Call the LLM and return the response content. Retries on transient failures."""
+        pass
 
 
-@retry(
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, min=2, max=30),
-    retry=retry_if_exception_type((APIError, APIConnectionError, RateLimitError)),
-    reraise=True,
-)
-def _call_groq_with_retry(messages: list, model: str, max_tokens: int = None, **kwargs) -> str:
+class GroqProvider(LLMProvider):
+    def __init__(self, api_key: str):
+        from groq import Groq, APIError, APIConnectionError, RateLimitError
+        self._client = Groq(api_key=api_key)
+        self._retryable = (APIError, APIConnectionError, RateLimitError)
+
+    @property
+    def name(self) -> str:
+        return "GROQ"
+
+    def complete(self, messages: list, model: str, max_tokens: int, temperature: float) -> str:
+        for attempt in Retrying(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=2, max=30),
+            retry=retry_if_exception_type(self._retryable),
+            reraise=True,
+        ):
+            with attempt:
+                completion = self._client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+                if not completion.choices:
+                    raise RuntimeError("AI returned no choices: possible API error or empty response")
+                return completion.choices[0].message.content
+
+
+class DeepSeekProvider(LLMProvider):
+    def __init__(self, api_key: str, base_url: str):
+        from openai import OpenAI, APIError, APIConnectionError, RateLimitError
+        self._client = OpenAI(api_key=api_key, base_url=base_url)
+        self._retryable = (APIError, APIConnectionError, RateLimitError)
+
+    @property
+    def name(self) -> str:
+        return "DEEPSEEK"
+
+    def complete(self, messages: list, model: str, max_tokens: int, temperature: float) -> str:
+        for attempt in Retrying(
+            stop=stop_after_attempt(3),
+            wait=wait_exponential(multiplier=1, min=2, max=30),
+            retry=retry_if_exception_type(self._retryable),
+            reraise=True,
+        ):
+            with attempt:
+                completion = self._client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                )
+                if not completion.choices:
+                    raise RuntimeError("AI returned no choices: possible API error or empty response")
+                return completion.choices[0].message.content
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PROVIDER INITIALISATION
+# Primary is set by AI_PROVIDER (config validates its key is present).
+# Fallback is the other provider — activated only if its API key is present.
+# Adding a second key in .env is all that is needed to enable fallback.
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _build_provider(name: str) -> Optional[LLMProvider]:
+    """Return an LLMProvider instance for `name`, or None if its key is absent or the SDK import fails."""
+    try:
+        if name == "groq" and settings.GROQ_API_KEY:
+            return GroqProvider(settings.GROQ_API_KEY)
+        if name == "deepseek" and settings.DEEPSEEK_API_KEY:
+            ds = PROVIDER_DEFAULTS["deepseek"]
+            return DeepSeekProvider(settings.DEEPSEEK_API_KEY, ds["base_url"])
+    except ImportError as e:
+        print(f"[AI Service] Warning: could not initialise {name} provider — {e}")
+    return None
+
+
+_primary_name: str = settings.AI_PROVIDER
+_fallback_name: str = "deepseek" if _primary_name == "groq" else "groq"
+
+_primary: LLMProvider = _build_provider(_primary_name)           # always present (config validates this)
+_fallback: Optional[LLMProvider] = _build_provider(_fallback_name)  # optional
+
+print(f"[AI Service] Primary:  {_primary.name}  |  Model: {settings.AI_MODEL}")
+if _fallback:
+    print(f"[AI Service] Fallback: {_fallback.name}  |  Model: {PROVIDER_DEFAULTS[_fallback_name]['model']}")
+else:
+    print(f"[AI Service] Fallback: none  (set {_fallback_name.upper()}_API_KEY to enable)")
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# CORE CALL — primary → fallback on total failure
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _call_llm(messages: list) -> str:
     """
-    Calls the Groq API. Retried up to 3 times on network failures
-    (rate limits, timeouts) with exponential backoff (2 s -> 4 s -> 8 s, max 30 s).
+    Call the primary LLM provider with retry. If all retries are exhausted,
+    fall back to the secondary provider (if configured). Raises RuntimeError
+    when both providers fail or no fallback is available.
     """
-    extra_args = {}
-    if max_tokens is not None:
-        extra_args["max_tokens"] = max_tokens
-    extra_args.update(kwargs) # Include any additional arguments passed like temperature etc.     
+    try:
+        return _primary.complete(
+            messages=messages,
+            model=settings.AI_MODEL,
+            max_tokens=settings.MAX_TOKENS,
+            temperature=settings.AI_TEMPERATURE,
+        )
+    except Exception as primary_err:
+        if _fallback is None:
+            raise
+        print(f"[AI Service] {_primary.name} failed ({primary_err}). Switching to {_fallback.name}...")
+        fallback_model = PROVIDER_DEFAULTS[_fallback_name]["model"]
+        return _fallback.complete(
+            messages=messages,
+            model=fallback_model,
+            max_tokens=settings.MAX_TOKENS,
+            temperature=settings.AI_TEMPERATURE,
+        )
 
-    completion = client.chat.completions.create( # API call to AI to get a completion based on the provided messages and model
-        model=model, # The AI model to use for generating the response 
-        messages=messages, # A list of messages that includes the system prompt and user input, which guides the AI's response
-        **extra_args # Any additional parameters for the API call, such as max_tokens or temperature, are passed here
-    )
-    if not completion.choices:
-        raise RuntimeError("AI returned no choices: possible API error or empty response")
-    return completion.choices[0].message.content
+
+# ──────────────────────────────────────────────────────────────────────────────
+# HELPER: Strip markdown code fences from AI responses
+# ──────────────────────────────────────────────────────────────────────────────
+
+def _clean_json_response(raw: str) -> str:
+    """
+    Removes markdown code fences (```json ... ``` or ``` ... ```) that some
+    LLMs wrap around their JSON output. Returns the cleaned string.
+    """
+    if "```json" in raw:
+        return raw.split("```json")[1].split("```")[0].strip()
+    elif "```" in raw:
+        return raw.split("```")[1].split("```")[0].strip()
+    return raw.strip()
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# AI GENERATION FUNCTIONS
+# ──────────────────────────────────────────────────────────────────────────────
 
 def generate_milestones_only(description: str, team_members: List[TeamMember]) -> MilestonePlanResponse:
     """
     Calls AI to generate only milestones with effort points.
     Returns a dict with project_name, milestones list, and optional risk warning.
     """
-    # Format team members for the prompt (same as before)
     members_info = "\n".join(
         f"{member.name}: " + (", ".join(str(skill) for skill in member.skills) if member.skills else "no skills listed")
         for member in team_members
@@ -78,33 +211,24 @@ def generate_milestones_only(description: str, team_members: List[TeamMember]) -
     """
 
     try:
-        raw_content = _call_groq_with_retry(
+        raw_content = _call_llm(
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": f"Project Description: {description}"}
-            ],
-            model=settings.AI_MODEL,
-            max_tokens=settings.MAX_TOKENS
+            ]
         )
 
-        # Clean markdown fences (same as before)
-        if "```json" in raw_content:
-            raw_content = raw_content.split("```json")[1].split("```")[0].strip()
-        elif "```" in raw_content:
-            raw_content = raw_content.split("```")[1].split("```")[0].strip()
-
-        # Parse JSON
+        raw_content = _clean_json_response(raw_content)
         data = json.loads(raw_content)
-        # Basic validation
         if "project_name" not in data or "milestones" not in data:
             raise ValueError("Missing required fields in AI response")
-        # Optional: validate each milestone has title and effort_points
         for m in data["milestones"]:
             if "title" not in m or "effort_points" not in m:
                 raise ValueError("Milestone missing title or effort_points")
         return MilestonePlanResponse.model_validate(data)
     except Exception as e:
         raise RuntimeError(f"Milestone generation failed: {str(e)}")
+
 
 def generate_tasks_for_milestone(
     project_description: str,
@@ -113,26 +237,21 @@ def generate_tasks_for_milestone(
     team_members: List[TeamMember],
     workload_summary: str,
     all_milestones: List[dict] = None
-) -> List[Task]: # Returns a list of Task objects with assignments and justifications.
+) -> List[Task]:
     """
     Calls AI to generate tasks for a specific milestone, considering current workload.
     Returns a list of Task objects.
     """
-    # Format team members
     members_info = "\n".join(
         f"{member.name}: " + (", ".join(str(skill) for skill in member.skills) if member.skills else "no skills listed")
         for member in team_members
     )
 
-    milestone_context = ""
     if all_milestones:
         milestones_lines = [f"- {m['title']} ({m['effort_points']} points)" for m in all_milestones]
         milestones_context = "\n".join(milestones_lines)
     else:
-        milestones_context = "Not provided." 
-
-    milestone_context = "Planning and Design, Frontend Development, Backend Development, Testing & QA, Deployment & Maintenance" # Temporary hardcoded context for testing. Replace with actual milestones when available.
-
+        milestones_context = "Not provided."
 
     prompt = f"""
     You are a Senior Project Manager. Your goal is to break down a specific milestone into concrete, assignable tasks.
@@ -143,8 +262,8 @@ def generate_tasks_for_milestone(
     - Milestone Effort Estimate: {milestone_effort} points (total effort for this milestone)
 
     Overall Project Milestones (for context):
-    {milestones_context}    
-    
+    {milestones_context}
+
     Team Members and their skills (format: "Skill (Level, 1/4)"):
     {members_info}
 
@@ -156,7 +275,7 @@ def generate_tasks_for_milestone(
     2. For each task, provide:
     - name: short title
     - description: brief explanation (optional but recommended)
-    - complexity: integer 1–10 (effort points). The sum of all task complexities should approximately equal the milestone's effort estimate.
+    - complexity: integer 1–10 STRICTLY (NEVER below 1 or above 10). The sum of all task complexities should approximately equal the milestone's effort estimate. If you need more total effort, create more tasks — do NOT increase individual complexity beyond 10.
     - required_skills: list of skill keywords (e.g., ["Python", "Database"])
     - assigned_to: name of the team member best suited based on skills and current workload. If the required skills are missing from the entire team, set this to null and set is_skill_gap to true.
     - assignment_reason: short justification for the assignment, or null if is_skill_gap is true.
@@ -178,100 +297,24 @@ def generate_tasks_for_milestone(
     }}
     ]
     Do not include any other text.
-    """ 
+    """
 
-    # Call AI (use _call_groq_with_retry)
-    raw_content = _call_groq_with_retry(
-        messages=[
-            {"role": "system", "content": prompt}
-        ],
-        model=settings.AI_MODEL,
-        max_tokens=settings.MAX_TOKENS
-    )
-    # Clean JSON (same as before)
-    if "```json" in raw_content:
-        raw_content = raw_content.split("```json")[1].split("```")[0].strip()
-    elif "```" in raw_content:
-        raw_content = raw_content.split("```")[1].split("```")[0].strip()
-    # Parse JSON into list of dicts
-    tasks_data = json.loads(raw_content)
-    # Convert each dict to a Task object
-    return [Task(**t) for t in tasks_data]
+    try:
+        raw_content = _call_llm(
+            messages=[
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": f"Generate tasks for milestone: {milestone_title}"}
+            ]
+        )
+        raw_content = _clean_json_response(raw_content)
+        tasks_data = json.loads(raw_content)
 
+        # Clamp complexity to 1–10 before Pydantic validation.
+        # LLMs occasionally ignore the prompt constraint and output values > 10.
+        for t in tasks_data:
+            if 'complexity' in t:
+                t['complexity'] = max(1, min(10, int(t['complexity'])))
 
-# generate_task_breakdown: kept for reference
-# This function has been replaced by a two-step approach:
-# 1. generate_milestones_only() - generates milestones with effort points
-# 2. generate_tasks_for_milestone() - generates tasks per milestone with workload balancing
-# The old single-call approach lacked workload awareness, per-milestone effort estimation,
-# and dynamic task distribution. It is kept here for reference only and should not be used.
-
-# def generate_task_breakdown(description: str, team_members: List[TeamMember]) -> ProjectPlan:
-#     """
-#     Takes a project description and a list of team members, 
-#     then returns a structured project plan assigned by AI.
-#     """
-#
-#     members_info = "\n".join(
-#         f"{member.name}: " + (", ".join(str(skill) for skill in member.skills) if member.skills else "no skills listed")
-#         for member in team_members
-#     )
-#
-#     # The System Prompt that the AI must follow
-#     system_prompt = f"""
-#     You are a Senior Project Manager. Your goal is to break down a project into logical milestones and tasks.
-#     
-#     CRITICAL RULES:
-#     1. Scale: Determine the number of milestones based on the project's complexity. Ensure the breakdown is detailed enough for guidance but not so granular that it overwhelms the team.
-#     2. Fairness: Assign tasks to the following team members based on their skills and proficiency levels
-#        (format: "Skill (Level, N/4)"): {members_info}
-#     3. Bottlenecks: If one person has a unique skill needed for 90% of the project, assign them the hardest tasks 
-#        and assign 'learning' tasks to others to balance the load.
-#     4. Reasoning: For every assignment, explain WHY that person was chosen in the 'assignment_reason' field.
-#     5. Output: You must return ONLY valid JSON that matches the ProjectPlan schema.
-#
-#     You must respond with a JSON object that exactly matches this schema:
-#     JSON STRUCTURE:
-#     {{
-#     "project_name": string,
-#     "milestones": [
-#         {{
-#         "title": string,
-#         "tasks": [
-#             {{
-#             "name": string,
-#             "description": string,
-#             "complexity": integer (1-10),
-#             "required_skills": [string],
-#             "assigned_to": string,
-#             "assignment_reason": string,
-#             "is_skill_gap": boolean
-#             }}
-#         ]
-#         }}
-#     ],
-#     "overall_risk_warning": string | null
-#     }}
-#     """
-#
-#     try:
-#         raw_content = _call_groq_with_retry(
-#             messages=[
-#                 {"role": "system", "content": system_prompt},
-#                 {"role": "user", "content": f"Project Description: {description}"}
-#             ],
-#             model=settings.AI_MODEL,
-#             max_tokens=settings.MAX_TOKENS   
-#         )            
-#
-#         raw_json = raw_content
-#         # The AI might wrap the JSON in markdown code blocks, so we need to extract it. 
-#         if "```json" in raw_content:
-#             raw_json = raw_content.split("```json")[1].split("```")[0].strip()
-#         elif "```" in raw_content:
-#             raw_json = raw_content.split("```")[1].split("```")[0].strip()
-#
-#         return ProjectPlan.model_validate_json(raw_json)
-#
-#     except Exception as e:
-#         raise RuntimeError(f"AI generation failed: {str(e)}")
+        return [Task(**t) for t in tasks_data]
+    except Exception as e:
+        raise RuntimeError(f"Task generation failed: {str(e)}")

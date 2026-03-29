@@ -1,0 +1,326 @@
+================================================================================
+  CHANGELOG — MVP Core Fixes (7 Issues Resolved)
+  Date: 2026-03-01
+================================================================================
+
+
+OVERVIEW
+────────
+This update implements all 7 remaining blockers/issues that were preventing
+the AI module from being integration-ready. After this, your AI service is
+fully functional with working endpoints that Member 4 (API Lead) and
+Members 2/3 (Frontend) can connect to.
+
+
+================================================================================
+WHAT WAS WRONG → WHAT WAS DONE
+================================================================================
+
+
+──────────────────────────────────────────────────────────────────────────────
+FIX 1: main.py was completely broken
+──────────────────────────────────────────────────────────────────────────────
+FILE: app/main.py
+
+PROBLEM:
+  The old main.py imported `generate_task_breakdown` — a function that was
+  COMMENTED OUT in ai_service.py. The app would crash immediately on startup
+  with an ImportError. The single endpoint used the old one-step flow.
+
+WHAT CHANGED:
+  - Removed the broken import and old /api/v1/generate-plan endpoint.
+  - Added 4 new working endpoints (see "NEW ENDPOINTS" section below).
+  - Bumped version from 0.1.0 → 0.2.0.
+
+WHY:
+  The two-step flow (milestones first, then tasks) was already built in
+  ai_service.py but had no endpoints to call it. Now it does.
+
+
+──────────────────────────────────────────────────────────────────────────────
+FIX 2: CORS middleware was missing
+──────────────────────────────────────────────────────────────────────────────
+FILE: app/main.py
+
+PROBLEM:
+  No CORS middleware meant the React frontend (localhost:3000) could NOT
+  call the backend API (localhost:8000). Browsers block cross-origin requests
+  by default.
+
+WHAT CHANGED:
+  - Added CORSMiddleware with allow_origins=["*"] (wildcard for dev).
+  - All HTTP methods and headers allowed.
+
+WHY:
+  Without this, Members 2/3 (Frontend) cannot even start integration testing.
+
+HOW TO USE:
+  For production, change allow_origins from ["*"] to your actual domain:
+    allow_origins=["https://clovio.app", "http://localhost:3000"]
+
+
+──────────────────────────────────────────────────────────────────────────────
+FIX 3: Gini fairness score — implemented from scratch
+──────────────────────────────────────────────────────────────────────────────
+FILE: app/services/fairness.py (NEW FILE)
+
+PROBLEM:
+  The fairness score was described in detail in About App.txt but had zero
+  code. This was one of your core deliverables.
+
+WHAT WAS ADDED:
+  - calculate_gini_coefficient(workloads: List[int]) → float
+  - Formula: G = (2 * Σ(i * y_i)) / (n * Σ(y_i)) - (n+1) / n
+  - Edge cases: empty list → 0.0, single member → 0.0, all zeros → 0.0
+  - Result clamped to [0.0, 1.0], rounded to 4 decimal places
+
+HOW IT WORKS:
+  from app.services.fairness import calculate_gini_coefficient
+
+  # Equal workload → low score
+  calculate_gini_coefficient([10, 10, 10])  # → 0.0
+
+  # Unequal workload → higher score
+  calculate_gini_coefficient([10, 20, 30])  # → 0.2222
+
+  # Very unequal → close to 1
+  calculate_gini_coefficient([0, 0, 100])   # → 0.6667
+
+HOW TO INTERPRET:
+  0.0 - 0.15  →  Excellent (very fair distribution)
+  0.15 - 0.30 →  Good (minor imbalance, likely acceptable)
+  0.30 - 0.50 →  Warning (noticeable imbalance)
+  0.50+       →  Bad (significant unfairness, needs attention)
+
+
+──────────────────────────────────────────────────────────────────────────────
+FIX 4: Progress tracking — implemented from scratch
+──────────────────────────────────────────────────────────────────────────────
+FILE: app/services/progress.py (NEW FILE)
+
+PROBLEM:
+  Progress calculation was described in docs but had no code. Without it,
+  there's no way to show a "45% complete" indicator on the frontend.
+
+WHAT WAS ADDED:
+  - calculate_progress(milestones: List[dict]) → ProgressResponse
+  - Uses EFFORT POINTS, not task count. A milestone worth 50 points
+    counts 5x more than one worth 10.
+  - Per-milestone progress + overall project progress.
+
+HOW IT WORKS:
+  Milestones have 3 statuses: "pending", "active", "completed".
+  
+  - "completed" → full effort_points added to completed total
+  - "active"    → fraction = (done task complexity) / effort_points
+  - "pending"   → 0% progress
+  
+  Overall = (total completed effort / total project effort) × 100
+
+  from app.services.progress import calculate_progress
+  result = calculate_progress([
+      {"title": "Planning", "effort_points": 10, "status": "completed", "tasks": [...]},
+      {"title": "Frontend", "effort_points": 20, "status": "active", "tasks": [
+          {"complexity": 5, "status": "done"},
+          {"complexity": 15, "status": "todo"}
+      ]},
+      {"title": "Testing", "effort_points": 15, "status": "pending", "tasks": []}
+  ])
+  # result.overall_percent → 33.3  (10 done + 5/20 of 20 = 12.5, total 45 → 12.5/45)
+
+
+──────────────────────────────────────────────────────────────────────────────
+FIX 5: TaskGenerationRequest schema — created
+──────────────────────────────────────────────────────────────────────────────
+FILE: app/schemas/project.py
+
+PROBLEM:
+  The task generation function accepted 6 separate arguments, but there was
+  no Pydantic request model. The frontend had no API contract to follow.
+
+WHAT WAS ADDED:
+  - TaskGenerationRequest model with:
+      project_description (str, 10-2000 chars)
+      milestone_title (str)
+      milestone_effort (int, >= 1)
+      team_members (List[TeamMember])
+      all_milestones (Optional, for context)
+      workload_override (Optional str, for testing without DB)
+
+  - FairnessResponse, MemberWorkload — response models for the fairness endpoint
+  - ProgressResponse, MilestoneProgress — response models for the progress endpoint
+
+WHY:
+  Clear API contracts so Members 2/3 (Frontend) and Member 4 (API Lead)
+  know exactly what JSON to send and what they'll get back.
+
+
+──────────────────────────────────────────────────────────────────────────────
+FIX 6: Workload summary builder — created
+──────────────────────────────────────────────────────────────────────────────
+FILE: app/services/workload.py (NEW FILE)
+
+PROBLEM:
+  generate_tasks_for_milestone() required a pre-formatted string like:
+    "Alice: completed 12 points, pending 5 points; Bob: ..."
+  But nothing built this string. Every test had to type it manually.
+
+WHAT WAS ADDED:
+  - build_workload_summary(team_members, tasks) → str
+    Tallies completed vs pending points per member from a list of task dicts.
+
+  - build_workload_summary_empty(team_members) → str
+    Generates a "zero workload" string for the first milestone.
+
+HOW IT WORKS:
+  from app.services.workload import build_workload_summary
+
+  summary = build_workload_summary(members, [
+      {"assigned_to": "Alice", "complexity": 5, "status": "done"},
+      {"assigned_to": "Alice", "complexity": 7, "status": "doing"},
+      {"assigned_to": "Bob",   "complexity": 3, "status": "todo"},
+  ])
+  # → "Alice: completed 5 points, pending 7 points; Bob: completed 0 points, pending 3 points"
+
+  When Member 5 integrates the DB, this function just needs to receive
+  task rows instead of manual dicts — the output format stays the same.
+
+
+──────────────────────────────────────────────────────────────────────────────
+FIX 7: Task generation — added user message role
+──────────────────────────────────────────────────────────────────────────────
+FILE: app/services/ai_service.py
+
+PROBLEM:
+  generate_tasks_for_milestone() only sent a "system" message to the LLM.
+  generate_milestones_only() correctly sent both "system" and "user" messages.
+  Many LLMs produce more reliable structured output when both roles are present.
+
+WHAT CHANGED:
+  Before:
+    messages=[{"role": "system", "content": prompt}]
+  
+  After:
+    messages=[
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": f"Generate tasks for milestone: {milestone_title}"}
+    ]
+
+WHY:
+  Consistency with generate_milestones_only() and better reliability
+  across different LLM providers (Groq, DeepSeek).
+
+
+================================================================================
+NEW ENDPOINTS (replacing the old broken one)
+================================================================================
+
+  OLD (REMOVED):
+    POST /api/v1/generate-plan   ← crashed on import, used deprecated function
+
+  NEW:
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ Endpoint                        │ Method │ What it does               │
+  ├────────────────────────────────────────────────────────────────────────┤
+  │ /                               │ GET    │ Health check               │
+  │ /api/v1/generate-milestones     │ POST   │ Step 1: Generate milestones│
+  │ /api/v1/generate-tasks          │ POST   │ Step 2: Generate tasks     │
+  │ /api/v1/fairness                │ POST   │ Compute Gini coefficient   │
+  │ /api/v1/progress                │ POST   │ Compute progress %         │
+  └────────────────────────────────────────────────────────────────────────┘
+
+  NOTE on fairness/progress being POST not GET:
+    In the MVP, these accept data directly (no DB yet). When Member 5
+    integrates the database, Member 4 can change these to:
+      GET /api/v1/projects/{id}/fairness   (queries DB internally)
+      GET /api/v1/projects/{id}/progress   (queries DB internally)
+
+
+================================================================================
+NEW FILES CREATED
+================================================================================
+
+  app/services/fairness.py   — Gini coefficient calculation
+  app/services/progress.py   — Effort-point-based progress tracking
+  app/services/workload.py   — Workload summary string builder
+
+
+================================================================================
+FILES MODIFIED
+================================================================================
+
+  app/main.py              — Complete rewrite (new endpoints, CORS, new imports)
+  app/schemas/project.py   — Added 5 new Pydantic models
+  app/services/ai_service.py — Added user message to task generation
+
+
+================================================================================
+HOW TO TEST
+================================================================================
+
+  1. Start the server:
+       cd backend
+       uvicorn app.main:app --reload
+
+  2. Open the auto-generated docs:
+       http://localhost:8000/docs
+
+  3. Try each endpoint in the Swagger UI:
+
+     a) POST /api/v1/generate-milestones
+        Body: {
+          "description": "Build a habit tracker app with social features",
+          "team_members": [
+            {"name": "Alice", "skills": [{"name": "Python", "level": 4}]},
+            {"name": "Bob", "skills": [{"name": "React", "level": 3}]}
+          ]
+        }
+
+     b) POST /api/v1/generate-tasks
+        Body: {
+          "project_description": "Build a habit tracker app with social features",
+          "milestone_title": "Frontend Development",
+          "milestone_effort": 20,
+          "team_members": [
+            {"name": "Alice", "skills": [{"name": "Python", "level": 4}]},
+            {"name": "Bob", "skills": [{"name": "React", "level": 3}]}
+          ]
+        }
+
+     c) POST /api/v1/fairness
+        Body: [
+          {"name": "Alice", "total_assigned": 25, "completed": 15, "pending": 10},
+          {"name": "Bob", "total_assigned": 10, "completed": 10, "pending": 0}
+        ]
+
+     d) POST /api/v1/progress
+        Body: [
+          {"title": "Planning", "effort_points": 10, "status": "completed",
+           "tasks": [{"complexity": 10, "status": "done"}]},
+          {"title": "Frontend", "effort_points": 20, "status": "active",
+           "tasks": [{"complexity": 5, "status": "done"}, {"complexity": 15, "status": "todo"}]}
+        ]
+
+
+================================================================================
+WHAT'S LEFT FOR INTEGRATION WITH OTHER MEMBERS
+================================================================================
+
+  Member 5 (Database):
+    - Once DB models exist, the workload summary can be built from DB queries
+      instead of manual data.
+    - Fairness and progress endpoints can switch from POST (accepts data)
+      to GET /projects/{id}/... (queries DB internally).
+
+  Member 4 (API Lead):
+    - Can now use these endpoints directly or wrap them in their own router.
+    - The request/response schemas are fully defined in app/schemas/project.py.
+
+  Members 2/3 (Frontend):
+    - CORS is enabled — frontend can call the API immediately.
+    - Swagger docs at /docs show exactly what JSON to send and receive.
+
+
+================================================================================
+END OF CHANGELOG
+================================================================================

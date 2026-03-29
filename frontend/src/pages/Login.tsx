@@ -107,8 +107,11 @@ const Login: React.FC = () => {
 			if (error?.response?.status === 401) {
 				localStorage.removeItem('access_token');
 			}
+			const isNetworkOrCorsError = !error?.response;
 			setErrors({
-				password: error.response?.data?.detail || 'Login failed. Please try again.'
+				password: isNetworkOrCorsError
+					? 'Cannot reach backend API. Verify VITE_API_BASE_URL on Vercel and redeploy.'
+					: error.response?.data?.detail || 'Login failed. Please try again.'
 			});
 		}
 	};

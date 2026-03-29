@@ -1,7 +1,12 @@
 import axios from "axios";
 
 // Send API requests to the backend
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:8000").replace(/\/+$/, "");
+const configuredApiBase = import.meta.env.VITE_API_BASE_URL;
+const API_BASE = (configuredApiBase || "http://localhost:8000").replace(/\/+$/, "");
+
+if (import.meta.env.PROD && !configuredApiBase) {
+    console.error("Missing VITE_API_BASE_URL in production. Frontend is falling back to localhost and cannot reach Railway.");
+}
 
 export const apiClient = axios.create({
     baseURL: API_BASE,
@@ -109,11 +114,11 @@ export const register = async (userData: RegisterRequest): Promise<User> => {
 };
 
 export const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const formData = new FormData();
-    formData.append('username', credentials.username);
-    formData.append('password', credentials.password);
+    const body = new URLSearchParams();
+    body.append('username', credentials.username);
+    body.append('password', credentials.password);
 
-    const response = await apiClient.post("/api/v1/auth/login", formData, {
+    const response = await apiClient.post("/api/v1/auth/login", body.toString(), {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },

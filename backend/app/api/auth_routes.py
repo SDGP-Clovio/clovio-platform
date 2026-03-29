@@ -6,7 +6,13 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from app.core.auth import create_access_token, get_current_user, hash_password, verify_password
+from app.core.auth import (
+    create_access_token,
+    get_current_user,
+    hash_password,
+    is_recognized_password_hash,
+    verify_password,
+)
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.auth_schema import RegisterRequest, TokenResponse, UserResponse
@@ -30,7 +36,15 @@ def authenticate_user(db: Session, username: str, password: str) -> User:
         return None
 
     if not verify_password(password, user.hashed_password):
-        return None
+        # Backward compatibility path for legacy plaintext values in hashed_password.
+        # If the raw password matches, immediately upgrade it to bcrypt.
+        if not is_recognized_password_hash(user.hashed_password) and password == user.hashed_password:
+            user.hashed_password = hash_password(password)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+            return None
 
     if not user.is_active:
         return None

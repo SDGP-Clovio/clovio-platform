@@ -1,7 +1,8 @@
 import axios from "axios";
 
 // Send API requests to the backend
-const API_BASE = "https://clovio-platform-production.up.railway.app";
+const API_BASE = "http://localhost:8000";
+// "https://clovio-platform-production.up.railway.app";
 
 export const apiClient = axios.create({
     baseURL: API_BASE,
@@ -99,11 +100,11 @@ export const register = async (userData: RegisterRequest): Promise<User> => {
 };
 
 export const login = async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const formData = new FormData();
+    const formData = new URLSearchParams();
     formData.append('username', credentials.username);
     formData.append('password', credentials.password);
 
-    const response = await apiClient.post("/api/v1/auth/login", formData, {
+    const response = await apiClient.post("/api/v1/auth/login", formData.toString(), {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },

@@ -13,7 +13,7 @@ interface SupervisorSidebarProps {
 const SupervisorSidebar: React.FC<SupervisorSidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { currentUser } = useApp();
+    const { currentUser, setCurrentUser } = useApp();
 
     const navItems = [
         { id: '/supervisor', label: 'Dashboard', icon: LayoutDashboard },
@@ -21,6 +21,8 @@ const SupervisorSidebar: React.FC<SupervisorSidebarProps> = ({ sidebarOpen, setS
     ];
 
     const handleLogout = () => {
+        localStorage.removeItem('access_token');
+        setCurrentUser(null);
         navigate('/');
     };
 

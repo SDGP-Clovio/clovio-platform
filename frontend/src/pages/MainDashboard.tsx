@@ -370,7 +370,7 @@ const UpcomingMeetingsWidget: React.FC = () => {
 ═══════════════════════════════════════════════════════════════════════════ */
 const MainDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { currentUser, projects, activities } = useApp();
+    const { currentUser, projects, activities, setCurrentUser } = useApp();
     const [sidebarOpen, setSidebarOpen]   = useState(false);
     const [activeTab, setActiveTab]       = useState<'dashboard' | 'notifications' | 'settings' | 'schedule' | 'chat'>('dashboard');
     const [searchQuery, setSearchQuery]   = useState('');
@@ -381,7 +381,11 @@ const MainDashboard: React.FC = () => {
     const [scheduleShowModal, setScheduleShowModal] = useState(false);
     const unreadCount = notifSeen ? 0 : activities.length;
 
-    const handleLogout = () => navigate('/');
+    const handleLogout = () => {
+        localStorage.removeItem('access_token');
+        setCurrentUser(null);
+        navigate('/');
+    };
 
     const navItems = [
         { id: 'dashboard',     label: 'Dashboard',     icon: LayoutDashboard },

@@ -42,7 +42,7 @@ function toAppMeeting(record: BackendMeetingRecord): Meeting {
 }
 
 export async function fetchMeetings(projectId?: number): Promise<Meeting[]> {
-    const response = await apiClient.get<BackendMeetingRecord[]>("/api/meetings", {
+    const response = await apiClient.get<BackendMeetingRecord[]>("/api/meetings/", {
         params: projectId != null ? { project_id: projectId } : undefined,
     });
 
@@ -50,6 +50,6 @@ export async function fetchMeetings(projectId?: number): Promise<Meeting[]> {
 }
 
 export async function createMeetingRecord(payload: CreateMeetingApiRequest): Promise<Meeting> {
-    const response = await apiClient.post<BackendMeetingRecord>("/api/meetings", payload);
+    const response = await apiClient.post<BackendMeetingRecord>("/api/meetings/", payload);
     return toAppMeeting(response.data);
 }

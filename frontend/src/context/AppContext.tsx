@@ -293,6 +293,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
         const bootstrapFromApi = async () => {
             const hasToken = Boolean(localStorage.getItem('access_token'));
+            let resolvedCurrentUser: User | null = null;
 
             try {
                 const [apiUsers, apiProjects, apiTasks] = await Promise.all([
@@ -312,34 +313,41 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
                 if (hasToken) {
                     try {
                         const me = await fetchCurrentUserSettingsAsAppUser();
-                        if (isMounted) {
-                            setCurrentUser(me);
-                        }
+                        resolvedCurrentUser = me;
                     } catch {
                         try {
                             const fallbackMe = await fetchCurrentUserAsAppUser();
-                            if (isMounted) {
-                                setCurrentUser(fallbackMe);
-                            }
+                            resolvedCurrentUser = fallbackMe;
                         } catch {
-                            if (isMounted) {
-                                setCurrentUser(null);
-                            }
+                            resolvedCurrentUser = null;
                         }
                     }
                 } else {
                     const firstStudent = apiUsers.find((user) => user.role === 'student') ?? apiUsers[0] ?? null;
-                    setCurrentUser(firstStudent);
+                    resolvedCurrentUser = firstStudent;
                 }
 
-                const placeholderChats = apiProjects.map(createProjectChatPlaceholder);
+                if (isMounted) {
+                    setCurrentUser(resolvedCurrentUser);
+                }
+
+                const currentUserId = resolvedCurrentUser?.id;
+                const chatProjects = hasToken && currentUserId != null
+                    ? apiProjects.filter(
+                        (project) =>
+                            project.teamMembers.includes(currentUserId) ||
+                            project.supervisorId === currentUserId
+                    )
+                    : apiProjects;
+
+                const placeholderChats = chatProjects.map(createProjectChatPlaceholder);
                 setProjectChats(placeholderChats);
 
                 if (hasToken) {
                     try {
                         const [apiMeetings, apiProjectChats] = await Promise.all([
                             fetchMeetings(),
-                            fetchProjectChats(apiProjects),
+                            fetchProjectChats(chatProjects),
                         ]);
 
                         if (isMounted) {

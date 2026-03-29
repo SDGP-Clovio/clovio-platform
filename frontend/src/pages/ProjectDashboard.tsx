@@ -28,7 +28,7 @@ const ProjectDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { id: projectIdParam } = useParams<{ id: string }>();
     const projectId = projectIdParam ? Number(projectIdParam) : NaN;
-    const { currentUser, projects, setActiveProject, tasks, users } = useApp();
+    const { currentUser, projects, setActiveProject, tasks, users, setCurrentUser } = useApp();
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'chat' | 'settings'>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -252,6 +252,8 @@ const ProjectDashboard: React.FC = () => {
     }
 
     const handleLogout = () => {
+        localStorage.removeItem('access_token');
+        setCurrentUser(null);
         navigate('/');
     };
 

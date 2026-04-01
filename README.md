@@ -53,3 +53,66 @@
 git clone https://github.com/SDGP-Clovio/clovio-platform.git
 cd clovio-platform
 
+#### Navigate to the backend folder
+
+```bash
+cd backend
+
+#### Create and activate a virtual environment
+
+```bash
+python -m venv venv
+source venv/bin/activate       # on Windows: .\venv\Scripts\activate
+
+#### Install dependencies
+
+```bash
+pip install -r requirements.txt
+
+#### Set up environment variables
+Copy .env.example to .env and fill in the required keys:
+
+```bash
+env
+GROQ_API_KEY=your-groq-key
+DEEPSEEK_API_KEY=your-deepseek-key   # optional
+SECRET_KEY=your-secret-key
+DATABASE_URL=sqlite:///./test.db      # or PostgreSQL URL
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
+
+#### Run database migrations
+
+```bash
+alembic upgrade head
+
+#### Start the backend server
+
+```bash
+uvicorn app.main:app --reload
+
+The API will be available at http://localhost:8000. Swagger docs at /docs.
+
+### Frontend Setup
+#### Navigate to the frontend folder
+
+```bash
+cd ../frontend/clovio-frontend
+
+#### Install dependencies
+
+```bash
+npm install
+Set up environment variables
+
+#### Create a .env file with:
+
+```bash
+VITE_API_BASE_URL=http://localhost:8000
+
+#### Start the development server
+
+```bash
+npm run dev
+The frontend will be available at http://localhost:5173.
+
+

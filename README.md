@@ -32,13 +32,15 @@
 ## 📸 Screenshots
 
 <img width="1366" height="646" alt="image" src="https://github.com/user-attachments/assets/aa7530de-3330-46f7-a01c-1c9b0ba3ac73" />
-*The AI breaks down a project description into milestones and tasks.*
+**The AI breaks down a project description into milestones and tasks.**
+
 
 <img width="1366" height="641" alt="image" src="https://github.com/user-attachments/assets/177ffdaf-4fe8-4347-8110-757cf6e5786a" />
-*Tasks are intelligently distributed based on skills and workload.*
+**Tasks are intelligently distributed based on skills and workload.**
+
 
 <img width="1366" height="643" alt="image" src="https://github.com/user-attachments/assets/35b86068-7baf-4073-b773-3daffe367b7d" />
-*Clovio Dashboard*
+**Clovio Dashboard**
 
 ---
 

@@ -74,10 +74,9 @@ pip install -r requirements.txt
 ```
 
 #### Set up environment variables
-Copy .env.example to .env and fill in the required keys:
+Copy ```.env.example``` to ```.env``` and fill in the required keys:
 
 ```bash
-env
 GROQ_API_KEY=your-groq-key
 DEEPSEEK_API_KEY=your-deepseek-key   # optional
 SECRET_KEY=your-secret-key
@@ -110,18 +109,25 @@ cd ../frontend/clovio-frontend
 
 ```bash
 npm install
-Set up environment variables
 ```
 
-#### Create a .env file with:
+#### Set up environment variables
 
+Create a .env file with:
+
+```bash
 VITE_API_BASE_URL=http://localhost:8000
+```
 
 #### Start the development server
 
 ```bash
 npm run dev
-The frontend will be available at http://localhost:5173.
 ```
+The frontend will be available at http://localhost:5173.
+
+
+### 📄 License
+Distributed under the MIT License. See LICENSE for more information.
 
 **Built with ❤️ by the Clovio team – IIT, University of Westminster**

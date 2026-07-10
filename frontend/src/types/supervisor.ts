@@ -13,6 +13,8 @@ export interface SupervisorProjectItem {
 	risk_level: string;
 	team_size: number;
 	due_date: string | null;
+	fairness_score?: number;
+	last_active?: string;
 }
 
 export interface SupervisorProjectsResponse {

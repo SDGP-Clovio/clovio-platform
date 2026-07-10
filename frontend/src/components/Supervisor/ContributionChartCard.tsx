@@ -5,9 +5,10 @@ import { ensureChartJsRegistered } from "../../utils/chartSetup";
 
 interface ContributionChartCardProps {
 	contributions: SupervisorContributionItem[];
+	onClickMember?: (member: SupervisorContributionItem) => void;
 }
 
-export default function ContributionChartCard({ contributions }: ContributionChartCardProps) {
+export default function ContributionChartCard({ contributions, onClickMember }: ContributionChartCardProps) {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
 	const labels = useMemo(() => contributions.map((member) => member.name), [contributions]);
@@ -75,7 +76,11 @@ export default function ContributionChartCard({ contributions }: ContributionCha
 
 			<div className="mt-6 space-y-4">
 				{contributions.map((member) => (
-					<article key={member.user_id} className="rounded-xl border border-slate-100 p-4 transition-colors hover:bg-slate-50/50">
+					<article 
+						key={member.user_id} 
+						onClick={() => onClickMember?.(member)}
+						className={`rounded-xl border border-slate-100 p-4 transition-colors hover:bg-slate-50/50 ${onClickMember ? 'cursor-pointer hover:border-indigo-200' : ''}`}
+					>
 						<div className="flex items-center justify-between gap-2">
 							<p className="text-sm font-semibold text-slate-800">{member.name}</p>
 							<p className="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{member.contribution_percent.toFixed(1)}%</p>

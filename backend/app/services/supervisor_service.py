@@ -186,14 +186,43 @@ class SupervisorService:
         return SupervisorAlertsResponse(project_id=project_id, alerts=alerts)
 
     def _map_project_item(self, record: Mapping[str, Any]) -> SupervisorProjectItem:
+        project_id = int(record.get("id"))
+        project_name = str(record.get("name", ""))
+        
+        # Demo specific mocking
+        fairness_score = 0.85
+        last_active = "2 hours ago"
+        risk_level = str(record.get("risk_level", "Medium"))
+        progress = self._to_float(record.get("completion_percent"), fallback=0.0)
+
+        if "Group 2" in project_name:
+            fairness_score = 0.35
+            progress = 45.0
+            risk_level = "High"
+            last_active = "3 days ago"
+        elif project_id % 3 == 0:
+            fairness_score = 0.95
+            risk_level = "Low"
+            last_active = "10 mins ago"
+        elif project_id % 2 == 0:
+            fairness_score = 0.65
+            risk_level = "Medium"
+            last_active = "1 day ago"
+        else:
+            fairness_score = 0.55
+            risk_level = "High"
+            last_active = "5 days ago"
+
         return SupervisorProjectItem(
-            id=int(record.get("id")),
-            name=str(record.get("name", "")),
+            id=project_id,
+            name=project_name,
             status=str(record.get("status", "Unknown")),
-            completion_percent=self._to_float(record.get("completion_percent"), fallback=0.0),
-            risk_level=str(record.get("risk_level", "Medium")),
+            completion_percent=progress,
+            risk_level=risk_level,
             team_size=int(record.get("team_size", 0)),
             due_date=self._to_date(record.get("due_date")),
+            fairness_score=fairness_score,
+            last_active=last_active,
         )
 
     def _build_timeline(

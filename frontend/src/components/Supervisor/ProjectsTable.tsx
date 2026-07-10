@@ -67,6 +67,8 @@ export default function ProjectsTable({ projects, onOpenProject }: ProjectsTable
 							<Th label="Project" sortableKey="name" />
 							<Th label="Status" sortableKey="status" />
 							<Th label="Progress" sortableKey="completion_percent" />
+							<Th label="Fairness" sortableKey="fairness_score" />
+							<Th label="Last Active" sortableKey="last_active" />
 							<Th label="Risk" sortableKey="risk_level" />
 							<Th label="Team Size" sortableKey="team_size" />
 							<Th label="Due Date" sortableKey="due_date" />
@@ -89,6 +91,19 @@ export default function ProjectsTable({ projects, onOpenProject }: ProjectsTable
 										</div>
 										<p className="text-xs text-gray-500 mt-1">{project.completion_percent.toFixed(0)}%</p>
 									</div>
+								</td>
+								<td className="py-3 pr-3">
+									{project.fairness_score !== undefined ? (
+										<div className="flex items-center gap-1.5">
+											<div className={`w-2 h-2 rounded-full ${project.fairness_score < 0.6 ? 'bg-red-500' : project.fairness_score < 0.8 ? 'bg-amber-400' : 'bg-emerald-500'}`}></div>
+											<span className="font-medium text-slate-700">{project.fairness_score.toFixed(2)}</span>
+										</div>
+									) : (
+										<span className="text-gray-400">-</span>
+									)}
+								</td>
+								<td className="py-3 pr-3 text-gray-500 text-xs whitespace-nowrap">
+									{project.last_active ?? "-"}
 								</td>
 								<td className="py-3 pr-3">
 									<span className={`px-2 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${riskBadgeClass(project.risk_level)}`}>

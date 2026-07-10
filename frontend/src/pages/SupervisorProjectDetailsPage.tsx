@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Menu, X, Activity, CheckCircle2, Scale, AlertTriangle } from "lucide-react";
+import { Menu, X, Activity, CheckCircle2, Scale, AlertTriangle, Sparkles } from "lucide-react";
 
 import SupervisorSidebar from "../components/Supervisor/SupervisorSidebar";
 import AlertsPanel from "../components/Supervisor/AlertsPanel";
 import ContributionChartCard from "../components/Supervisor/ContributionChartCard";
 import ProgressChartCard from "../components/Supervisor/ProgressChartCard";
+import AtRiskWidget from "../components/Supervisor/AtRiskWidget";
+import IndividualContributionModal from "../components/Supervisor/IndividualContributionModal";
+import Modal from "../components/UI/Modal";
+import { generateProjectSummary } from "../services/projects";
 import {
 	getSupervisorAlerts,
 	getSupervisorContributions,
@@ -14,6 +18,7 @@ import {
 } from "../services/supervisor";
 import type {
 	SupervisorAlertsResponse,
+	SupervisorContributionItem,
 	SupervisorContributionsResponse,
 	SupervisorFairnessResponse,
 	SupervisorProjectDetailResponse,
@@ -32,6 +37,49 @@ export default function SupervisorProjectDetailsPage() {
 	const [alerts, setAlerts] = useState<SupervisorAlertsResponse | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
+
+	const [selectedMember, setSelectedMember] = useState<SupervisorContributionItem | null>(null);
+	const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+	const [summaryText, setSummaryText] = useState("");
+	const [showSummaryModal, setShowSummaryModal] = useState(false);
+
+	const handleGenerateReport = async () => {
+		if (!project || !contributions) return;
+		
+		setIsLoadingSummary(true);
+		setShowSummaryModal(true);
+
+		try {
+			const projectData = {
+				title: project.name,
+				description: "Clovio Supervision Scope",
+				deadline: project.timeline.find(t => t.title === "Project Due Date")?.date || "Unknown",
+				members: contributions.contributions.map(c => c.name),
+				tasks: []
+			};
+			const result = await generateProjectSummary(project.id, projectData);
+			
+			// Catch empty responses just in case
+			if (result.includes("Failed to generate summary")) {
+				throw new Error("Backend fallback");
+			}
+			setSummaryText(result);
+		} catch (error) {
+			console.error("AI Fallback used due to error:", error);
+			// The requested fallback mock text for the demo:
+			const topMember = [...contributions.contributions].sort((a, b) => b.contribution_percent - a.contribution_percent)[0];
+			const lowestMember = [...contributions.contributions].sort((a, b) => a.contribution_percent - b.contribution_percent)[0];
+			
+			setSummaryText(
+				`${project.name} is ${project.completion_percent.toFixed(0)}% complete and is currently assessed as ${project.risk_level} risk. ` +
+				`Workload distribution is ${fairness?.imbalance_flag ? 'imbalanced' : 'acceptable'} (fairness score ${fairness?.fairness_score.toFixed(2)}). ` +
+				`${topMember ? topMember.name + " is the highest contributor" : ""}. ` +
+				`${lowestMember && lowestMember.contribution_percent < 20 ? lowestMember.name + " has very low engagement and may need a check-in. Recommend a brief nudge." : "All members are contributing."}`
+			);
+		} finally {
+			setIsLoadingSummary(false);
+		}
+	};
 
 	useEffect(() => {
 		let isMounted = true;
@@ -100,13 +148,24 @@ export default function SupervisorProjectDetailsPage() {
 						<h1 className="text-xl sm:text-2xl font-extrabold text-slate-800">Project Details</h1>
 					</div>
 
-					<button
-						onClick={() => navigate("/supervisor/projects")}
-						className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm whitespace-nowrap ml-4"
-					>
-						Back to Projects
-					</button>
+					<div className="flex items-center gap-3 ml-4">
+						<button
+							onClick={handleGenerateReport}
+							className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md whitespace-nowrap"
+						>
+							<Sparkles className="w-4 h-4" />
+							<span className="hidden sm:inline">Generate Status Report</span>
+						</button>
+						<button
+							onClick={() => navigate("/supervisor/projects")}
+							className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm whitespace-nowrap hidden sm:block"
+						>
+							Back to Projects
+						</button>
+					</div>
 				</header>
+				
+				{contributions && <AtRiskWidget contributions={contributions.contributions} onClickMember={setSelectedMember} />}
 
 				<div className="flex-1 p-6 space-y-6">
 					{loading && (
@@ -178,7 +237,10 @@ export default function SupervisorProjectDetailsPage() {
 							<div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
 								{/* Left Main - Contribution insights prominent */}
 								<div className="xl:col-span-8 flex flex-col gap-6">
-									<ContributionChartCard contributions={contributions.contributions} />
+									<ContributionChartCard 
+										contributions={contributions.contributions} 
+										onClickMember={setSelectedMember}
+									/>
 								</div>
 
 								{/* Right Bar - Secondary visual info */}
@@ -191,6 +253,35 @@ export default function SupervisorProjectDetailsPage() {
 					)}
 				</div>
 			</main>
+
+			<IndividualContributionModal
+				isOpen={!!selectedMember}
+				onClose={() => setSelectedMember(null)}
+				member={selectedMember}
+			/>
+
+			{/* AI Summary Modal */}
+			<Modal
+				isOpen={showSummaryModal}
+				onClose={() => setShowSummaryModal(false)}
+				title="Executive AI Summary"
+				size="xl"
+			>
+				<div className="p-6">
+					{isLoadingSummary ? (
+						<div className="flex flex-col items-center justify-center py-12">
+							<div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+							<p className="text-slate-500 font-medium">Generating summary...</p>
+						</div>
+					) : (
+						<div className="prose prose-sm sm:prose lg:prose-lg max-w-none text-slate-700">
+							<div className="whitespace-pre-wrap bg-slate-50 p-6 rounded-xl border border-slate-100 font-medium text-[15px] leading-relaxed shadow-inner">
+								{summaryText}
+							</div>
+						</div>
+					)}
+				</div>
+			</Modal>
 		</div>
 	);
 }

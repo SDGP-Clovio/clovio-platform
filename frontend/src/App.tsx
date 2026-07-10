@@ -10,6 +10,7 @@ import ProjectDashboard from './pages/ProjectDashboard';
 import SupervisorDashboard from "./pages/SupervisorDashboard";
 import SupervisorProjectsPage from "./pages/SupervisorProjectsPage";
 import SupervisorProjectDetailsPage from "./pages/SupervisorProjectDetailsPage";
+import InstitutionIntegrations from './pages/InstitutionIntegrations';
 
 // Components
 import ProjectWizard from './components/Projects/ProjectWizard';
@@ -34,6 +35,7 @@ function App() {
           <Route path="/supervisor" element={<SupervisorDashboard />} />
           <Route path="/supervisor/projects" element={<SupervisorProjectsPage />} />
           <Route path="/supervisor/project/:id" element={<SupervisorProjectDetailsPage />} />
+          <Route path="/supervisor/integrations" element={<InstitutionIntegrations />} />
 
           <Route path="/test" element={<Navigate to="/dashboard" replace />} />
         </Routes>

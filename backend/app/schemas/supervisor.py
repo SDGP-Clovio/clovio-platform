@@ -19,6 +19,8 @@ class SupervisorProjectItem(BaseModel):
     risk_level: str
     team_size: int = Field(..., ge=0)
     due_date: Optional[date] = None
+    fairness_score: Optional[float] = None
+    last_active: Optional[str] = None
 
 
 class SupervisorProjectsResponse(BaseModel):

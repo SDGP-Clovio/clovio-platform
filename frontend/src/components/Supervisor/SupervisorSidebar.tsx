@@ -1,6 +1,6 @@
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, FolderKanban, LogOut } from 'lucide-react';
+import { LayoutDashboard, FolderKanban, LogOut, Link as LinkIcon } from 'lucide-react';
 import Avatar from '../UI/Avatar';
 import ClovioMark from '../common/ClovioMark';
 import { useApp } from '../../context/AppContext';
@@ -18,6 +18,7 @@ const SupervisorSidebar: React.FC<SupervisorSidebarProps> = ({ sidebarOpen, setS
     const navItems = [
         { id: '/supervisor', label: 'Dashboard', icon: LayoutDashboard },
         { id: '/supervisor/projects', label: 'All Projects', icon: FolderKanban },
+        { id: '/supervisor/integrations', label: 'Integrations', icon: LinkIcon },
     ];
 
     const handleLogout = () => {
@@ -43,7 +44,9 @@ const SupervisorSidebar: React.FC<SupervisorSidebarProps> = ({ sidebarOpen, setS
                     // Match exact route for dashboard, or prefix for projects
                     const isActive = item.id === '/supervisor' 
                         ? location.pathname === '/supervisor'
-                        : location.pathname.startsWith('/supervisor/project');
+                        : item.id === '/supervisor/projects'
+                            ? location.pathname.startsWith('/supervisor/project') && !location.pathname.includes('integrations')
+                            : location.pathname.startsWith(item.id);
                     
                     const Icon = item.icon;
 

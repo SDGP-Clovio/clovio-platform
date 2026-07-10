@@ -8,10 +8,13 @@ from app.models.task import Task
 from app.models.milestone import Milestone
 from app.models.project import Project
 from app.models.user import User
+from app.models.contribution_log import ContributionLog
 from app.schemas.task import TaskCreate, TaskResponse, TaskUpdate
 
 router = APIRouter()
 
+
+from datetime import datetime
 
 def _serialize_task(task: Task, milestone: Milestone) -> dict[str, Any]:
     status_value = task.status.value if hasattr(task.status, "value") else str(task.status)
@@ -28,6 +31,7 @@ def _serialize_task(task: Task, milestone: Milestone) -> dict[str, Any]:
         "assigned_to": task.assigned_to,
         "assignment_reason": task.assignment_reason,
         "is_skill_gap": task.is_skill_gap,
+        "completed_at": task.completed_at,
         "project_id": int(milestone.project_id),
     }
 
@@ -152,15 +156,32 @@ def update_task(task_id: int, task_update: TaskUpdate, db: Session = Depends(get
     if "assigned_to" in updates:
         updates["assigned_to"] = _normalize_assignee_id(updates["assigned_to"], db)
 
+    if "status" in updates:
+        if updates["status"] == "done" and (not hasattr(db_task, "status") or db_task.status != "done"):
+            updates["completed_at"] = datetime.utcnow()
+        elif updates["status"] != "done":
+            updates["completed_at"] = None
+
     for field, value in updates.items():
         setattr(db_task, field, value)
-
-    db.commit()
-    db.refresh(db_task)
 
     milestone = db.query(Milestone).filter(Milestone.id == db_task.milestone_id).first()
     if milestone is None:
         raise HTTPException(status_code=500, detail="Task milestone is missing")
+
+    if "status" in updates and db_task.assigned_to:
+        action = f"task_{updates['status']}"
+        log = ContributionLog(
+            project_id=milestone.project_id,
+            user_id=db_task.assigned_to,
+            task_id=db_task.id,
+            action=action,
+            description=f"Task '{db_task.name}' status changed to {updates['status']}"
+        )
+        db.add(log)
+
+    db.commit()
+    db.refresh(db_task)
 
     return _serialize_task(db_task, milestone)
 

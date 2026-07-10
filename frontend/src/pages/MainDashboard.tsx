@@ -57,38 +57,28 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 /* ─── Project row card ──────────────────────────────────────────────────── */
 const ProjectRowCard: React.FC<{ project: Project }> = ({ project }) => {
     const navigate = useNavigate();
-    const { users } = useApp();
+    const { users, tasks } = useApp();
     const teamMembers = project.teamMembers
         .map((id) => users.find((user) => user.id === id))
         .filter((member): member is NonNullable<typeof member> => Boolean(member));
 
     const getProgress = () => {
         if (project.status === 'completed' || project.status === 'archived') return 100;
-        const daysSinceStart = Math.floor((Date.now() - new Date(project.createdAt).getTime()) / 86400000);
-        const totalDays = project.deadline
-            ? Math.floor((new Date(project.deadline).getTime() - new Date(project.createdAt).getTime()) / 86400000)
-            : 90;
-        return Math.min(Math.round((daysSinceStart / totalDays) * 100), 90);
+        const projectTasks = tasks.filter((t) => t.projectId === project.id);
+        if (projectTasks.length === 0) return 0;
+        const completedTasks = projectTasks.filter((t) => t.status === 'done').length;
+        return Math.round((completedTasks / projectTasks.length) * 100);
     };
 
     const progress = getProgress();
-    const fairnessPct = Math.round((1 - project.fairnessScore) * 100);
+    const fairnessScore = project.fairnessScore || 1;
+    const fairnessPct = Math.round(fairnessScore * 100);
     const fairnessColor =
         fairnessPct >= 80 ? 'bg-green-500' :
         fairnessPct >= 60 ? 'bg-amber-400' :
                              'bg-red-400';
 
-    const courseCode = project.courseName ?? (
-        project.id === 1 ? '5CDSC021C' :
-        project.id === 2 ? '4CDSC018W' :
-        project.id === 3 ? '6CDSC024C' :
-                               '5CDSC020C'
-    );
-    const courseType =
-        project.id === 1 ? 'AI / Web App' :
-        project.id === 2 ? 'Mobile / IoT' :
-        project.id === 3 ? 'Data / React' :
-                               'Security / Node';
+    const courseCode = project.module || 'General';
 
     return (
         <div
@@ -105,9 +95,6 @@ const ProjectRowCard: React.FC<{ project: Project }> = ({ project }) => {
                     <StatusBadge status={project.status} />
                     <span className="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded px-2 py-0.5 font-medium whitespace-nowrap">
                         {courseCode}
-                    </span>
-                    <span className="text-xs text-slate-400 bg-slate-50 border border-slate-100 rounded px-2 py-0.5 font-medium whitespace-nowrap">
-                        {courseType}
                     </span>
                 </div>
                 <p className="text-xs text-slate-500 mb-3 line-clamp-1">{project.description}</p>
@@ -237,18 +224,20 @@ const MiniCalendar: React.FC<{ onOpenSchedule: () => void }> = ({ onOpenSchedule
                 </div>
             </div>
 
-            <div className="grid grid-cols-7 mb-1">
+            <div className="grid grid-cols-7 mb-1" role="row">
                 {dayNames.map((d) => (
-                    <div key={d} className="text-center text-[10px] font-semibold text-slate-400 py-1">{d}</div>
+                    <div key={d} role="columnheader" aria-label={d} className="text-center text-[10px] font-semibold text-slate-400 py-1">{d}</div>
                 ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-y-0.5">
+            <div className="grid grid-cols-7 gap-y-0.5" role="grid" aria-label="Calendar">
                 {cells.map((d, i) => (
-                    <div key={i} className="flex items-center justify-center aspect-square">
+                    <div key={i} role="gridcell" className="flex items-center justify-center aspect-square">
                         {d !== null && (
                             <button
                                 type="button"
+                                aria-label={`Date ${d} ${monthLabel}`}
+                                aria-pressed={selectedDayInView === d}
                                 onClick={() => setSelectedDate(new Date(year, month, d))}
                                 className={`w-7 h-7 rounded-full text-[11px] font-medium flex items-center justify-center transition-all relative
                                     ${selectedDayInView === d
@@ -391,13 +380,18 @@ const MainDashboard: React.FC = () => {
         { id: 'settings',      label: 'Settings',      icon: Settings },
     ];
 
-    // ── Exactly the original filter logic ───────────────────────────────
     const filteredProjects = projects.filter((project) => {
         const matchesSearch =
             project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             project.description.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesStatus = filterStatus === 'all' || project.status === filterStatus;
-        return matchesSearch && matchesStatus;
+        
+        const isUserProject = currentUser ? (
+            project.teamMembers.includes(currentUser.id) || 
+            project.supervisorId === currentUser.id
+        ) : false;
+        
+        return matchesSearch && matchesStatus && isUserProject;
     });
 
     return (

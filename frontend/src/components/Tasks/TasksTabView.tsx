@@ -386,12 +386,12 @@ const TasksTabView: React.FC<TasksTabViewProps> = ({ projectId }) => {
                             </div>
 
                             {/* Milestone Tasks */}
-                            {milestone.tasks.length > 0 ? (
+                            {milestone.tasks.filter(t => !(t.title || '').startsWith('Plan tasks for ')).length > 0 ? (
                                 <div
                                     className="space-y-3"
                                     key={`milestone-wave-${milestone.planMilestoneId ?? Number(milestone.id)}-${milestoneWaveTokens[milestone.planMilestoneId ?? Number(milestone.id)] ?? 0}`}
                                 >
-                                    {milestone.tasks.map((task, taskIdx) => {
+                                    {milestone.tasks.filter(t => !(t.title || '').startsWith('Plan tasks for ')).map((task, taskIdx) => {
                                         const assignees = task.assignedTo.map((id) => findUser(id)).filter(Boolean);
                                         const animationKey = milestone.planMilestoneId ?? Number(milestone.id);
                                         const shouldAnimateCard = Boolean(revealedMilestoneAnimations[animationKey]);

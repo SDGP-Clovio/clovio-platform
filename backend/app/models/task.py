@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, Enum, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, Boolean, Enum, ForeignKey, JSON, DateTime
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 import enum
@@ -21,6 +21,7 @@ class Task(Base):
     assignment_reason = Column(Text, nullable=True)
     is_skill_gap = Column(Boolean, default=False)
     status = Column(Enum(TaskStatus), default=TaskStatus.TODO)
+    completed_at = Column(DateTime, nullable=True)
 
     milestone = relationship("Milestone", back_populates="tasks")
     assignee = relationship("User", foreign_keys=[assigned_to])

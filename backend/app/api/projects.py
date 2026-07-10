@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from typing import Any, List
+from typing import Any, List, Dict
+import os
+import httpx
 
 # Import Database tools
 from app.core.database import get_db
@@ -319,3 +321,51 @@ async def create_project_plan(request: ProjectRequest):
     except Exception as e:
         logger.error(f"Error in create_project_plan: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{project_id}/summary")
+async def get_project_summary(project_id: int, project_data: Dict[str, Any]):
+    url = "https://api.ideamart.io/omniai/api/v1/chat/completions"
+    api_key = os.getenv("IDEAMART_API_KEY", "") 
+    
+    if not api_key:
+        return {"error": "IDEAMART_API_KEY environment variable is missing. Please add it to your .env file."}
+
+    auth_header = api_key if api_key.startswith("app_") else f"app_{api_key}"
+    
+    headers = {
+        "Authorization": auth_header,
+        "Content-Type": "application/json"
+    }
+
+    prompt = f"""
+    You are an expert project manager assistant. Analyze the following project data and generate a comprehensive status report.
+    Provide: 
+    1. A brief project summary.
+    2. Overall development progress.
+    3. What each member has contributed.
+    4. An assessment of whether the project will finish by the deadline based on completed vs. pending tasks.
+    5. and each and every info u have on the project
+    
+    Project Data:
+    {project_data}
+    """
+
+    payload = {
+        "model": "gpt-4o-mini",
+        "messages": [
+            {"role": "system", "content": "You are a helpful project management assistant."},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(url, json=payload, headers=headers)
+            if response.status_code != 200:
+                logger.error(f"API Error {response.status_code}: {response.text}")
+                return {"error": f"API returned {response.status_code}: {response.text[:100]}"}
+            response.raise_for_status()
+            return {"summary": response.json()['choices'][0]['message']['content']}
+    except Exception as e:
+        logger.error(f"Failed to generate summary: {str(e)}", exc_info=True)
+        return {"error": f"Failed to generate summary: {str(e)}"}

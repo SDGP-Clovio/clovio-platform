@@ -14,6 +14,7 @@ from app.models.project import Project
 from app.models.project_member import ProjectMember
 from app.models.task import Task
 from app.models.user import User, UserRole
+from app.models.contribution_log import ContributionLog
 from app.services.supervisor_service import SupervisorDataProvider
 
 
@@ -188,8 +189,25 @@ class SqlAlchemySupervisorDataProvider(SupervisorDataProvider):
         ]
 
     def get_contribution_logs(self, project_id: int) -> Sequence[Mapping[str, Any]]:
-        # No dedicated contribution log table yet; return an empty list for now.
-        return []
+        try:
+            logs = (
+                self.db.query(ContributionLog)
+                .filter(ContributionLog.project_id == project_id)
+                .all()
+            )
+            return [
+                {
+                    "id": log.id,
+                    "user_id": log.user_id,
+                    "task_id": log.task_id,
+                    "action": log.action,
+                    "description": log.description,
+                    "created_at": log.created_at,
+                }
+                for log in logs
+            ]
+        except SQLAlchemyError:
+            return []
 
 
 def get_supervisor_data_provider(db: Session = Depends(get_db)) -> SupervisorDataProvider:

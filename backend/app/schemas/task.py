@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional, List, Literal
+from datetime import datetime
 
 # 1. Base properties every Task needs
 class TaskBase(BaseModel):
@@ -11,6 +12,7 @@ class TaskBase(BaseModel):
     assigned_to: Optional[int] = None  # Renamed to match Database!
     assignment_reason: Optional[str] = None
     is_skill_gap: bool = False
+    completed_at: Optional[datetime] = None
 
 # 2. Properties required when creating a new Task
 class TaskCreate(TaskBase):
@@ -29,6 +31,7 @@ class TaskUpdate(BaseModel):
     assigned_to: Optional[int] = None
     assignment_reason: Optional[str] = None
     is_skill_gap: Optional[bool] = None
+    completed_at: Optional[datetime] = None
 
 # 3. Properties returned when sending a Task back to the frontend
 class TaskResponse(TaskBase):

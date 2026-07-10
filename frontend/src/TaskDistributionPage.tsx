@@ -4,7 +4,7 @@ import TaskDistributionModal from "./components/TaskDistribution/TaskDistributio
 import { useTaskEngine } from "./hooks/TaskEngine";
 import Sidebar from "./components/TaskDistribution/NavBar";
 import TopBar from "./components/TaskDistribution/TopBar";
-import { USER } from "./types/mockData";
+import { useApp } from "./context/AppContext";
 
 export default function TaskEnginePage() {
     const [showModal, setShowModal] = useState(false);
@@ -20,6 +20,7 @@ export default function TaskEnginePage() {
         { id: 3, name: "Charlie" },
     ];
 
+    const { currentUser } = useApp();
     const { projectDescription, setProjectDescription, file, setFile, milestones, loading, distributeTasks } = useTaskEngine();
 
     const handleDistribute = async () => {
@@ -40,7 +41,7 @@ export default function TaskEnginePage() {
             {/* Main Content */}
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 <TopBar
-                    user={USER}
+                    user={currentUser || { id: 0, name: "User", email: "", role: "student" }}
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                 />

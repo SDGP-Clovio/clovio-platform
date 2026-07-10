@@ -92,9 +92,22 @@ export default function TaskDistributionWizard({ isOpen, onClose, projectId, onP
         const stagedTasks: Array<{ milestone: Milestone; task: any; index: number }> = [];
 
         generatedMilestones.forEach((milestone) => {
-            if (milestone.tasks) {
+            if (milestone.tasks && milestone.tasks.length > 0) {
                 milestone.tasks.forEach((task: any, index: number) => {
                     stagedTasks.push({ milestone, task, index });
+                });
+            } else {
+                stagedTasks.push({
+                    milestone,
+                    task: {
+                        name: `Plan tasks for ${milestone.title}`,
+                        description: `Placeholder task to track the ${milestone.title} milestone.`,
+                        status: 'todo',
+                        priority: 'medium',
+                        complexity: milestone.effort || 5,
+                        assignment_reason: 'Auto-assigned to track this milestone'
+                    },
+                    index: 0
                 });
             }
         });

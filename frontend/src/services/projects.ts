@@ -92,3 +92,11 @@ export async function deleteProjectRecord(projectId: number): Promise<void> {
 export function mapProjectStatusForApi(status: Project["status"]): "planned" | "active" | "completed" {
     return toBackendProjectStatus(status);
 }
+
+export async function generateProjectSummary(projectId: number, projectData: any): Promise<string> {
+    const response = await apiClient.post<{ summary?: string; error?: string }>(`/api/projects/${projectId}/summary`, projectData);
+    if (response.data.error) {
+        throw new Error(response.data.error);
+    }
+    return response.data.summary || "";
+}

@@ -62,14 +62,14 @@ export default function SupervisorDashboard() {
 			<SupervisorSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
 
 			<main className="lg:ml-64 min-h-screen bg-slate-50/30 flex flex-col">
-				<header className="sticky top-0 z-10 bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between">
+				<header className="sticky top-0 z-10 bg-white border-b border-slate-100 pl-16 pr-8 lg:px-8 py-4 flex items-center justify-between">
 					<div>
 						<p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest mb-0.5">Supervisor</p>
-						<h1 className="text-2xl font-extrabold text-slate-800">Dashboard Overview</h1>
+						<h1 className="text-xl sm:text-2xl font-extrabold text-slate-800">Dashboard Overview</h1>
 					</div>
 					<button
 						onClick={() => navigate("/supervisor/projects")}
-						className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all shadow-md shadow-indigo-200 hover:-translate-y-0.5"
+						className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all shadow-md shadow-indigo-200 hover:-translate-y-0.5 whitespace-nowrap ml-4"
 						style={{ background: "linear-gradient(135deg,#4F46E5,#10B981)" }}
 					>
 						View All Projects
@@ -77,7 +77,16 @@ export default function SupervisorDashboard() {
 				</header>
 
 				<div className="flex-1 p-6 space-y-6">
-					{loading && <p className="text-sm text-gray-500">Loading dashboard...</p>}
+					{loading && (
+						<div className="space-y-6 animate-pulse">
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+								{[...Array(4)].map((_, i) => (
+									<div key={i} className="h-28 bg-slate-200 rounded-2xl" />
+								))}
+							</div>
+							<div className="h-96 bg-slate-200 rounded-2xl" />
+						</div>
+					)}
 					{error && <p className="text-sm text-red-600">{error}</p>}
 
 					{data && (

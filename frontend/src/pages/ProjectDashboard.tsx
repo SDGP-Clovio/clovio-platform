@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, ListTodo, Calendar, LogOut, Menu, X, ArrowLeft, Settings, MessageSquare, Sparkles } from 'lucide-react';
 import TasksTabView from '../components/Tasks/TasksTabView';
 import Avatar from '../components/UI/Avatar';
+import Modal from '../components/UI/Modal';
 import ClovioMark from '../components/common/ClovioMark';
+import { generateProjectSummary } from '../services/projects';
 import MeetingScheduler from '../components/Meetings/MeetingScheduler';
 import NotificationDropdown from '../components/Notifications/NotificationDropdown';
 import TeamAlertsDropdown from '../components/Kanban/TeamAlertsDropdown';
@@ -31,6 +33,13 @@ const ProjectDashboard: React.FC = () => {
     const { currentUser, projects, setActiveProject, tasks, users } = useApp();
     const [activeTab, setActiveTab] = useState<'overview' | 'tasks' | 'meetings' | 'chat' | 'settings'>('overview');
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    // AI Summary States
+    const [aiCredits, setAiCredits] = useState(0);
+    const [showPaywallModal, setShowPaywallModal] = useState(false);
+    const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+    const [summaryText, setSummaryText] = useState('');
+    const [showSummaryModal, setShowSummaryModal] = useState(false);
 
     // Find the project by ID
     const project = projects.find((p) => p.id === projectId);
@@ -255,6 +264,45 @@ const ProjectDashboard: React.FC = () => {
         navigate('/');
     };
 
+    const handleGenerateReport = async () => {
+        if (aiCredits === 0) {
+            setShowPaywallModal(true);
+            return;
+        }
+
+        setIsLoadingSummary(true);
+        setShowSummaryModal(true); // Open modal to show loading state
+
+        try {
+            // Build the data payload
+            const projectData = {
+                title: project.name,
+                description: project.description,
+                deadline: project.deadline,
+                members: teamMemberNames,
+                tasks: projectTasks.map(t => ({
+                    title: t.title,
+                    status: t.status,
+                    assignee: t.assignedTo.map(id => memberNameById.get(id)).join(', ')
+                }))
+            };
+            const result = await generateProjectSummary(project.id, projectData);
+            setSummaryText(result);
+        } catch (error) {
+            setSummaryText("Failed to generate summary. Please try again.");
+            console.error(error);
+        } finally {
+            setIsLoadingSummary(false);
+        }
+    };
+
+    const handleTopUp = () => {
+        setAiCredits(50);
+        setShowPaywallModal(false);
+        // Automatically trigger after top-up
+        handleGenerateReport();
+    };
+
     const navItems = [
         { id: 'overview',  label: 'Dashboard',    icon: LayoutDashboard },
         { id: 'tasks',     label: 'Tasks',         icon: ListTodo },
@@ -354,7 +402,14 @@ const ProjectDashboard: React.FC = () => {
                             <p className="text-slate-500 mt-0.5 text-sm">{project.name}</p>
                         </div>
                         {/* Header icons */}
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={handleGenerateReport}
+                                className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md"
+                            >
+                                <Sparkles className="w-4 h-4" />
+                                <span className="hidden sm:inline">Generate AI Report</span>
+                            </button>
                             <TeamAlertsDropdown projectId={project.id} />
                             <NotificationDropdown projectId={project.id} />
                         </div>
@@ -416,10 +471,59 @@ const ProjectDashboard: React.FC = () => {
                         <ProjectChatBox projectId={project.id} />
                     ) : (
                         // Settings Tab
-                        <ProjectSettings project={project} />
+                        <ProjectSettings project={project} onGenerateReport={handleGenerateReport} />
                     )}
                 </div>
             </main>
+
+            {/* Paywall Modal */}
+            <Modal
+                isOpen={showPaywallModal}
+                onClose={() => setShowPaywallModal(false)}
+                title="Premium AI Feature"
+                size="md"
+            >
+                <div className="p-6 text-center space-y-4">
+                    <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <Sparkles className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-800">Insufficient AI Credits</h3>
+                    <p className="text-sm text-slate-500">
+                        Generating a comprehensive project summary requires AI credits. You currently have <span className="font-bold text-slate-700">{aiCredits}</span> credits.
+                    </p>
+                    <div className="pt-4">
+                        <button
+                            onClick={handleTopUp}
+                            className="w-full bg-gradient-to-r from-indigo-600 to-emerald-500 text-white font-semibold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all"
+                        >
+                            Top up 50 Credits via Mobile Balance
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Summary Modal */}
+            <Modal
+                isOpen={showSummaryModal}
+                onClose={() => setShowSummaryModal(false)}
+                title="Project AI Summary"
+                size="xl"
+            >
+                <div className="p-6">
+                    {isLoadingSummary ? (
+                        <div className="flex flex-col items-center justify-center py-12">
+                            <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4"></div>
+                            <p className="text-slate-500 font-medium">Analyzing project data...</p>
+                        </div>
+                    ) : (
+                        <div className="prose prose-sm sm:prose lg:prose-lg max-w-none text-slate-700">
+                            <div className="whitespace-pre-wrap bg-slate-50 p-6 rounded-xl border border-slate-100 font-medium text-[15px] leading-relaxed shadow-inner">
+                                {summaryText}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 };

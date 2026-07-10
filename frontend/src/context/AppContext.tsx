@@ -13,11 +13,6 @@ import type {
 } from '../types/types';
 
 import {
-    mockFairnessMetrics,
-    mockActivities,
-    mockDashboardStats,
-} from '../data/mockData';
-import {
     fetchCurrentUserAsAppUser,
     fetchCurrentUserSettingsAsAppUser,
     fetchUsers,
@@ -210,12 +205,20 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [activeProject, setActiveProject] = useState<Project | null>(null);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [meetings, setMeetings] = useState<Meeting[]>([]);
-    const [fairnessMetrics] = useState<FairnessMetrics>(mockFairnessMetrics);
+    const [fairnessMetrics] = useState<FairnessMetrics>({
+        overallScore: 0,
+        metrics: { workloadBalance: 0, skillUtilization: 0, deadlinePressure: 0, taskComplexity: 0 }
+    });
     const [activities, setActivities] = useState<Activity[]>(() => {
         const restored = hydrateStoredActivities();
-        return restored ?? mockActivities;
+        return restored ?? [];
     });
-    const [dashboardStats, setDashboardStats] = useState<DashboardStats>(mockDashboardStats);
+    const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+        totalProjects: 0,
+        activeTasks: 0,
+        completedTasks: 0,
+        upcomingMeetings: 0
+    });
     const [projectChats, setProjectChats] = useState<ProjectChat[]>([]);
 
     const priorityToComplexity = (priority?: Task['priority'], fallback = 5): number => {
@@ -1009,20 +1012,24 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
 
     // Dashboard Stats Update
-    const updateDashboardStats = () => {
+    useEffect(() => {
         const projectTasks = tasks.filter((task) => task.projectId === activeProject?.id);
         const activeTasks = projectTasks.filter((task) => task.status === 'in-progress').length;
         const completedTasks = projectTasks.filter((task) => task.status === 'done').length;
         const totalTasks = projectTasks.length;
         const progressPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        const upcomingMeetingsCount = meetings.filter((m) => m.startTime >= new Date()).length;
 
         setDashboardStats({
-            ...dashboardStats,
+            totalProjects: projects.length,
             activeTasks,
             completedTasks,
             projectProgress: progressPercentage,
+            upcomingMeetings: upcomingMeetingsCount,
         });
-    };
+    }, [tasks, activeProject, projects.length, meetings]);
+
+    const updateDashboardStats = () => {};
 
     // Context Value
     const value: AppContextState = {

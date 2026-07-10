@@ -76,10 +76,19 @@ const ProjectWizard: React.FC = () => {
 
             try {
                 const records = await fetchUsers();
+                const currentUser = await fetchCurrentUserAsAppUser();
+                
                 if (!isMounted) {
                     return;
                 }
                 setAvailableUsers(records);
+                
+                setFormData(prev => {
+                    if (!prev.teamMembers.includes(currentUser.id)) {
+                        return { ...prev, teamMembers: [...prev.teamMembers, currentUser.id] };
+                    }
+                    return prev;
+                });
             } catch (error) {
                 if (isMounted) {
                     setUsersError(resolveErrorMessage(error, 'Unable to load users from the database.'));
@@ -397,7 +406,8 @@ const Step2TeamSelection: React.FC<{
                                             <button
                                                 key={supervisor.id}
                                                 type="button"
-                                                onClick={() => {
+                                                onMouseDown={(e) => {
+                                                    e.preventDefault(); // Prevent focus loss that triggers onBlur
                                                     setFormData({ ...formData, supervisorId: supervisor.id });
                                                     setSupervisorQuery('');
                                                     setShowSupervisorResults(false);

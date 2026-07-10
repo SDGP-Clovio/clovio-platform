@@ -8,7 +8,7 @@ import { useApp } from '../../context/AppContext';
 import type { Project } from '../../types/types';
 import MemberSearch from './MemberSearch';
 
-interface Props { project: Project; }
+interface Props { project: Project; onGenerateReport?: () => void; }
 
 /** Convert a Date or undefined → "YYYY-MM-DD" for <input type="date"> */
 const toDateStr = (d?: Date | string): string => {
@@ -29,7 +29,7 @@ const Label: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 const inputCls = 'w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-all';
 
 /* ═══════════════════════════════════════════════════════════════════════════ */
-const ProjectSettings: React.FC<Props> = ({ project }) => {
+const ProjectSettings: React.FC<Props> = ({ project, onGenerateReport }) => {
     const navigate = useNavigate();
     const { users, updateProject, deleteProject } = useApp();
 
@@ -98,8 +98,19 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                             <h3 className="text-sm font-bold text-slate-800">General Info</h3>
                             <p className="text-xs text-slate-400 mt-0.5">Basic project details</p>
                         </div>
-                        <button
-                            onClick={save}
+                        <div className="flex gap-2">
+                            {onGenerateReport && (
+                                <button
+                                    onClick={onGenerateReport}
+                                    type="button"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-semibold transition-colors"
+                                >
+                                    <Sparkles className="w-4 h-4" />
+                                    AI Report
+                                </button>
+                            )}
+                            <button
+                                onClick={save}
                             disabled={isSaving}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
                                 isSaving
@@ -115,6 +126,7 @@ const ProjectSettings: React.FC<Props> = ({ project }) => {
                                 ? <><CheckCircle2 className="w-3.5 h-3.5" /> Saved!</>
                                 : <><Save className="w-3.5 h-3.5" /> Save</>}
                         </button>
+                        </div>
                     </div>
                     <div className="p-6 space-y-4">
                         <div>

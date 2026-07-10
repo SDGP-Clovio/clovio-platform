@@ -1,4 +1,4 @@
-import React from 'react';
+
 import Modal from '../UI/Modal';
 import { Download, FileText, CheckCircle, Activity, Award } from 'lucide-react';
 import type { SupervisorContributionItem } from '../../types/supervisor';

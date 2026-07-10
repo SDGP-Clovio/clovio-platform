@@ -41,7 +41,7 @@ export default function TaskEnginePage() {
             {/* Main Content */}
             <div className="flex-1 flex flex-col h-screen overflow-hidden">
                 <TopBar
-                    user={currentUser || { id: 0, name: "User", email: "", role: "student" }}
+                    user={currentUser || { id: 0, name: "User", email: "", role: "student" as const }}
                     searchQuery={searchQuery}
                     setSearchQuery={setSearchQuery}
                 />

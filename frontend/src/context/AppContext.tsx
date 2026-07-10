@@ -206,18 +206,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [fairnessMetrics] = useState<FairnessMetrics>({
-        overallScore: 0,
-        metrics: { workloadBalance: 0, skillUtilization: 0, deadlinePressure: 0, taskComplexity: 0 }
+        giniCoefficient: 0,
+        fairnessLevel: 'good',
+        contributions: [],
+        lastCalculated: new Date()
     });
     const [activities, setActivities] = useState<Activity[]>(() => {
         const restored = hydrateStoredActivities();
         return restored ?? [];
     });
     const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
-        totalProjects: 0,
         activeTasks: 0,
         completedTasks: 0,
-        upcomingMeetings: 0
+        upcomingMeetings: 0,
+        fairnessScore: 0,
+        teamSize: 0,
+        projectProgress: 0
     });
     const [projectChats, setProjectChats] = useState<ProjectChat[]>([]);
 
@@ -1021,11 +1025,12 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         const upcomingMeetingsCount = meetings.filter((m) => m.startTime >= new Date()).length;
 
         setDashboardStats({
-            totalProjects: projects.length,
             activeTasks,
             completedTasks,
-            projectProgress: progressPercentage,
             upcomingMeetings: upcomingMeetingsCount,
+            fairnessScore: fairnessMetrics.giniCoefficient,
+            teamSize: users.length,
+            projectProgress: progressPercentage
         });
     }, [tasks, activeProject, projects.length, meetings]);
 
